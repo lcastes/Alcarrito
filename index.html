@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="googlebot" content="noindex, nofollow">
+<title>Mi lista de la compra</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mu:#76746e;--ac:#1f7a4d;--ac2:#e3f3ea;--bd:#e4e2db;--wa:#c0392b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#151614;--card:#222421;--tx:#f0efe9;--mu:#9b9a93;--ac:#4cc98a;--ac2:#1d3a2c;--bd:#33362f;--wa:#ff7b6b}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#151614;--card:#222421;--tx:#f0efe9;--mu:#9b9a93;--ac:#4cc98a;--ac2:#1d3a2c;--bd:#33362f;--wa:#ff7b6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:90px}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;padding:12px 12px 8px;border-bottom:1px solid var(--bd)}
+h1{font-size:20px;margin:0 0 10px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tab{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 14px;border-radius:20px;font-size:15px}
+.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.quick{display:none;gap:8px;margin-top:10px;flex-wrap:wrap}
+.quick input{flex:1 1 150px;min-width:0}
+.quick select{flex:1 1 110px;width:auto;min-width:0}
+.quick .btn{padding:11px 18px}
+.filt{display:none;gap:8px;margin-top:10px;flex-wrap:wrap}.filt input{flex:1 1 150px;min-width:0}.filt select{flex:1 1 130px;width:auto;min-width:0}
+.sbox{margin-top:12px;padding-top:8px;border-top:1px solid var(--bd)}.sbox .srow{margin-top:0}
+.nsb{display:inline-block;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;color:#fff;margin-right:2px}
+.dt{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}.dt-r{background:#d33a2c}.dt-y{background:#f0c020}.dt-g{background:#2eaa5c}.dt-n{background:#9b9a93}
+.rk-r{background:#d33a2c}.rk-y{background:#c99700}.rk-g{background:#2eaa5c}.rk-n{background:#9b9a93}
+.sheet textarea{width:100%;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;min-height:72px;resize:vertical}
+.adr{padding:10px 0;border-top:1px solid var(--bd)}.rk{display:inline-block;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;color:#fff;margin-left:6px}.rk-h{background:#d33a2c}.rk-m{background:#e2861b}.rk-l{background:#6aa81f}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}#lb.show{display:flex}#lb img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+#main img.th,#main img.th2,#main img.th3{cursor:zoom-in}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.stile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;background:var(--card);border:1px solid var(--bd);border-radius:16px;color:var(--tx);font:inherit;cursor:pointer;text-align:center}.sic{width:56px;height:56px;border-radius:14px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
+.stile{min-height:84px;justify-content:center}.stile .sn{font-size:18px;overflow-wrap:anywhere}
+.slogo{width:36px;height:36px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid var(--bd)}.stile .slogo{width:56px;height:56px}
+.bl .lt{flex:1;min-width:0}.bl .cart{margin-left:auto}
+.sedit{padding:8px 0;border-top:1px solid var(--bd)}
+.sedit .srow input[type=text]{flex:1;min-width:0}
+input[type=color]{width:46px;height:42px;padding:2px;flex:none;border-radius:10px;border:1px solid var(--bd);background:var(--card)}
+.uprow{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--bd)}.uprow input[type=number]{width:78px;flex:none;padding:9px}
+.sbar{flex-wrap:wrap}
+.sbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:17px}.stg{display:inline-block;background:var(--ac2);color:var(--ac);border-radius:6px;padding:0 6px;font-size:12px;font-weight:700}
+.rgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.rcard{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:0 0 10px;overflow:hidden;color:var(--tx);font:inherit;cursor:pointer}
+.rcard img,.rph{width:100%;height:110px;object-fit:cover;display:block}.rph{display:flex;align-items:center;justify-content:center;background:var(--ac2);font-size:34px}.rcard b,.rcard span{padding:0 10px}
+.rimg{width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin:6px 0}.ing{margin:0;padding-left:20px}.steps{white-space:pre-wrap}
+.plbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}.seg{display:flex;gap:6px}
+.pday{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;margin-bottom:10px}.pday.today{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}.pdh{font-weight:700;margin-bottom:6px}
+.pslot{padding:6px 0;border-top:1px solid var(--bd)}.pent{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:var(--ac2);border:0;border-radius:10px;padding:8px 10px;margin:4px 0;color:var(--tx);font:inherit;cursor:pointer}.pent .pt{flex:1;min-width:0}
+.padd{background:none;border:1px dashed var(--bd);border-radius:10px;padding:6px 10px;color:var(--mu);font:inherit;cursor:pointer;margin-top:2px}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.mh{text-align:center;font-size:12px;color:var(--mu)}.mcell{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:74px;padding:4px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;text-align:left}
+.mcell.today{border-color:var(--ac)}.mcell span{font-size:9px;line-height:1.15;color:var(--mu);width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+input[type=date]{width:100%;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}.chip{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:16px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}.chip .x{background:none;border:0;color:var(--mu);cursor:pointer;padding:0 0 0 6px;font:inherit}
+.rtool{margin-bottom:12px}.rtool .seg{margin-top:4px}
+.rrow{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:8px;margin-bottom:10px;color:var(--tx);font:inherit;cursor:pointer}
+.rrow img,.rph2{width:68px;height:68px;border-radius:10px;object-fit:cover;flex:none}.rph2{display:flex;align-items:center;justify-content:center;background:var(--ac2);font-size:28px}.rrt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rsheet{display:flex!important;flex-direction:column;height:92%;padding:0!important;overflow:hidden!important}.rhead img,.rhead .rph{width:100%;height:150px;object-fit:cover;display:block}.rtt{padding:10px 16px 6px}.rtt h2{margin:0 0 2px;font-size:20px}
+.rtabs{display:flex;border-bottom:1px solid var(--bd)}.rtab{flex:1;padding:12px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mu);font:inherit;font-weight:600;cursor:pointer}.rtab.on{color:var(--ac);border-bottom-color:var(--ac)}
+.rbody{flex:1;overflow-y:auto;padding:12px 16px}.racts{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bd)}
+.plbar{flex-direction:column;align-items:stretch}.seg2 .btn{flex:1;padding:12px 8px}.plbar .seg:last-child .btn{flex:1}
+.sett{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px}.sett .stile{min-height:112px}.sico{font-size:34px;line-height:1}
+.sc-ex{background:#1e8f4e}.sc-bu{background:#6aa81f}.sc-me{background:#e2861b}.sc-ma{background:#d33a2c}
+.ns-a,.nv-1{background:#1e8f4e}.ns-b,.nv-2{background:#6aa81f}.ns-c,.nv-3{background:#e8a900;color:#222}.ns-d,.nv-4{background:#e2661b}.ns-e{background:#d33a2c}
+.orow .oc{flex:1 1 140px;width:auto;min-width:0}.orow .sb,.orow .sm2{padding:8px 12px}
+#scan{position:fixed;inset:0;background:#000;display:none;z-index:30;flex-direction:column}#scan.show{display:flex}
+#scan video{flex:1;width:100%;min-height:0;object-fit:cover}.scb{padding:14px;display:flex;justify-content:space-between;align-items:center;color:#fff;gap:10px}
+.addst{display:flex;gap:8px;flex-wrap:wrap}
+.orow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0 36px}.orow .ob{flex:1 1 calc(100% - 56px);width:auto;min-width:0}.oph{width:44px;height:44px;border-radius:8px;background:var(--ac2);display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;cursor:pointer;font-size:20px}.oph img{width:100%;height:100%;object-fit:cover}
+.bl{display:flex;gap:8px;align-items:center;margin-top:4px}.th2{width:34px;height:34px;border-radius:8px;object-fit:cover;flex:none}.th3{width:26px;height:26px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px}
+.orow .ob0{}.orow input[type=number]{width:92px;flex:none}.orow .kgv{flex:1;margin:0;min-width:70px}.orow .rm{padding:6px 10px}
+main{padding:12px;max-width:640px;margin:auto}
+.row{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;margin-bottom:10px}
+.th{width:56px;height:56px;border-radius:10px;background:var(--ac2);flex:none;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:24px}
+.info{flex:1;min-width:0}.nm{font-weight:600;overflow-wrap:anywhere}
+.sub{font-size:13px;color:var(--mu)}.best{color:var(--ac);font-weight:600}.worse{color:var(--wa)}
+.done .nm{text-decoration:line-through;color:var(--mu)}
+input[type=checkbox]{width:26px;height:26px;accent-color:var(--ac);flex:none}
+.fabs{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;z-index:6}
+.fab2{background:var(--card)!important;color:var(--tx)!important;border:1px solid var(--bd)!important;padding:15px 18px!important}
+.fab{background:var(--ac);color:#fff;border:0;border-radius:28px;padding:15px 22px;font-size:17px;font-weight:600;box-shadow:0 4px 14px #0004}
+.gh{margin:18px 0 8px;font-size:17px}.cart{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:18px;padding:8px 12px;font-size:14px}.cart.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.ch{font-size:12px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin:14px 2px 6px}
+#login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:20;padding:20px;text-align:center}#login.show{display:flex}.lbox{max-width:320px}.lbox p{color:var(--mu)}
+.empty{text-align:center;color:var(--mu);padding:40px 10px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:10}.modal.show{display:flex}
+.sheet{background:var(--bg);width:100%;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-width:640px;margin:auto}
+.sheet h2{margin:0 0 12px;font-size:18px}
+label.f{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input[type=text],input[type=number],select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px}
+.photo{display:flex;align-items:center;gap:12px}.photo .th{width:80px;height:80px}
+.srow{display:flex;gap:10px;align-items:center;margin-top:8px}.srow span{flex:1}.srow input[type=number]{width:92px;flex:none}
+.hd{display:flex;gap:10px;font-size:12px;color:var(--mu);margin-top:6px}.hd span{flex:1}.hd b{width:92px;font-weight:400;flex:none}
+.kgv{text-align:right;min-height:16px}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-size:16px;background:var(--ac);color:#fff;font-weight:600}
+.btn.g{background:var(--card);color:var(--tx);border:1px solid var(--bd)}.btn.r{background:none;color:var(--wa)}
+.acts{display:flex;gap:8px;margin-top:16px;justify-content:space-between}
+.cmp .p{display:flex;justify-content:space-between;padding:3px 0;gap:8px}
+.badge{background:var(--ac2);color:var(--ac);border-radius:8px;padding:2px 8px;font-size:13px;font-weight:600;display:inline-block;margin-top:4px}
+</style></head><body>
+<header><h1>🛒 Mi compra <small id="st" style="font-size:12px;font-weight:400;color:var(--mu)"></small></h1><div class="tabs" id="tabs"></div>
+<div class="quick" id="quick"><input type="text" id="xn" placeholder="Añadir a la lista (plátanos…)" enterkeyhint="done"><select id="xc"></select><button class="btn" id="xa">+</button></div>
+<div class="filt" id="filt"><input type="text" id="q" placeholder="Buscar producto o marca…" enterkeyhint="search" autocomplete="off"><select id="fc"></select></div></header>
+<main id="main"></main>
+<div class="sub" style="text-align:center;padding:0 12px 70px">Nota propia con el método de Yuka (60% nutrición con su tabla oficial, 30% aditivos, 10% ecológico) y datos de Open Food Facts (ODbL). La clasificación de aditivos es aproximada y propia; no es la de Yuka.</div>
+<div class="fabs"><button class="fab" id="fab">+ Añadir</button><button class="fab fab2" id="fabs" aria-label="Ajustes">⚙️ Ajustes</button></div>
+<div class="modal" id="det" style="z-index:12"><div class="sheet" id="detsheet"></div></div>
+<div id="lb"><img id="lbi" alt=""></div>
+<div class="modal" id="srch" style="z-index:35"><div class="sheet"><h2>Buscar en Open Food Facts</h2><div class="srow"><input type="text" id="srq" placeholder="Ej: varitas de merluza" enterkeyhint="search" autocomplete="off"><button class="btn" id="srgo">Buscar</button></div><div id="srl" style="margin-top:10px"></div><div class="acts"><span></span><button class="btn g" id="srx">Cerrar</button></div></div></div>
+<div class="modal" id="mnl" style="z-index:36"><div class="sheet" id="mnsheet"></div></div>
+<div class="modal" id="upm" style="z-index:34"><div class="sheet" id="upsheet"></div></div>
+<div class="modal" id="chp" style="z-index:37"><div class="sheet" id="chps"></div></div>
+<div id="scan"><video id="scv" playsinline muted></video><div class="scb"><span>Apunta al código de barras</span><button class="btn g" id="scx">Cerrar</button></div></div>
+<div id="login"><div class="lbox"><h2>🛒 Mi compra</h2><p id="lmsg"></p><button class="btn" id="lbtn">Entrar con Google</button></div></div>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+// ===== PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE (ver instrucciones) =====
+const firebaseConfig={apiKey:"AIzaSyCp-YWTUCidjRFLm27EIayge58YRvvZE_E",authDomain:"alcarrito-f7612.firebaseapp.com",projectId:"alcarrito-f7612",appId:"1:634133144954:web:0cfede80298b6f91c322c3"};
+// =====================================================================
+
+const DEF=[{id:'s1',name:'LIDL'},{id:'s2',name:'BM'}];
+const DEFC=[{id:'c1',name:'Comida precocinada'},{id:'c2',name:'Carne'},{id:'c3',name:'Pescado'},{id:'c4',name:'Productos de higiene'},{id:'c5',name:'Verduras'},{id:'c6',name:'Frutas'}];
+let S={stores:DEF,cats:DEFC,products:[],extras:[]},cur='list',edit=null,unsubs=[],lastErr='',Q='',FC='';
+const configured=!String(firebaseConfig.apiKey).startsWith('PEGA');
+let app,auth,db;
+if(configured){app=initializeApp(firebaseConfig);auth=getAuth(app);
+  db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});}
+const wfail=e=>alert('No se pudo guardar: '+((e&&e.code==='permission-denied')?'tu cuenta no tiene permiso.':'inténtalo de nuevo.'));
+function putP(p){setDoc(doc(db,'products',p.id),{name:p.name,photo:p.photo||'',cat:p.cat||'',e:p.e}).catch(wfail)}
+function delP(id){deleteDoc(doc(db,'products',id)).catch(wfail)}
+function putX(x){setDoc(doc(db,'extras',x.id),{name:x.name,cat:x.cat||'',done:!!x.done}).catch(wfail)}
+function delX(id){deleteDoc(doc(db,'extras',id)).catch(wfail)}
+function putCats(l){S.cats=l;setDoc(doc(db,'config','cats'),{list:l}).catch(wfail)}
+function putStores(l){S.stores=l;if(!['list','cmp','sm','pr','rc','pl'].includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
+  setDoc(doc(db,'config','stores'),{list:l}).catch(wfail)}
+function showLogin(msg,btn){$('lmsg').textContent=msg;$('lbtn').style.display=btn?'':'none';$('login').classList.add('show')}
+function startAuth(){
+  if(!configured){showLogin('Falta pegar tu configuración de Firebase en el archivo (busca «PEGA AQUÍ»).',false);return}
+  $('lbtn').onclick=async()=>{const p=new GoogleAuthProvider();
+    try{await signInWithPopup(auth,p)}catch(e){
+      if(e.code!=='auth/popup-closed-by-user'&&e.code!=='auth/cancelled-popup-request'){
+        try{await signInWithRedirect(auth,p)}catch(x){showLogin('No se pudo iniciar sesión ('+x.code+').',true)}}}};
+  onAuthStateChanged(auth,u=>{
+    unsubs.forEach(f=>f());unsubs=[];
+    if(!u){$('st').textContent='';showLogin(lastErr||'Inicia sesión para ver la lista compartida.',true);lastErr='';return}
+    $('login').classList.remove('show');$('st').textContent='☁️ '+(u.email||'');
+    const err=e=>{lastErr='La cuenta '+u.email+' no tiene permiso. Entra con otra cuenta de Google.';signOut(auth)};
+    unsubs.push(onSnapshot(doc(db,'config','stores'),d=>{
+      S.stores=(d.exists()&&d.data().list&&d.data().list.length)?d.data().list:DEF;
+      if(!['list','cmp','sm','pr','rc','pl'].includes(cur)&&!S.stores.find(x=>x.id===cur))cur=S.stores[0].id;render()},err));
+    unsubs.push(onSnapshot(doc(db,'config','cats'),d=>{
+      S.cats=(d.exists()&&Array.isArray(d.data().list))?d.data().list:DEFC;render()},err));
+    unsubs.push(onSnapshot(collection(db,'products'),q=>{S.products=q.docs.map(d=>migrate({id:d.id,...d.data()}));render()},err));
+    unsubs.push(onSnapshot(collection(db,'additives'),q=>{ADDS={};q.docs.forEach(d=>{ADDS[d.id]=d.data()});render()},err));
+    unsubs.push(onSnapshot(collection(db,'extras'),q=>{S.extras=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
+    unsubs.push(onSnapshot(doc(db,'config','telegram'),d=>{TG=d.exists()?d.data():{}},()=>{}));
+    unsubs.push(onSnapshot(doc(db,'config','rcats'),d=>{S.rcats=(d.exists()&&d.data().list)?d.data().list:['Desayunos','Comidas','Cenas','Postres','Snacks'];render()},()=>{}));
+    unsubs.push(onSnapshot(collection(db,'recipes'),q=>{S.recipes=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
+    unsubs.push(onSnapshot(collection(db,'plan'),q=>{S.plan={};q.docs.forEach(d=>{S.plan[d.id]=d.data()});render()},err));
+  });
+}
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>n.toFixed(2).replace('.',',')+' €';
+const eurkg=n=>n.toFixed(2).replace('.',',')+' €/kg';
+const kgOf=(pr,g)=>pr>0&&g>0?pr/g*1000:0;
+const sname=id=>(S.stores.find(s=>s.id===id)||{}).name||'?';
+const cname=id=>(S.cats.find(c=>c.id===id)||{}).name||'Sin categoría';
+const hashCol=id=>['#1f7a4d','#2b6cb0','#c05621','#805ad5','#b83280','#2c7a7b','#975a16','#4a5568'][[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%8];
+const scol=s=>s.color||hashCol(s.id);
+const sbyid=id=>S.stores.find(s=>s.id===id)||{id,name:'?'};
+function migrate(p){
+  Object.values(p.e||{}).forEach(e=>{
+    if(!Array.isArray(e.o)){e.o=opts(e);delete e.price;delete e.g}
+    if(!e.o.length)e.o=[{b:'',price:0,g:0}];
+    if((e.need||e.done)&&e.o.every(o=>o.need===undefined)){
+      const pr=e.o.map((o,i)=>({...o,i,kg:kgOf(o.price,o.g||0)})).filter(o=>o.price>0),best=pr.length?rank(pr)[0].i:0;
+      e.o.forEach((o,i)=>{o.need=i===best?!!e.need:false;o.done=i===best?!!e.done:false})}
+    e.need=false;e.done=false});
+  return p}
+const opts=e=>Array.isArray(e.o)?e.o:((e.price>0||e.g>0)?[{b:'',price:e.price||0,g:e.g||0}]:[]);
+const prices=p=>{const r=[];Object.entries(p.e).forEach(([k,v])=>{if(!S.stores.some(s=>s.id===k))return;
+  opts(v).forEach((o,i)=>{if(o.price>0)r.push({id:k,i,b:o.b||'',price:o.price,g:o.g||0,kg:kgOf(o.price,o.g||0),ns:o.ns||'',nova:o.nova||0,eco:o.eco||'',ad:o.ad==null?null:o.ad,og:o.og?1:0,ph:o.ph||'',np:o.np==null?null:o.np,lq:o.lq?1:0,ps:o.ps||'',nd:o.nd||''})})});return r};
+// Clasificación de aditivos: APROXIMADA y propia (no es la de Yuka). Edita estas listas si quieres.
+const HI=new Set(['e249','e250','e251','e252','e171','e123','e128','e924','e924a','e924b']);
+const MO=new Set(['e951','e950','e955','e954','e102','e104','e110','e122','e124','e129','e211','e320','e321','e150c','e150d','e220','e221','e222','e223','e224','e226','e227','e228','e338','e339','e340','e341','e450','e451','e452','e407','aroma']);
+const LO=new Set(['e330','e300','e322','e202','e415','e412','e440','e471','e500','e306','e307','e308','e309']);
+const adList=x=>String(x.ad||'').split(',').filter(c=>c&&c[0]!=='_'); // los tokens que empiezan por _ son marcas internas (p. ej. _qs = queso sencillo), no aditivos
+let ADDS={},TG={};
+const kOf=c=>{const o=ADDS[c];if(o&&o.r)return o.r;return HI.has(c)?'r':MO.has(c)?'y':LO.has(c)?'g':'n'};
+// Tabla oficial de Yuka: puntos del Nutri-Score -> nota nutricional sobre 100 (sólidos y líquidos)
+const SOLT={'-1':90,0:80,1:75,2:70,3:65,4:60,5:55,6:50,7:45,8:40,9:35,10:30,11:15,12:13,13:11,14:9,15:7,16:5,17:3,18:1};
+const LIQT={'-3':77,'-2':74,'-1':71,0:68,1:65,2:57,3:49,4:41,5:33,6:15,7:11,8:7,9:3};
+const tbl=(p,lq)=>lq?(p<=-4?80:p>=10?0:LIQT[p]):(p<=-2?100:p>=19?0:SOLT[p]);
+const repPts=(ns,lq)=>lq?{a:-2,b:0,c:3,d:7,e:10}[ns]:{a:-1,b:1,c:6,d:14,e:19}[ns];
+const letterOf=(p,lq)=>lq?(p<=1?'b':p<=5?'c':p<=9?'d':'e'):(p<=-1?'a':p<=2?'b':p<=10?'c':p<=18?'d':'e');
+const nsTxt=x=>x.np!=null?'Nutri-Score '+letterOf(x.np,x.lq).toUpperCase()+' · '+x.np+' puntos'+(x.ps==='o'?' (algoritmo original)':x.ps==='m'?' (algoritmo original, datos escritos a mano)':' (según Open Food Facts)'):(x.ns?'Nutri-Score '+x.ns.toUpperCase():'');
+const parts=x=>{const pp=x.np!=null?Math.round(x.np):repPts(x.ns,x.lq),qs=String(x.ad||'').split(',').includes('_qs'),raw=tbl(pp,x.lq),nut=(qs?Math.max(raw,50):raw)*0.6,fl=qs&&raw<50;let ap=30,hi=false;
+  adList(x).forEach(c=>{const k=kOf(c);if(k==='r'){hi=true;ap=0}else if(k==='y')ap=Math.max(0,ap-6);else if(k==='n')ap=Math.max(0,ap-2)});
+  const og=x.og?10:0;let t=nut+ap+og;const capped=hi&&t>49;if(hi)t=Math.min(t,49);return {nut,ap,og,capped,fl,t:Math.round(t)}};
+const scoreOf=x=>((x.np==null&&!x.ns)||x.ad==null)?null:parts(x).t;
+const scLbl=n=>n>=75?['ex','Excelente']:n>=50?['bu','Bueno']:n>=25?['me','Mediocre']:['ma','Malo'];
+const bdg=(x,t='')=>{const n=scoreOf(x);if(n===null)return'';const [c,tx]=scLbl(n);return `<span class="nsb sc-${c}" data-ns="${x.ns||''}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-ad="${esc(x.ad||'')}" data-og="${x.og?1:0}" data-t="${esc(t)}" style="cursor:pointer">${tx} ${n}/100 ⓘ</span>`};
+const det=x=>{const l=adList(x),hi=l.filter(c=>kOf(c)==='r'),mo=l.filter(c=>kOf(c)==='y'),U=a=>a.map(c=>c.toUpperCase()).join(', ');
+  return [nsTxt(x),x.ad==null?'':(l.length?l.length+' aditivo'+(l.length>1?'s':'')+(hi.length?' (alto riesgo: '+U(hi)+')':mo.length?' (riesgo limitado: '+U(mo)+')':''):'Sin aditivos'),x.og?'Ecológico':''].filter(Boolean).join(' · ')};
+const NIT='Puede formar nitrosaminas, compuestos potencialmente cancerígenos; la IARC clasifica la carne procesada como cancerígena.';
+const KID='En la UE obliga a avisar de que «puede tener efectos negativos sobre la actividad y la atención de los niños». Puede dar reacciones en personas sensibles.';
+const SUL='Pueden provocar reacciones en personas sensibles, sobre todo asmáticos; se declaran como alérgeno.';
+const PHO='Un exceso de fósforo en la dieta se asocia a más riesgo cardiovascular y renal, sobre todo en personas con enfermedad renal.';
+const NOP='Nada relevante a las dosis habituales.';
+const SWT='Edulcorante sin calorías (refrescos light, chicles, productos «sin azúcar»).',SWP='No aporta calorías ni sube la glucosa.';
+const COL='Colorante.';
+// [nombre, para qué sirve, lo malo, lo bueno (opcional)]
+const ADI={
+ e249:['Nitrito potásico','Conservante de embutidos y carnes curadas; mantiene el color rosado.',NIT,'Frena bacterias peligrosas, como la del botulismo.'],
+ e250:['Nitrito sódico','Conservante de embutidos y carnes curadas; mantiene el color rosado.',NIT,'Frena bacterias peligrosas, como la del botulismo.'],
+ e251:['Nitrato sódico','Conservante de carnes curadas y algunos quesos.','Se transforma en nitrito en el organismo; mismas dudas (nitrosaminas).'],
+ e252:['Nitrato potásico','Conservante de carnes curadas y algunos quesos.','Se transforma en nitrito en el organismo; mismas dudas (nitrosaminas).'],
+ e171:['Dióxido de titanio','Colorante blanco y opacificante (dulces, chicles…).','Prohibido como aditivo en la UE desde 2022: la EFSA no pudo descartar que dañe el ADN.'],
+ e123:['Amaranto','Colorante rojo.','Uso muy restringido; la EFSA rebajó su ingesta aceptable por dudas sobre su seguridad.'],
+ e128:['Rojo 2G','Colorante rojo.','No autorizado en la UE.'],
+ e924:['Bromato potásico','Mejorante de harinas.','No autorizado en la UE; la IARC lo considera posible cancerígeno.'],
+ e924a:['Bromato potásico','Mejorante de harinas.','No autorizado en la UE; la IARC lo considera posible cancerígeno.'],
+ e924b:['Bromato cálcico','Mejorante de harinas.','No autorizado en la UE.'],
+ e951:['Aspartamo',SWT,'En 2023 la IARC lo clasificó como posiblemente cancerígeno, aunque la OMS mantiene su dosis diaria aceptable. No apto en fenilcetonuria.',SWP],
+ e950:['Acesulfamo K',SWT,'Evidencia limitada y debatida; sigue en evaluación.',SWP],
+ e955:['Sucralosa',SWT,'Algunos estudios recientes plantean dudas (flora intestinal, ADN); las autoridades lo consideran seguro a las dosis permitidas.',SWP],
+ e954:['Sacarina',SWT,'Evidencia limitada.',SWP],
+ e102:['Tartrazina','Colorante amarillo.',KID],e104:['Amarillo de quinoleína','Colorante amarillo.',KID],e110:['Amarillo anaranjado S','Colorante naranja.',KID],
+ e122:['Azorrubina','Colorante rojo.',KID],e124:['Ponceau 4R','Colorante rojo.',KID],e129:['Rojo allura AC','Colorante rojo.',KID],
+ e211:['Benzoato sódico','Conservante (refrescos, salsas, encurtidos).','Combinado con vitamina C puede formar benceno; algunos estudios lo relacionan con hiperactividad en niños.'],
+ e320:['BHA (butilhidroxianisol)','Antioxidante: evita que las grasas se pongan rancias.','La IARC lo considera posiblemente cancerígeno (grupo 2B).'],
+ e321:['BHT (butilhidroxitolueno)','Antioxidante: evita que las grasas se pongan rancias.','Dudas por efectos en hígado y tiroides a dosis altas en animales.'],
+ e150c:['Caramelo amónico','Colorante marrón (refrescos de cola, salsas, caramelos).','Puede contener 4-metilimidazol, que la IARC considera posiblemente cancerígeno.'],
+ e150d:['Caramelo sulfito amónico','Colorante marrón (refrescos de cola, salsas, caramelos).','Puede contener 4-metilimidazol, que la IARC considera posiblemente cancerígeno.'],
+ e220:['Dióxido de azufre','Conservante y antioxidante (vino, frutas secas, encurtidos).',SUL],e221:['Sulfito sódico','Conservante y antioxidante.',SUL],e222:['Bisulfito sódico','Conservante y antioxidante.',SUL],
+ e223:['Metabisulfito sódico','Conservante y antioxidante.',SUL],e224:['Metabisulfito potásico','Conservante y antioxidante.',SUL],e226:['Sulfito cálcico','Conservante y antioxidante.',SUL],
+ e227:['Bisulfito cálcico','Conservante y antioxidante.',SUL],e228:['Bisulfito potásico','Conservante y antioxidante.',SUL],
+ e338:['Ácido fosfórico','Acidulante (refrescos de cola).',PHO],e339:['Fosfatos de sodio','Regulador de acidez y estabilizante (quesos fundidos, embutidos).',PHO],
+ e340:['Fosfatos de potasio','Regulador de acidez y estabilizante.',PHO],e341:['Fosfatos de calcio','Regulador de acidez y antiapelmazante.',PHO],
+ e450:['Difosfatos','Estabilizante y gasificante (embutidos, bollería).',PHO],e451:['Trifosfatos','Estabilizante (embutidos, pescado procesado).',PHO],e452:['Polifosfatos','Estabilizante y retenedor de agua.',PHO],
+ e407:['Carragenanos','Espesante y gelificante (lácteos, postres, fiambres).','Algunos estudios plantean posible irritación intestinal; se considera seguro a las dosis autorizadas.'],
+ aroma:['Aromas (sin especificar)','Dan sabor al producto. Cuando la etiqueta solo dice «aromas», sin indicar que son naturales, no se sabe de qué tipo son.','Yuka los muestra como un aditivo («sabor artificial») porque no se declara su origen ni su composición.'],
+ e306:['Extracto rico en tocoferoles','Antioxidante: evita que las grasas se pongan rancias.',NOP,'Son formas de la vitamina E.'],e307:['Alfa-tocoferol','Antioxidante.',NOP,'Es vitamina E.'],e308:['Gamma-tocoferol','Antioxidante.',NOP,'Es una forma de la vitamina E.'],e309:['Delta-tocoferol','Antioxidante.',NOP,'Es una forma de la vitamina E.'],
+ e330:['Ácido cítrico','Acidulante y conservante natural (refrescos, conservas).',NOP,'Está presente de forma natural en los cítricos.'],
+ e300:['Ácido ascórbico','Antioxidante; evita que los alimentos se oscurezcan.',NOP,'Es la vitamina C.'],
+ e322:['Lecitinas','Emulgente: mezcla agua y grasa (chocolate, margarinas, panes).','Si procede de soja, se declara como alérgeno; por lo demás, nada relevante a las dosis habituales.'],
+ e202:['Sorbato potásico','Conservante (quesos, bollería, bebidas).',NOP],
+ e415:['Goma xantana','Espesante y estabilizante (salsas, aliños).','En cantidades altas puede dar molestias digestivas.'],
+ e412:['Goma guar','Espesante (salsas, helados, lácteos).','En cantidades altas puede dar molestias digestivas.'],
+ e440:['Pectinas','Gelificante (mermeladas, postres).',NOP,'Es una fibra presente en las frutas.'],
+ e471:['Mono y diglicéridos de ácidos grasos','Emulgente (bollería, helados, margarinas).',NOP],
+ e500:['Carbonatos de sodio','Regulador de acidez y gasificante (levaduras en polvo).',NOP]};
+const dotK=kOf;
+const DOTT={r:'Riesgo alto',y:'Riesgo limitado',g:'Sin riesgo',n:'Sin clasificar'};
+const dot=k=>`<span class="dt dt-${k}"></span>`;
+// [nombre, para qué sirve, lo malo, lo positivo]; lo que escribas tú (Editar) tiene prioridad
+const info=c=>{const b=ADI[c]||[],o=ADDS[c]||{};return [o.n||b[0]||c.toUpperCase(),o.u||b[1]||'',o.c||b[2]||'',o.p||b[3]||'']};
+function showDet(ds){
+  const d0={ns:ds.ns,ad:ds.ad||'',og:ds.og||'0',t:ds.t||'',np:ds.np||'',lq:ds.lq||'0',ps:ds.ps||'',nd:ds.nd||''},x={ns:d0.ns,ad:d0.ad,og:+d0.og||0,np:d0.np===''?null:+d0.np,lq:+d0.lq||0,ps:d0.ps,nd:d0.nd},pt=parts(x),l=adList(x);
+  const ord={r:0,y:1,n:2,g:3};l.sort((a,b)=>ord[dotK(a)]-ord[dotK(b)]);
+  const [cl,tx]=scLbl(pt.t);
+  $('detsheet').innerHTML=`<h2>${esc(d0.t||'Producto')}</h2>
+  <div><span class="nsb sc-${cl}" style="font-size:15px;padding:3px 10px">${tx} ${pt.t}/100</span></div>
+  <div class="sub" style="margin:10px 0">Nutrición ${Math.round(pt.nut*10)/10}/60 (${nsTxt(x)}) · Aditivos ${pt.ap}/30 · Ecológico ${pt.og}/10${pt.capped?'<br>La nota se limita a 49 por contener un aditivo de alto riesgo.':''}${pt.fl?'<br>Queso sencillo (sin aditivos y hasta 5 ingredientes): la nutrición no baja de 30/60.':''}${x.nd?'<br>'+esc(x.nd):''}</div>
+  <h3 style="margin:14px 0 4px;font-size:16px">${l.length?l.length+' aditivo'+(l.length>1?'s':''):'Sin aditivos'}</h3>
+  ${l.length?`<div class="sub">${['r','y','g','n'].map(k=>dot(k)+DOTT[k]).join(' &nbsp; ')}</div>`:''}
+  ${l.map(c=>{const k=dotK(c),i=info(c);
+    return `<div class="adr" data-code="${c}" style="cursor:pointer">${dot(k)}<b>${c.toUpperCase()}</b> ${esc(i[0])}<span class="sub" style="float:right">Ver ›</span><div class="sub">${esc(i[1]||'Sin descripción en la app. Toca para añadirla.')}</div></div>`}).join('')}
+  <details style="margin-top:12px"><summary>Más información sobre los aditivos</summary><div class="sub" style="margin-top:6px">Los aditivos son sustancias que se añaden a los alimentos para conservarlos, darles color, sabor o textura. En la UE solo se pueden usar los autorizados, que evalúa la EFSA, y se identifican con un código E. Que un aditivo esté permitido no significa que no tenga ningún efecto: algunos se limitan por dosis o en niños y personas sensibles. Toca un aditivo de la lista para ver para qué sirve y qué se sabe de él.</div></details>
+  <div class="sub" style="margin-top:14px">Resumen orientativo basado en lo que indican la IARC y la EFSA, más lo que hayáis editado vosotros. No es consejo médico.</div>
+  <div class="acts"><span></span><button class="btn" id="detx">Cerrar</button></div>`;
+  $('detsheet').querySelectorAll('[data-code]').forEach(el=>el.onclick=()=>showAd(el.dataset.code,d0));
+  $('det').classList.add('show');$('detx').onclick=()=>$('det').classList.remove('show');
+}
+function showAd(c,d0){
+  const k=dotK(c),i=info(c),none=!i[1]&&!i[2]&&!i[3];
+  $('detsheet').innerHTML=`<h2>${dot(k)}${c.toUpperCase()} · ${esc(i[0])}</h2>
+  <div><span class="rk rk-${k}" style="margin:0">${DOTT[k]}</span>${ADDS[c]?' <span class="sub">· editado por vosotros</span>':''}</div>
+  ${none?'<div class="sub" style="margin-top:12px">Aún no hay información de este aditivo. Puedes añadirla con «Editar».</div>':''}
+  ${i[1]?`<h3 style="margin:14px 0 2px;font-size:15px">Para qué sirve</h3><div class="sub">${esc(i[1])}</div>`:''}
+  ${i[3]?`<h3 style="margin:14px 0 2px;font-size:15px">Lo positivo</h3><div class="sub">${esc(i[3])}</div>`:''}
+  ${i[2]?`<h3 style="margin:14px 0 2px;font-size:15px">Lo malo</h3><div class="sub">${esc(i[2])}</div>`:''}
+  <div class="acts"><button class="btn g" id="detb">‹ Volver</button><span><button class="btn g" id="dete">✏️ Editar</button> <button class="btn" id="detx">Cerrar</button></span></div>`;
+  $('detb').onclick=()=>showDet(d0);$('dete').onclick=()=>editAd(c,d0);$('detx').onclick=()=>$('det').classList.remove('show');
+}
+function editAd(c,d0){
+  const k=dotK(c),i=info(c);
+  $('detsheet').innerHTML=`<h2>Editar ${c.toUpperCase()}</h2>
+  <label class="f">Nombre</label><input type="text" id="ae-n" value="${esc(i[0])}">
+  <label class="f">Nivel de riesgo</label><select id="ae-r">${[['r','🔴 Riesgo alto'],['y','🟡 Riesgo limitado'],['g','🟢 Sin riesgo'],['n','⚪ Sin clasificar']].map(([v,t])=>`<option value="${v}" ${v===k?'selected':''}>${t}</option>`).join('')}</select>
+  <label class="f">Para qué sirve</label><textarea id="ae-u">${esc(i[1])}</textarea>
+  <label class="f">Lo positivo (opcional)</label><textarea id="ae-p">${esc(i[3])}</textarea>
+  <label class="f">Lo malo</label><textarea id="ae-c">${esc(i[2])}</textarea>
+  <div class="acts">${ADDS[c]?'<button class="btn r" id="aer">Restablecer</button>':'<span></span>'}<span><button class="btn g" id="aeb">Cancelar</button> <button class="btn" id="aes">Guardar</button></span></div>`;
+  $('aeb').onclick=()=>showAd(c,d0);
+  $('aes').onclick=()=>{const o={n:$('ae-n').value.trim(),u:$('ae-u').value.trim(),p:$('ae-p').value.trim(),c:$('ae-c').value.trim(),r:$('ae-r').value};
+    ADDS[c]=o;setDoc(doc(db,'additives',c),o).catch(wfail);render();showAd(c,d0)};
+  if(ADDS[c])$('aer').onclick=()=>{if(confirm('¿Volver a la información original de la app?')){delete ADDS[c];deleteDoc(doc(db,'additives',c)).catch(wfail);render();showAd(c,d0)}};
+}
+async function searchOFF(q){
+  const f='code,product_name,brands,quantity,nutriscore_grade,image_front_small_url';
+  const br=p=>Array.isArray(p.brands)?(p.brands[0]||''):String(p.brands||'').split(',')[0].trim();
+  const mp=p=>({code:String(p.code||''),name:p.product_name||'',brand:br(p),qty:p.quantity||'',ns:/^[a-e]$/.test(p.nutriscore_grade||'')?p.nutriscore_grade:'',img:p.image_front_small_url||''});
+  const run=async es=>{
+    const r=await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=12&sort_by=unique_scans_n&fields=${f}`+(es?'&tagtype_0=countries&tag_contains_0=contains&tag_0=spain':''));
+    if(!r.ok)throw new Error('http');const d=await r.json();return (d.products||[]).map(mp).filter(x=>x.code)};
+  try{let rs=await run(true);if(!rs.length)rs=await run(false);return rs}
+  catch(e){const r=await fetch(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=12&fields=${f}`);
+    if(!r.ok)throw e;const d=await r.json();return (d.hits||[]).map(mp).filter(x=>x.code)}
+}
+function openSearch(row,apply){
+  let shown=[];
+  $('srq').value=($('name').value.trim()+' '+row.querySelector('.ob').value.trim()).trim();
+  $('srl').innerHTML='';$('srch').classList.add('show');
+  const go=async()=>{const q=$('srq').value.trim();if(q.length<2)return;
+    $('srl').innerHTML='<div class="sub">Buscando…</div>';
+    try{shown=await searchOFF(q);
+      $('srl').innerHTML=shown.length?shown.map((x,i)=>`<div class="adr" data-i="${i}" style="cursor:pointer;display:flex;gap:10px;align-items:center">${x.img?`<img class="th2" src="${esc(x.img)}" alt="">`:'<div class="th2" style="background:var(--ac2)"></div>'}<div style="flex:1;min-width:0"><div class="nm">${esc(x.name||'Sin nombre')}</div><div class="sub">${esc(x.brand)}${x.qty?' · '+esc(x.qty):''}</div></div>${x.ns?`<span class="nsb ns-${x.ns}">Nutri ${x.ns.toUpperCase()}</span>`:''}</div>`).join(''):'<div class="sub">No he encontrado nada. Prueba con menos palabras o escanea el código de barras.</div>'}
+    catch(e){$('srl').innerHTML='<div class="sub">No se pudo buscar (¿sin conexión, o demasiadas búsquedas seguidas?). Prueba de nuevo en un minuto.</div>'}};
+  $('srgo').onclick=go;$('srq').onkeydown=ev=>{if(ev.key==='Enter')go()};
+  $('srx').onclick=()=>$('srch').classList.remove('show');
+  $('srl').onclick=ev=>{const el=ev.target.closest('[data-i]');if(!el)return;const x=shown[+el.dataset.i];
+    $('srch').classList.remove('show');apply(row,x.code);
+    if(x.img&&!row.dataset.ph){fetch(x.img).then(r=>r.blob()).then(b=>shrink(b,u=>{row.dataset.ph=u;row.querySelector('.opi').innerHTML=`<img src="${u}" alt="">`})).catch(()=>{})}};
+  if($('srq').value.length>=2)go();
+}
+const FVRE=/tomat|naranja|orange|manzana|apple|zanahoria|carrot|cebolla|onion|pimiento|pepper|lim[oó]n|lemon|patata|potato|fruta|fruit|verdura|vegetable|espinaca|spinach|pl[aá]tano|banana|\buva|grape|fresa|strawberr|melocot|peach|\bpera\b|\bpear|pi[ñn]a\b|pineapple|mango|lechuga|lettuce|pepino|cucumber|calabac|zucchini|repollo|cabbage|br[oó]coli|broccoli|\bajo\b|garlic|champi|mushroom|jud[ií]a|\bbean|guisante|\bpea\b|lenteja|lentil|garbanzo|chickpea|aceituna|olive|frambuesa|raspberr|ar[aá]ndano|blueberr|cereza|cherr|albaricoque|apricot|mel[oó]n|sand[ií]a|watermelon|calabaza|pumpkin|remolacha|beet|puerro|leek|\bapio\b|celery|berenjena|aubergine|eggplant/i;
+const fvFromIng=list=>{let t=0;const walk=a=>(a||[]).forEach(i=>{if(i.ingredients&&i.ingredients.length)return walk(i.ingredients);
+  const pc=i.percent_estimate??i.percent;if(pc>0&&FVRE.test((i.id||'')+' '+(i.text||'')))t+=pc});walk(list);return Math.min(100,t)};
+const SW=['e950','e951','e952','e954','e955','e957','e959','e960','e960a','e960b','e960c','e960d','e961','e962','e969'];
+function nsPoints(p){
+  const n=p.nutriments||{},tags=p.categories_tags||[],has=(...k)=>k.some(x=>tags.includes(x));
+  const bev=has('en:beverages')&&!has('en:milks'),fat=has('en:fats','en:vegetable-fats','en:vegetable-oils','en:butters','en:margarines');
+  const kj=n['energy-kj_100g']??n['energy_100g']??(n['energy-kcal_100g']!=null?n['energy-kcal_100g']*4.184:null);
+  const sug=n['sugars_100g'],sat=n['saturated-fat_100g'];const sa=n['salt_100g'],so=n['sodium_100g'];let na=(sa!=null&&!isNaN(sa)&&sa<=100)?sa/2.5:null;
+  if(so!=null&&!isNaN(so)&&so<=40&&(na==null||(so>=na*0.5&&so<=na*2)))na=so; // si sodio y sal no cuadran (error de unidades en la base de datos), mando la sal
+  const lq=bev?1:0,bad=v=>v==null||isNaN(v);
+  if(fat||[kj,sug,sat,na].some(bad))return {np:typeof p.nutriscore_score==='number'?p.nutriscore_score:null,lq,ps:'f',nd:''};
+  const cnt=(v,th)=>th.filter(t=>v>t).length;
+  const pe=cnt(kj,bev?[0,30,60,90,120,150,180,210,240,270]:[335,670,1005,1340,1675,2010,2345,2680,3015,3350]);
+  const pz=cnt(sug,bev?[0,1.5,3,4.5,6,7.5,9,10.5,12,13.5]:[4.5,9,13.5,18,22.5,27,31,36,40,45]);
+  const pg=cnt(sat,[1,2,3,4,5,6,7,8,9,10]),pn=cnt(na*1000,[90,180,270,360,450,540,630,720,810,900]);
+  const sw=bev&&(p.additives_tags||[]).some(t=>SW.includes(t.replace(/^[a-z]{2}:/,'')))?4:0;
+  const N=pe+pz+pg+pn+sw;
+  let fv=n['fruits-vegetables-legumes-estimate-from-ingredients_100g']??n['fruits-vegetables-nuts-estimate-from-ingredients_100g']??n['fruits-vegetables-nuts_100g']??0,lab='';
+  const fi2=fvFromIng(p.ingredients);if(fi2>fv){fv=fi2;lab='según los ingredientes'}
+  // Si la etiqueta dice «X g por 100 g» de una fruta/verdura (p. ej. tomate en el ketchup), eso manda sobre la estimación de la base de datos
+  const txt=[p.ingredients_text,p.ingredients_text_es,p.ingredients_text_en,p.ingredients_text_fr].filter(Boolean).join(' ; ');
+  const re=/([a-záéíóúüñçàèìòùâêîôû' -]{3,40}?)\s*\(\s*(\d+(?:[.,]\d+)?)\s*g\s*(?:per|por|pour|für|pro)\s*100\s*g/gi;let mm;
+  while((mm=re.exec(txt))){if(FVRE.test(mm[1])){const v=Math.min(100,parseFloat(mm[2].replace(',','.')));if(v>fv){fv=v;lab='según la etiqueta: '+mm[1].trim().toLowerCase()}}}
+  const fp=bev?(fv>80?10:fv>60?4:fv>40?2:0):(fv>80?5:fv>60?2:fv>40?1:0);
+  const fib=n['fiber_100g']||0,pro=n['proteins_100g']||0,fi=cnt(fib,[0.9,1.9,2.8,3.7,4.7]),pr=cnt(pro,[1.6,3.2,4.8,6.4,8]);
+  const prOk=bev||has('en:cheeses')||!(N>=11&&fp<5);
+  const np=N-fi-fp-(prOk?pr:0),f1=v=>String(Math.round(v*10)/10).replace('.',',');
+  const nd=`Datos usados: energía ${f1(kj)} kJ (${pe}), azúcares ${f1(sug)} g (${pz}), grasa saturada ${f1(sat)} g (${pg}), sodio ${Math.round(na*1000)} mg (${pn})${sw?', edulcorantes (+4)':''} · fruta y verdura ${f1(fv)} %${lab?' ('+lab+')':''} (−${fp}), fibra ${f1(fib)} g (−${fi}), proteínas ${f1(pro)} g (${prOk?'−'+pr:'no cuentan'}) · ${bev?'bebida':'alimento'}`;
+  return {np,lq,ps:'o',nd};
+}
+const ingN=p=>{const c=a=>(a||[]).reduce((t,i)=>t+((i.ingredients&&i.ingredients.length)?c(i.ingredients):1),0);const n=c(p.ingredients);return n||(typeof p.ingredients_n==='number'?p.ingredients_n:99)};
+const hasAroma=p=>{const t=[p.ingredients_text,p.ingredients_text_es,p.ingredients_text_en,p.ingredients_text_fr].filter(Boolean).join(' ; ')
+  .replace(/aromas?\s+natural(es)?|natural(es)?\s+aromas?|natural\s+flavou?r(ing)?s?|flavou?r(ing)?s?\s+natural|ar[oô]mes?\s+naturel(le)?s?|sin\s+aromas?|no\s+(artificial\s+)?flavou?rs?|without\s+(artificial\s+)?flavou?rs?/gi,'');
+  return /\b(aromas?|aromatizantes?|flavou?rings?|flavou?rs?|ar[oô]mes?)\b/i.test(t)};
+function openManual(row){
+  let m={};try{m=JSON.parse(row.dataset.mn||'{}')}catch(e){}
+  const v=k=>m[k]===undefined||m[k]===null?'':m[k];
+  const fld=(id,l,k)=>`<div style="flex:1;min-width:120px"><label class="f">${l}</label><input type="number" id="${id}" step="any" inputmode="decimal" value="${esc(v(k))}"></div>`;
+  $('mnsheet').innerHTML=`<h2>Datos a mano</h2><div class="sub">Valores por 100 g (o 100 ml), tal como salen en la etiqueta o en Yuka. Si escribes datos aquí, tienen prioridad sobre los de Open Food Facts en esta marca.</div>
+  <label class="f">Tipo de producto</label><select id="mt"><option value="food">Alimento</option><option value="bev">Bebida (zumos, refrescos, leches vegetales…)</option><option value="cheese">Queso</option></select>
+  <div class="srow" style="flex-wrap:wrap">${fld('me','Energía','e')}<div style="width:96px"><label class="f">Unidad</label><select id="meu"><option value="kcal">kcal</option><option value="kj">kJ</option></select></div></div>
+  <div class="srow" style="flex-wrap:wrap">${fld('msz','Azúcares (g)','sz')}${fld('msf','Grasa saturada (g)','sf')}</div>
+  <div class="srow" style="flex-wrap:wrap">${fld('msl','Sal (g)','sl')}${fld('mfb','Fibra (g)','fb')}</div>
+  <div class="srow" style="flex-wrap:wrap">${fld('mpr','Proteínas (g)','pr')}${fld('mfv','Fruta y verdura (%)','fv')}</div>
+  <div class="sub">Fruta y verdura: pon 100 en un zumo de fruta; en la mayoría de productos, 0. Si es un ketchup o una salsa de tomate, el % de tomate.</div>
+  <label class="f">Aditivos (códigos E separados por comas, si los hay)</label><input type="text" id="mad" value="${esc(v('ad'))}" placeholder="E330, E250">
+  <label class="srow" style="margin-top:10px"><input type="checkbox" id="mar"> <span>Lleva «aromas» sin especificar (no «naturales»)</span></label>
+  <label class="srow" style="margin-top:6px"><input type="checkbox" id="mog"> <span>Es ecológico</span></label>
+  <div id="mnr" style="display:none">${fld('mni','Nº de ingredientes del queso','ni')}</div>
+  <div class="acts"><button class="btn g" id="mncx">Cancelar</button><span>${row.dataset.mn?'<button class="btn r" id="mnrm">Quitar datos a mano</button> ':''}<button class="btn" id="mncalc">Calcular nota</button></span></div>`;
+  $('mt').value=m.t||'food';$('meu').value=m.eu||'kcal';$('mar').checked=!!m.ar;$('mog').checked=!!m.og;
+  const tg=()=>{$('mnr').style.display=$('mt').value==='cheese'?'':'none'};$('mt').onchange=tg;tg();
+  $('mnl').classList.add('show');
+  $('mncx').onclick=()=>$('mnl').classList.remove('show');
+  if(row.dataset.mn)$('mnrm').onclick=()=>{row.dataset.mn='';row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.querySelector('.osc').innerHTML='';$('mnl').classList.remove('show')};
+  $('mncalc').onclick=()=>{
+    const g=id=>{const t=String($(id).value).trim();return t===''?null:parseFloat(t.replace(',','.'))};
+    const t=$('mt').value,e=g('me'),sz=g('msz'),sf=g('msf'),sl=g('msl');
+    if([e,sz,sf,sl].some(x=>x==null||isNaN(x))){alert('Rellena al menos energía, azúcares, grasa saturada y sal. Si no sale en la etiqueta, pon 0.');return}
+    const fb=g('mfb')||0,pr=g('mpr')||0,fv=Math.min(100,Math.max(0,g('mfv')||0)),ni=g('mni')||99,eu=$('meu').value,ar=$('mar').checked,og=$('mog').checked;
+    const codes=[...new Set([...String($('mad').value).toLowerCase().matchAll(/\be\s*-?\s*(\d{3,4}[a-z]?)\b/g)].map(z=>'e'+z[1]))];
+    const prod={categories_tags:t==='bev'?['en:beverages']:t==='cheese'?['en:cheeses']:[],additives_tags:codes.map(c=>'en:'+c),
+      nutriments:{'energy-kj_100g':eu==='kj'?e:e*4.184,'sugars_100g':sz,'saturated-fat_100g':sf,'salt_100g':sl,'fiber_100g':fb,'proteins_100g':pr,'fruits-vegetables-legumes-estimate-from-ingredients_100g':fv}};
+    const q=nsPoints(prod);if(q.np==null){alert('No he podido calcular los puntos con esos datos.');return}
+    const a=[...codes,...(ar?['aroma']:[])];if(!a.length&&t==='cheese'&&ni<=5)a.push('_qs');
+    const ad=a.join(',');
+    row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad=ad;row.dataset.og=og?1:0;
+    row.dataset.np=q.np;row.dataset.lq=q.lq?1:0;row.dataset.ps='m';row.dataset.nd='Introducido a mano. '+q.nd;
+    row.dataset.mn=JSON.stringify({t,e,eu,sz,sf,sl,fb,pr,fv,ad:codes.join(', '),ar,og,ni:t==='cheese'?ni:''});
+    const xx={ns:'',np:q.np,lq:q.lq,ps:'m',nd:row.dataset.nd,ad,og:og?1:0},tt=($('name').value||'')+(row.querySelector('.ob').value?' · '+row.querySelector('.ob').value:'');
+    row.querySelector('.osc').innerHTML=bdg(xx,tt)+' '+det(xx);
+    $('mnl').classList.remove('show')};
+}
+function setNeed(pid,sid,i,val){const p=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));const o=p.e[sid].o[i];o.need=val===undefined?!o.need:val;o.done=false;putP(p)}
+function askCheaper(p,me,best,k){
+  const val=x=>k?x.kg:x.price,u=v=>k?eurkg(v):eur(v),pct=Math.round((1-val(best)/val(me))*100);
+  $('chps').innerHTML=`<h2>${esc(p.name)}</h2>
+  <div class="sub">Has elegido <b>${lbl(me)}</b>: ${priceTxt(me)}</div>
+  <div class="sub" style="margin-top:8px">Pero <b>${lbl(best)}</b> sale más barato: ${priceTxt(best)} <span class="best">(un ${pct} % menos; ahorras ${u(val(me)-val(best))}${k?'':' por envase'})</span></div>
+  ${k?'':'<div class="sub" style="margin-top:6px">Se compara el precio del envase. Si pones los gramos de todos, se compara por kilo.</div>'}
+  <div class="acts" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:14px"><button class="btn" id="chb">✓ Añadir el más barato (${lbl(best)})</button><button class="btn g" id="chm">Añadir el que había elegido (${lbl(me)})</button><button class="btn r" id="chx">Cancelar</button></div>`;
+  $('chb').onclick=()=>{setNeed(p.id,best.id,best.i,true);$('chp').classList.remove('show')};
+  $('chm').onclick=()=>{setNeed(p.id,me.id,me.i,true);$('chp').classList.remove('show')};
+  $('chx').onclick=()=>$('chp').classList.remove('show');
+  $('chp').classList.add('show');
+}
+function listParts(){
+  const E=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'),blocks=[];let pend=0;
+  S.stores.forEach(s=>{const it=[];S.products.forEach(p=>{const e=p.e[s.id];if(e)e.o.forEach(o=>{if(o.need){if(!o.done)pend++;it.push((o.done?'✅ ':'⬜ ')+E(p.name)+(o.b?' ('+E(o.b)+')':''))}})});
+    if(it.length)blocks.push(`<b>${E(s.name)}</b>\n`+it.join('\n'))});
+  if(S.extras.length){S.extras.forEach(x=>{if(!x.done)pend++});blocks.push('<b>Otros productos</b>\n'+S.extras.map(x=>(x.done?'✅ ':'⬜ ')+E(x.name)).join('\n'))}
+  if(!blocks.length)return [];
+  const who=(typeof auth!=='undefined'&&auth&&auth.currentUser&&auth.currentUser.displayName)||'';
+  const head=`🛒 <b>Lista de la compra</b>${who?' · '+E(who):''}`,foot=`Pendientes: ${pend}`,parts=[];let cur2=head;
+  blocks.forEach(b=>{if((cur2+'\n\n'+b).length>3800){parts.push(cur2);cur2=b}else cur2+='\n\n'+b});
+  parts.push(cur2+'\n\n'+foot);return parts;
+}
+async function tgSend(parts,out){
+  if(!TG.token||!TG.chat){out.textContent='Configura primero Telegram en Ajustes.';return}
+  out.textContent='Enviando…';let unknown=false;
+  for(const t of parts){
+    try{const body=new URLSearchParams({chat_id:TG.chat,text:t,parse_mode:'HTML',disable_web_page_preview:'true'});
+      const r=await fetch('https://api.telegram.org/bot'+TG.token+'/sendMessage',{method:'POST',body});const d=await r.json();
+      if(!d.ok){out.textContent='Telegram dice: '+(d.description||'error');return}}
+    catch(e){unknown=true}}
+  out.textContent=unknown?'Petición enviada. El navegador no me deja ver la respuesta de Telegram: mira si ha llegado al grupo.':'Enviado ✓';
+}
+function openPrices(sid){
+  const st=sbyid(sid),rowsData=[];
+  [...S.products].sort((a,b)=>a.name.localeCompare(b.name,'es')).forEach(p=>{const e=p.e[sid];if(e)e.o.forEach((o,i)=>rowsData.push({p,o,i}))});
+  $('upsheet').innerHTML=`<h2>Actualizar precios · ${esc(st.name)}</h2>
+  <div class="sub">Cambia el precio (€) y los gramos de lo que haya cambiado y pulsa «Guardar». Solo se guardan las filas que modifiques.</div>
+  <input type="text" id="upq" placeholder="Buscar producto o marca…" autocomplete="off" style="margin-top:10px">
+  <div id="upl">${rowsData.length?rowsData.map(z=>`<div class="uprow" data-pid="${z.p.id}" data-i="${z.i}" data-q="${esc(norm(z.p.name+' '+(z.o.b||'')))}"><div style="flex:1;min-width:0"><div class="nm">${esc(z.p.name)}</div><div class="sub">${z.o.b?esc(z.o.b)+' · ':''}<span class="kgv"></span></div></div><input type="number" class="upp" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${z.o.price>0?z.o.price:''}"><input type="number" class="upg" inputmode="decimal" step="any" min="0" placeholder="g" value="${z.o.g>0?z.o.g:''}"></div>`).join(''):'<div class="empty">No hay productos en esta tienda.</div>'}</div>
+  <div class="acts"><button class="btn g" id="upx">Cancelar</button><button class="btn" id="ups">Guardar</button></div>`;
+  const rows=()=>[...$('upsheet').querySelectorAll('.uprow')];
+  const kg=r=>{const k=kgOf(n2(r.querySelector('.upp').value),n2(r.querySelector('.upg').value));r.querySelector('.kgv').textContent=k>0?eurkg(k):''};
+  rows().forEach(r=>{kg(r);r.querySelectorAll('input').forEach(i=>i.oninput=()=>kg(r))});
+  $('upq').oninput=()=>{const q=norm($('upq').value.trim());rows().forEach(r=>{r.style.display=(!q||r.dataset.q.includes(q))?'':'none'})};
+  $('upx').onclick=()=>$('upm').classList.remove('show');
+  $('ups').onclick=()=>{
+    const ch={};
+    rows().forEach(r=>{const z=rowsData.find(x=>x.p.id===r.dataset.pid&&x.i===+r.dataset.i);if(!z)return;
+      const price=n2(r.querySelector('.upp').value),g=n2(r.querySelector('.upg').value);
+      if(price!==(z.o.price||0)||g!==(z.o.g||0))(ch[z.p.id]=ch[z.p.id]||[]).push({i:z.i,price,g})});
+    const ids=Object.keys(ch);
+    ids.forEach(pid=>{const q=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));
+      ch[pid].forEach(c=>{const o=q.e[sid].o[c.i];o.price=c.price;o.g=c.g});putP(q)});
+    $('upm').classList.remove('show');
+    if(ids.length)alert(ids.length+' producto'+(ids.length>1?'s actualizados':' actualizado')+'.')};
+  $('upm').classList.add('show');
+}
+// ===== RECETAS Y PLANNING =====
+S.recipes=[];S.plan={};S.rcats=['Desayunos','Comidas','Cenas','Postres','Snacks'];
+let RV={mode:'grid',cat:'',tag:''};
+function putRcats(l){S.rcats=l;setDoc(doc(db,'config','rcats'),{list:l}).catch(wfail)}
+let PL={view:'week',anchor:new Date()};
+const DN=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const dk=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const pd=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const addD=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const monday=d=>addD(d,-((d.getDay()+6)%7));
+const labelDay=k=>{const d=pd(k);return DN[(d.getDay()+6)%7]+' '+d.getDate()+' '+MN[d.getMonth()].slice(0,3)};
+const SLN={b:'Desayuno',c:'Comida',d:'Cena'},SLI={b:'☕',c:'🍽️',d:'🌙'},SLS=['b','c','d'];
+function mdl(html,z){const d=document.createElement('div');d.className='modal show';d.style.zIndex=z||33;d.innerHTML='<div class="sheet">'+html+'</div>';d.onclick=e=>{if(e.target===d)d.remove()};document.body.appendChild(d);return d}
+// --- ingredientes: "200 g harina", "2 huevos", "1/2 cebolla", "sal"... ---
+const UN={kg:['g',1000],kilo:['g',1000],kilos:['g',1000],g:['g',1],gr:['g',1],grs:['g',1],gramo:['g',1],gramos:['g',1],mg:['g',0.001],l:['ml',1000],lt:['ml',1000],litro:['ml',1000],litros:['ml',1000],ml:['ml',1],cl:['ml',10],dl:['ml',100],
+ cda:['cda',1],cdas:['cda',1],cucharada:['cda',1],cucharadas:['cda',1],cdta:['cdta',1],cdtas:['cdta',1],cucharadita:['cdta',1],cucharaditas:['cdta',1],taza:['taza',1],tazas:['taza',1],vaso:['vaso',1],vasos:['vaso',1],
+ diente:['diente',1],dientes:['diente',1],lata:['lata',1],latas:['lata',1],pizca:['pizca',1],pizcas:['pizca',1],rama:['rama',1],ramas:['rama',1],hoja:['hoja',1],hojas:['hoja',1],rebanada:['rebanada',1],rebanadas:['rebanada',1],
+ loncha:['loncha',1],lonchas:['loncha',1],paquete:['paquete',1],paquetes:['paquete',1],bote:['bote',1],botes:['bote',1],sobre:['sobre',1],sobres:['sobre',1],ud:['',1],uds:['',1],unidad:['',1],unidades:['',1]};
+function parseIng(line){
+  let t=String(line).trim().replace(/^[-•*·]\s*/,'');if(!t||/:\s*$/.test(t))return null;let q=null,m;
+  if((m=t.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)\s*/))){q=+m[1]+(+m[2])/(+m[3]);t=t.slice(m[0].length)}
+  else if((m=t.match(/^(\d+)\s*\/\s*(\d+)\s*/))){q=(+m[1])/(+m[2]);t=t.slice(m[0].length)}
+  else if((m=t.match(/^(\d+(?:[.,]\d+)?)\s*(?:-|–|a)\s*\d+(?:[.,]\d+)?\s*/))){q=parseFloat(m[1].replace(',','.'));t=t.slice(m[0].length)}
+  else if((m=t.match(/^(\d+(?:[.,]\d+)?)\s*/))){q=parseFloat(m[1].replace(',','.'));t=t.slice(m[0].length)}
+  else if((m=t.match(/^([½¼¾⅓⅔])\s*/))){q={'½':0.5,'¼':0.25,'¾':0.75,'⅓':1/3,'⅔':2/3}[m[1]];t=t.slice(m[0].length)}
+  else if((m=t.match(/^(una?|un par de|medio|media)\s+/i))){q=/medi/i.test(m[1])?0.5:(/par/i.test(m[1])?2:1);t=t.slice(m[0].length)}
+  let u='',f=1;m=t.match(/^([a-zA-ZáéíóúñÁÉÍÓÚ]+)\.?\s+/);
+  if(m&&UN[m[1].toLowerCase()]){[u,f]=UN[m[1].toLowerCase()];t=t.slice(m[0].length)}
+  t=t.replace(/^(de(l| la| los| las)?|d')\s+/i,'').split(',')[0].replace(/\s*\(.*?\)\s*/g,' ').replace(/\s+(al gusto|c\/s|opcional)$/i,'').trim();
+  if(!t)return null;
+  return {n:t,q:q==null?null:Math.round(q*f*1000)/1000,u,t:String(line).trim()};
+}
+const parseIngs=txt=>String(txt||'').split('\n').map(parseIng).filter(Boolean);
+const nName=n=>norm(n).replace(/^(el|la|los|las|un|una)\s+/,'').split(' ').map(w=>w.length>3?w.replace(/s$/,''):w).join(' ').trim();
+const fq=(q,u)=>{if(q==null)return '';let v=q,uu=u;if(u==='g'&&q>=1000){v=q/1000;uu='kg'}else if(u==='ml'&&q>=1000){v=q/1000;uu='l'}
+  if(v>1&&uu&&!['g','kg','ml','l'].includes(uu))uu+='s';
+  return String(Math.round(v*100)/100).replace('.',',')+(uu?' '+uu:'')};
+const fqLine=it=>(it.q!=null?fq(it.q,it.u)+' ':'')+it.name;
+function agg(entries){const M=new Map();
+  entries.forEach(({r,s})=>{const base=r.servings||s||1,sc=(s||base)/base;
+    (r.ing||[]).forEach(i=>{const k=nName(i.n)+'|'+(i.q==null?'-':i.u);let it=M.get(k);
+      if(!it){it={name:i.n,q:i.q==null?null:0,u:i.u,from:new Set()};M.set(k,it)}
+      if(i.q!=null)it.q+=i.q*sc;it.from.add(r.title)})});
+  return [...M.values()].sort((a,b)=>a.name.localeCompare(b.name,'es'))}
+function planEntries(fromKey,days,slots){const out=[],d0=pd(fromKey);
+  for(let i=0;i<days;i++){const dd=S.plan[dk(addD(d0,i))];if(!dd)continue;
+    slots.forEach(sl=>(dd[sl]||[]).forEach(e=>{const rc=e.r&&S.recipes.find(x=>x.id===e.r);if(rc)out.push({r:rc,s:e.s})}))}
+  return out}
+function matchProduct(name){const k=nName(name);const ex=S.products.filter(p=>nName(p.name)===k);if(ex.length===1)return ex[0];if(ex.length)return null;
+  const inc=S.products.filter(p=>{const pn=nName(p.name);return pn.includes(k)||(k.includes(pn)&&pn.length>3)});return inc.length===1?inc[0]:null}
+function bestOpt(p){const all=rank(prices(p));if(all.length)return {sid:all[0].id,i:all[0].i};const sid=Object.keys(p.e)[0];return {sid,i:0}}
+function addToList(items){let a=0,b=0;
+  items.forEach((it,n)=>{const mp=matchProduct(it.name);
+    if(mp){const o=bestOpt(mp);if(o.sid){setNeed(mp.id,o.sid,o.i,true);a++;return}}
+    const nm=it.name.charAt(0).toUpperCase()+it.name.slice(1)+(it.q!=null?' — '+fq(it.q,it.u):'');
+    if(!S.extras.some(x=>norm(x.name)===norm(nm))){putX({id:'x'+Date.now()+n+Math.random().toString(36).slice(2,5),name:nm,cat:'',done:false});b++}});
+  alert((a+b)+' ingrediente'+((a+b)===1?'':'s')+' añadido'+((a+b)===1?'':'s')+' a la lista ('+a+' de tus productos, '+b+' en «Otros productos»).')}
+function renderItems(d,items){d._items=items;
+  d.querySelector('#sgl').innerHTML=items.length?'<div class="sub">Marca lo que <b>ya tienes</b> en casa: no se añadirá a la lista.</div>'+items.map((it,i)=>{const mp=matchProduct(it.name);
+    return `<label class="adr" style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" data-have="${i}"><span style="flex:1"><b>${esc(fqLine(it))}</b><div class="sub">${[...it.from].map(esc).join(', ')} · → ${mp?esc(mp.name):'Otros productos'}</div></span></label>`}).join(''):'<div class="empty">No hay ingredientes para esas fechas.</div>';
+  d.querySelectorAll('[data-have]').forEach(c=>c.onchange=()=>{c.closest('label').style.opacity=c.checked?'.45':''})}
+function shopUI(title,controls,getItems){
+  const d=mdl(`<h2>${esc(title)}</h2>${controls}<div id="sgl" style="margin-top:10px"></div><div class="acts"><button class="btn g" id="sgx">Cerrar</button><button class="btn" id="sga">Añadir a la lista</button></div>`,34);
+  const upd=()=>renderItems(d,getItems(d));upd();
+  d.querySelectorAll('input[data-up],select[data-up]').forEach(i=>i.oninput=upd);
+  d.querySelectorAll('[data-dn]').forEach(b=>b.onclick=()=>{d.querySelector('#sgn').value=b.dataset.dn;upd()});
+  d.querySelector('#sgx').onclick=()=>d.remove();
+  d.querySelector('#sga').onclick=()=>{const have=new Set([...d.querySelectorAll('[data-have]')].filter(c=>c.checked).map(c=>+c.dataset.have));
+    const sel=(d._items||[]).filter((_,i)=>!have.has(i));if(!sel.length){alert('No hay nada que añadir.');return}addToList(sel);d.remove()};
+}
+function shopGen(){
+  const today=dk(new Date());
+  shopUI('🛒 Lista de la compra del planning',`<div class="srow" style="flex-wrap:wrap"><div style="flex:1;min-width:140px"><label class="f">Desde</label><input type="date" id="sgf" data-up="1" value="${PL.view==='week'?dk(monday(PL.anchor)):today}"></div><div style="width:92px"><label class="f">Días</label><input type="number" id="sgn" data-up="1" min="1" max="90" value="7"></div></div>
+  <div class="addst" style="margin-top:8px">${[3,7,14,30].map(n=>`<button class="btn g" data-dn="${n}">${n} días</button>`).join('')}</div>
+  <label class="srow" style="margin-top:8px"><input type="checkbox" id="sgb" data-up="1" checked><span>Desayunos</span></label><label class="srow"><input type="checkbox" id="sgc" data-up="1" checked><span>Comidas</span></label><label class="srow"><input type="checkbox" id="sgd" data-up="1" checked><span>Cenas</span></label>`,
+  d=>{const sl=[];if(d.querySelector('#sgb').checked)sl.push('b');if(d.querySelector('#sgc').checked)sl.push('c');if(d.querySelector('#sgd').checked)sl.push('d');
+    return agg(planEntries(d.querySelector('#sgf').value||today,Math.max(1,+d.querySelector('#sgn').value||7),sl))})}
+// --- recetas ---
+function putRecipe(rc){setDoc(doc(db,'recipes',rc.id),{title:rc.title,photo:rc.photo||'',servings:rc.servings||2,it:rc.it||'',ing:rc.ing||[],steps:rc.steps||'',url:rc.url||'',tags:rc.tags||[],notes:rc.notes||'',cat:rc.cat||''}).catch(wfail)}
+const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+function recipesHtml(){
+  const cats=[...new Set([...S.rcats,...S.recipes.map(x=>x.cat).filter(Boolean)])],tags=[...new Set(S.recipes.flatMap(x=>x.tags||[]))].sort((a,b)=>a.localeCompare(b,'es')),qq=norm(Q.trim());
+  const l=S.recipes.filter(x=>(!RV.cat||x.cat===RV.cat)&&(!RV.tag||(x.tags||[]).includes(RV.tag))&&(!qq||norm([x.title,x.cat,(x.tags||[]).join(' '),x.it].join(' ')).includes(qq))).sort((a,b)=>a.title.localeCompare(b.title,'es'));
+  const chip=(at,v,lb,on)=>`<button class="chip ${on?'on':''}" ${at}="${esc(v)}">${esc(lb)}</button>`;
+  const head=`<div class="rtool"><div class="chips">${chip('data-rfc','','Todas',!RV.cat)}${cats.map(c=>chip('data-rfc',c,c,RV.cat===c)).join('')}</div>${tags.length?`<div class="chips">${tags.map(t=>chip('data-rft',t,'#'+t,RV.tag===t)).join('')}</div>`:''}
+    <div class="seg"><button class="btn ${RV.mode==='grid'?'':'g'}" data-rv="grid">▦ Iconos</button><button class="btn ${RV.mode==='list'?'':'g'}" data-rv="list">☰ Lista</button></div></div>`;
+  const sub=x=>[x.cat,...(x.tags||[]).map(t=>'#'+t)].filter(Boolean).map(esc).join(' · ');
+  const body=!l.length?`<div class="empty">${S.recipes.length?'Ninguna receta coincide con la búsqueda o los filtros.':'Aún no hay recetas.<br>Pulsa «+ Receta» para crear la primera.'}</div>`
+    :RV.mode==='list'?l.map(x=>`<button class="rrow" data-r="${x.id}">${x.photo?`<img src="${x.photo}" alt="">`:'<div class="rph2">🍳</div>'}<span class="rrt"><b>${esc(x.title)}</b><span class="sub">${sub(x)||'Sin categoría'}</span><span class="sub">${x.servings||2} personas · ${(x.ing||[]).length} ingredientes</span></span></button>`).join('')
+    :'<div class="rgrid">'+l.map(x=>`<button class="rcard" data-r="${x.id}">${x.photo?`<img src="${x.photo}" alt="">`:'<div class="rph">🍳</div>'}<b>${esc(x.title)}</b><span class="sub">${esc(x.cat||'Sin categoría')}</span></button>`).join('')+'</div>';
+  return head+body}
+function recipeBody(rc,sv,tab){const sc=sv/(rc.servings||sv);
+  if(tab==='i')return `<div class="srow" style="margin-bottom:10px"><button class="btn g" data-sv="-1">−</button><b>${sv} persona${sv===1?'':'s'}</b><button class="btn g" data-sv="1">+</button></div>
+    <ul class="ing">${(rc.ing||[]).map(i=>`<li>${i.q!=null?esc(fq(i.q*sc,i.u))+' ':''}${esc(i.n)}</li>`).join('')||'<li class="sub">Sin ingredientes</li>'}</ul>`;
+  return `<div class="steps">${esc(rc.steps||'Sin pasos todavía.')}</div>
+    ${rc.notes?`<h3 style="margin:14px 0 4px;font-size:16px">Notas</h3><div class="steps">${esc(rc.notes)}</div>`:''}
+    ${safeUrl(rc.url)?`<div style="margin-top:12px"><a href="${esc(rc.url)}" target="_blank" rel="noopener">🔗 Ver la receta original</a></div>`:''}`}
+function showRecipe(id,sv0,tab0){const rc=S.recipes.find(x=>x.id===id);if(!rc)return;let sv=sv0||rc.servings||2,tab=tab0||'i';
+  const meta=[rc.cat,...(rc.tags||[]).map(t=>'#'+t)].filter(Boolean).map(esc).join(' · ');
+  const d=mdl(`<div class="rhead">${rc.photo?`<img src="${rc.photo}" alt="">`:'<div class="rph">🍳</div>'}</div>
+  <div class="rtt"><h2>${esc(rc.title)}</h2>${meta?`<div class="sub">${meta}</div>`:''}</div>
+  <div class="rtabs"><button class="rtab" data-t="i">Ingredientes</button><button class="rtab" data-t="p">Preparación</button></div>
+  <div class="rbody" id="rbd"></div>
+  <div class="racts"><button class="btn g" data-a="edit">✏️ Editar</button><button class="btn g" data-a="plan">📅 Planificar</button><button class="btn" data-a="list">🛒 A la lista</button><button class="btn g" data-a="x">Cerrar</button></div>`,33);
+  d.firstChild.classList.add('rsheet');
+  const paint=()=>{d.querySelectorAll('.rtab').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));d.querySelector('#rbd').innerHTML=recipeBody(rc,sv,tab)};
+  d.onclick=e=>{if(e.target===d){d.remove();return}
+    const t=e.target.closest('[data-t]');if(t){tab=t.dataset.t;paint();return}
+    const b=e.target.closest('[data-sv]');if(b){sv=Math.max(1,sv+(+b.dataset.sv));paint();return}
+    const a=e.target.closest('[data-a]');if(!a)return;const k=a.dataset.a;
+    if(k==='x')d.remove();else if(k==='edit'){d.remove();editRecipe(id)}else if(k==='plan')pickSlot(rc,sv);
+    else if(k==='list')shopUI('Ingredientes de '+rc.title,'',()=>agg([{r:rc,s:sv}]))};
+  paint()}
+function pickSlot(rc,sv){
+  const d=mdl(`<h2>Planificar «${esc(rc.title)}»</h2><label class="f">Día</label><input type="date" id="psd" value="${dk(new Date())}">
+  <label class="f">Momento del día</label><select id="pss"><option value="b">Desayuno</option><option value="c" selected>Comida</option><option value="d">Cena</option></select>
+  <label class="f">Personas</label><input type="number" id="psn" min="1" value="${sv||rc.servings||2}">
+  <div class="acts"><button class="btn g" id="psx">Cancelar</button><button class="btn" id="psa">Añadir al planning</button></div>`,38);
+  d.querySelector('#psx').onclick=()=>d.remove();
+  d.querySelector('#psa').onclick=()=>{const k=d.querySelector('#psd').value;if(!k){alert('Elige un día.');return}
+    addEntry(k,d.querySelector('#pss').value,{r:rc.id,t:'',s:Math.max(1,+d.querySelector('#psn').value||2)});d.remove();alert('Añadida al planning: '+labelDay(k)+'.')}}
+function editRecipe(id){
+  const rc=id?JSON.parse(JSON.stringify(S.recipes.find(x=>x.id===id))):{id:'r'+Date.now(),title:'',photo:'',servings:2,it:'',steps:'',url:'',tags:[],notes:'',cat:''};
+  const d=mdl(`<h2>${id?'Editar receta':'Nueva receta'}</h2>
+  <div class="photo"><div id="rpv">${rc.photo?`<img class="th" src="${rc.photo}" alt="">`:'<div class="th">🍳</div>'}</div><label class="btn g">📷 Foto<input type="file" accept="image/*" id="rfo" hidden></label></div>
+  <label class="f">Título</label><input type="text" id="rti" value="${esc(rc.title)}" placeholder="Lentejas estofadas">
+  <label class="f">Categoría</label><select id="rca"><option value="">Sin categoría</option>${[...new Set([...S.rcats,rc.cat].filter(Boolean))].map(c=>`<option value="${esc(c)}" ${rc.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+  <label class="f">Para cuántas personas</label><input type="number" id="rsv" min="1" value="${rc.servings||2}">
+  <label class="f">Ingredientes (uno por línea: «200 g harina», «2 huevos», «1/2 cebolla», «sal»)</label><textarea id="rit" style="min-height:130px">${esc(rc.it)}</textarea><div class="sub" id="rpr"></div>
+  <label class="f">Preparación</label><textarea id="rst" style="min-height:130px">${esc(rc.steps)}</textarea>
+  <label class="f">Enlace de la web (opcional)</label><input type="text" id="rur" value="${esc(rc.url)}" placeholder="https://…"><div class="sub">Si la receta es de una web, copia y pega aquí los ingredientes y los pasos, y guarda el enlace para volver a ella.</div>
+  <label class="f">Etiquetas (separadas por comas)</label><input type="text" id="rta" value="${esc((rc.tags||[]).join(', '))}" placeholder="vegano, legumbres, rápido"><div class="chips" id="rtc" style="margin-top:6px"></div>
+  <label class="f">Notas</label><textarea id="rno">${esc(rc.notes)}</textarea>
+  <div class="acts">${id?'<button class="btn r" id="rdl">Eliminar</button>':'<span></span>'}<span><button class="btn g" id="rcx">Cancelar</button> <button class="btn" id="rsa">Guardar</button></span></div>`,36);
+  const q=sel=>d.querySelector(sel);
+  const pv=()=>{const l=parseIngs(q('#rit').value);q('#rpr').innerHTML=l.length?'Los entiendo así: '+l.slice(0,12).map(i=>esc((i.q!=null?fq(i.q,i.u)+' · ':'')+i.n)).join(' | ')+(l.length>12?' …':''):''};
+  q('#rit').oninput=pv;pv();
+  const allT=[...new Set(S.recipes.flatMap(x=>x.tags||[]))];
+  q('#rtc').innerHTML=allT.map(t=>`<button class="chip" data-tg2="${esc(t)}" type="button">#${esc(t)}</button>`).join('');
+  q('#rtc').onclick=ev=>{const b=ev.target.closest('[data-tg2]');if(!b)return;const c2=q('#rta').value.split(',').map(x=>x.trim()).filter(Boolean);if(!c2.includes(b.dataset.tg2)){c2.push(b.dataset.tg2);q('#rta').value=c2.join(', ')}};
+  q('#rfo').onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{rc.photo=u;q('#rpv').innerHTML=`<img class="th" src="${u}" alt="">`})};
+  q('#rcx').onclick=()=>d.remove();
+  if(id)q('#rdl').onclick=()=>{if(confirm('¿Eliminar esta receta? Se quitará también del planning.')){deleteDoc(doc(db,'recipes',id)).catch(wfail);Object.keys(S.plan).forEach(k=>{const dd=getDay(k);let ch=false;SLS.forEach(sl=>{const n=dd[sl].length;dd[sl]=dd[sl].filter(e=>e.r!==id);if(dd[sl].length!==n)ch=true});if(ch)savePlan(k,dd)});d.remove()}};
+  q('#rsa').onclick=()=>{const t=q('#rti').value.trim();if(!t){q('#rti').focus();return}
+    rc.cat=q('#rca').value;rc.title=t;rc.servings=Math.max(1,+q('#rsv').value||2);rc.it=q('#rit').value;rc.ing=parseIngs(rc.it);rc.steps=q('#rst').value;rc.url=q('#rur').value.trim();
+    rc.tags=q('#rta').value.split(',').map(x=>x.trim()).filter(Boolean);rc.notes=q('#rno').value;
+    putRecipe(rc);const i=S.recipes.findIndex(x=>x.id===rc.id);if(i>=0)S.recipes[i]=rc;else S.recipes.push(rc);d.remove();render()}}
+// --- planning ---
+function savePlan(k,dd){const empty=!SLS.some(s=>(dd[s]||[]).length);
+  if(empty){delete S.plan[k];deleteDoc(doc(db,'plan',k)).catch(wfail)}else{S.plan[k]=dd;setDoc(doc(db,'plan',k),{b:dd.b||[],c:dd.c||[],d:dd.d||[]}).catch(wfail)}render()}
+const getDay=k=>{const x=JSON.parse(JSON.stringify(S.plan[k]||{}));SLS.forEach(s=>{x[s]=x[s]||[]});return x};
+function addEntry(k,sl,en){const dd=getDay(k);dd[sl].push(en);savePlan(k,dd)}
+const entTitle=e=>e.r?((S.recipes.find(x=>x.id===e.r)||{}).title||'(receta borrada)'):e.t;
+function pickEntry(k,sl){
+  const d=mdl(`<h2>${labelDay(k)} · ${SLN[sl]}</h2><input type="text" id="pks" placeholder="Buscar receta…" autocomplete="off"><select id="pkc" style="margin-top:6px"><option value="">Todas las categorías</option>${[...new Set([...S.rcats,...S.recipes.map(x=>x.cat).filter(Boolean)])].map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select><div id="pkl" style="margin-top:8px"></div>
+  <label class="f">O escribe algo (restaurante, sobras…)</label><div class="srow"><input type="text" id="pkt"><button class="btn" id="pka">Añadir</button></div><div class="acts"><span></span><button class="btn g" id="pkx">Cerrar</button></div>`,35);
+  const list=()=>{const qq=norm(d.querySelector('#pks').value.trim());
+    const cc=d.querySelector('#pkc').value;
+    const l=S.recipes.filter(x=>(!cc||x.cat===cc)&&(!qq||norm(x.title+' '+(x.cat||'')+' '+(x.tags||[]).join(' ')).includes(qq))).sort((a,b)=>a.title.localeCompare(b.title,'es'));
+    d.querySelector('#pkl').innerHTML=l.length?l.map(x=>`<div class="adr" data-rid="${x.id}" style="cursor:pointer;display:flex;gap:10px;align-items:center">${x.photo?`<img class="th2" src="${x.photo}" alt="">`:'<div class="th2" style="background:var(--ac2);display:flex;align-items:center;justify-content:center">🍳</div>'}<div style="flex:1;min-width:0"><div class="nm">${esc(x.title)}</div><div class="sub">${x.servings||2} personas</div></div></div>`).join(''):'<div class="sub">No hay recetas que coincidan.</div>'};
+  const pref=[...new Set([...S.rcats,...S.recipes.map(x=>x.cat).filter(Boolean)])].find(c=>norm(c).includes(sl==='b'?'desayun':sl==='c'?'comida':'cena')&&S.recipes.some(x=>x.cat===c));
+  if(pref)d.querySelector('#pkc').value=pref;
+  list();d.querySelector('#pks').oninput=list;d.querySelector('#pkc').onchange=list;
+  d.querySelector('#pkl').onclick=ev=>{const el=ev.target.closest('[data-rid]');if(!el)return;const x=S.recipes.find(y=>y.id===el.dataset.rid);addEntry(k,sl,{r:x.id,t:'',s:x.servings||2});d.remove()};
+  d.querySelector('#pka').onclick=()=>{const t=d.querySelector('#pkt').value.trim();if(!t)return;addEntry(k,sl,{r:'',t,s:0});d.remove()};
+  d.querySelector('#pkx').onclick=()=>d.remove()}
+function editEntry(k,sl,i){const en=((S.plan[k]||{})[sl]||[])[i];if(!en)return;const rc=en.r&&S.recipes.find(x=>x.id===en.r);
+  const d=mdl(`<h2>${esc(entTitle(en))}</h2><div class="sub">${labelDay(k)} · ${SLN[sl]}</div>
+  ${rc?`<div class="srow" style="margin:10px 0"><button class="btn g" data-sv="-1">−</button><b id="evs">${en.s} personas</b><button class="btn g" data-sv="1">+</button></div>`:''}
+  <label class="f">Copiar a otro día</label><div class="srow"><input type="date" id="ecd" value="${k}"><select id="ecs">${SLS.map(s=>`<option value="${s}" ${s===sl?'selected':''}>${SLN[s]}</option>`).join('')}</select><button class="btn g" id="ecb">Copiar</button></div>
+  <div class="acts"><button class="btn r" id="erm">Quitar</button><span>${rc?'<button class="btn g" id="evr">Ver receta</button> ':''}<button class="btn" id="ex">Cerrar</button></span></div>`,35);
+  d.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{const dd=getDay(k),e2=dd[sl][i];if(!e2)return;e2.s=Math.max(1,(e2.s||1)+(+b.dataset.sv));savePlan(k,dd);d.querySelector('#evs').textContent=e2.s+' personas'});
+  d.querySelector('#ecb').onclick=()=>{const k2=d.querySelector('#ecd').value;if(!k2)return;addEntry(k2,d.querySelector('#ecs').value,{...en});d.remove();alert('Copiada a '+labelDay(k2)+'.')};
+  d.querySelector('#erm').onclick=()=>{const dd=getDay(k);dd[sl].splice(i,1);savePlan(k,dd);d.remove()};
+  if(rc)d.querySelector('#evr').onclick=()=>{d.remove();showRecipe(rc.id,en.s)};
+  d.querySelector('#ex').onclick=()=>d.remove()}
+function copyWeek(){if(!confirm('¿Copiar esta semana a la siguiente? Se añadirá a lo que ya haya planificado.'))return;
+  const m0=monday(PL.anchor);
+  for(let i=0;i<7;i++){const src=S.plan[dk(addD(m0,i))];if(!src)continue;const tk=dk(addD(m0,i+7)),t2=getDay(tk);
+    SLS.forEach(sl=>(src[sl]||[]).forEach(e=>t2[sl].push({...e})));savePlan(tk,t2)}
+  PL.anchor=addD(PL.anchor,7);render()}
+function planView(){
+  const a=PL.anchor,today=dk(new Date());let label,body;
+  if(PL.view==='week'){const m0=monday(a),m6=addD(m0,6);label=`${m0.getDate()} ${MN[m0.getMonth()].slice(0,3)} – ${m6.getDate()} ${MN[m6.getMonth()].slice(0,3)} ${m6.getFullYear()}`;
+    body=[...Array(7)].map((_,i)=>{const dt=addD(m0,i),k=dk(dt),pl=S.plan[k]||{};
+      return `<div class="pday ${k===today?'today':''}"><div class="pdh">${DN[i]} ${dt.getDate()} ${MN[dt.getMonth()].slice(0,3)}</div>${SLS.map(sl=>`<div class="pslot"><div class="sub">${SLI[sl]} ${SLN[sl]}</div>
+        ${(pl[sl]||[]).map((e,j)=>{const rc=e.r&&S.recipes.find(x=>x.id===e.r);return `<button class="pent" data-pe="${k}|${sl}|${j}">${rc&&rc.photo?`<img class="th3" src="${rc.photo}" alt="">`:''}<span class="pt">${esc(entTitle(e))}</span>${e.r?`<span class="sub">${e.s} p.</span>`:''}</button>`}).join('')}
+        <button class="padd" data-pa="${k}|${sl}">+ Añadir</button></div>`).join('')}</div>`}).join('')+'<button class="btn g" data-pcp="1" style="width:100%;margin-top:4px">📋 Copiar esta semana a la siguiente</button>'}
+  else{const y=a.getFullYear(),mo=a.getMonth(),lead=(new Date(y,mo,1).getDay()+6)%7,nd=new Date(y,mo+1,0).getDate();label=MN[mo]+' '+y;
+    body='<div class="mgrid">'+DN.map(x=>`<div class="mh">${x}</div>`).join('')+[...Array(lead)].map(()=>'<div></div>').join('')+[...Array(nd)].map((_,i)=>{const k=dk(new Date(y,mo,i+1)),pl=S.plan[k]||{},ev=SLS.flatMap(s=>(pl[s]||[]).map(e=>SLI[s]+' '+entTitle(e)));
+      return `<button class="mcell ${k===today?'today':''}" data-pc="${k}"><b>${i+1}</b>${ev.slice(0,3).map(t=>`<span>${esc(t)}</span>`).join('')}${ev.length>3?`<span>+${ev.length-3}</span>`:''}</button>`}).join('')+'</div>'}
+  return `<div class="plbar"><div class="seg seg2"><button class="btn ${PL.view==='week'?'':'g'}" data-pv="week">📅 Vista semanal</button><button class="btn ${PL.view==='month'?'':'g'}" data-pv="month">🗓️ Vista mensual</button></div><div class="seg"><button class="btn g" data-pn="-1">‹</button><button class="btn g" data-pn="0">Hoy</button><button class="btn g" data-pn="1">›</button></div></div>
+  <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn" data-pg="1" style="width:100%;margin-top:12px">🛒 Lista de la compra de estos días</button>`}
+async function lookup(code){
+  const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score`);
+  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'',q=nsPoints(p);
+  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>t.replace(/^[a-z]{2}:/,'')),...(hasAroma(p)?['aroma']:[])];if(!a.length&&(p.categories_tags||[]).includes('en:cheeses')&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||''};
+}
+const loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s)});
+function scanCode(){return new Promise(async resolve=>{
+  const ov=$('scan'),v=$('scv');ov.classList.add('show');let stream=null,done=false,reader=null,timer=null;
+  const finish=c=>{if(done)return;done=true;clearInterval(timer);try{reader&&reader.reset()}catch(e){}
+    if(stream)stream.getTracks().forEach(t=>t.stop());v.srcObject=null;ov.classList.remove('show');resolve(c)};
+  $('scx').onclick=()=>finish(null);
+  try{
+    if('BarcodeDetector' in window){
+      let ok=true;try{const f=await BarcodeDetector.getSupportedFormats();ok=f.some(x=>/ean|upc/.test(x))}catch(e){}
+      if(ok){const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
+        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+        v.srcObject=stream;await v.play();
+        timer=setInterval(async()=>{try{const r=await det.detect(v);if(r.length)finish(r[0].rawValue)}catch(e){}},300);return}}
+    await loadZX();
+    const h=new Map();h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E]);
+    reader=new ZXing.BrowserMultiFormatReader(h);
+    await reader.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}},v,res=>{if(res)finish(res.getText())});
+  }catch(e){finish(null);alert('No se pudo abrir la cámara o cargar el lector. Revisa el permiso de cámara del navegador o escribe el código a mano.')}
+})}
+const thumbB=(p,x)=>(x&&x.ph)?`<img class="th" src="${x.ph}" alt="">`:thumb(p);
+const thumbP=(p,x)=>p.photo?thumb(p):thumbB(p,x);
+const bestO=(p,sid)=>rank(prices(p).filter(x=>x.id===sid))[0];
+const lbl=x=>esc(sname(x.id))+(x.b?' · '+esc(x.b):'');
+const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const brands=p=>Object.values(p.e).flatMap(v=>opts(v).map(o=>o.b||''));
+const keep=p=>(!FC||(FC==='-'?!S.cats.some(c=>c.id===p.cat):p.cat===FC))&&(!Q.trim()||[p.name,...brands(p)].some(t=>norm(t).includes(norm(Q.trim()))));
+const useKg=l=>l.length>1&&l.every(x=>x.kg>0);
+const rank=l=>{const k=useKg(l);return [...l].sort((a,b)=>k?a.kg-b.kg:a.price-b.price)};
+const priceTxt=e=>e.price>0?eur(e.price)+(e.g>0?' ('+e.g+' g) · '+eurkg(kgOf(e.price,e.g)):''):'Sin precio';
+const boTxt=(p,sid)=>{const l=rank(prices(p).filter(x=>x.id===sid)),b=l[0];return b?(b.b?esc(b.b)+' · ':'')+priceTxt(b)+(l.length>1?' · mejor de '+l.length+' marcas':'')+' '+bdg(b,p.name+(b.b?' · '+b.b:'')):''};
+const thumb=p=>p.photo?`<img class="th" src="${p.photo}" alt="">`:`<div class="th">🥫</div>`;
+const catOpts=sel=>'<option value="">Sin categoría</option>'+S.cats.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('');
+function groupHtml(items,gc,rf){
+  const ids=S.cats.map(c=>c.id);
+  const key=x=>ids.includes(gc(x))?gc(x):'';
+  return [...ids,''].map(id=>{const l=items.filter(x=>key(x)===id);
+    return l.length?(ids.length?`<div class="ch">${esc(id?cname(id):'Sin categoría')}</div>`:'')+l.map(rf).join(''):''}).join('');
+}
+
+function render(){
+  const inStore=S.stores.some(s=>s.id===cur);
+  $('tabs').innerHTML=`<button class="tab ${cur==='list'?'on':''}" data-t="list">🧾 Lista</button><button class="tab ${(cur==='sm'||inStore)?'on':''}" data-t="sm">🏪 Supermercados</button><button class="tab ${cur==='pr'?'on':''}" data-t="pr">📦 Productos</button><button class="tab ${cur==='cmp'?'on':''}" data-t="cmp">⚖️ Comparar</button><button class="tab ${cur==='rc'?'on':''}" data-t="rc">🍳 Recetas</button><button class="tab ${cur==='pl'?'on':''}" data-t="pl">📅 Planning</button>`;
+  try{const on=$('tabs').querySelector('.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'})}catch(e){}
+  const xs=$('xc'),pv=xs.value;xs.innerHTML=catOpts(pv);if(xs.selectedIndex<0)xs.selectedIndex=0;
+  $('quick').style.display=cur==='list'?'flex':'none';
+  const fs=$('fc');fs.innerHTML='<option value="">Todas las categorías</option>'+S.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')+'<option value="-">Sin categoría</option>';
+  if(![...fs.options].some(o=>o.value===FC))FC='';fs.value=FC;
+  $('filt').style.display=(inStore||cur==='pr'||cur==='cmp'||cur==='rc')?'flex':'none';$('fc').style.display=cur==='rc'?'none':'';$('q').placeholder=cur==='rc'?'Buscar receta, etiqueta o ingrediente…':'Buscar producto o marca…';$('fab').textContent=cur==='rc'?'+ Receta':'+ Añadir';
+  const m=$('main');
+  if(cur==='list'){
+    $('fab').style.display='';let any=false,dn=false,h='';
+    S.stores.forEach(s=>{
+      const it=[];S.products.forEach(p=>{const e=p.e[s.id];if(e)e.o.forEach((o,i)=>{if(o.need)it.push({p,o,i})})});
+      if(!it.length)return;any=true;
+      const d=it.filter(z=>z.o.done).length;if(d)dn=true;
+      h+=`<h3 class="gh"><span class="dt" style="background:${scol(s)}"></span>${esc(s.name)} <span class="sub">${d}/${it.length}</span></h3>`+groupHtml(it,z=>z.p.cat,({p,o,i})=>
+        `<div class="row ${o.done?'done':''}"><input type="checkbox" data-c="${p.id}|${s.id}|${i}" ${o.done?'checked':''}>${thumbB(p,o)}<div class="info"><div class="nm">${esc(p.name)}</div><div class="sub">${o.b?esc(o.b)+' · ':''}${o.price>0?priceTxt(o)+' ':''}${bdg(o,p.name+(o.b?' · '+o.b:''))}</div></div></div>`);
+    });
+    if(S.extras.length){any=true;const d=S.extras.filter(x=>x.done).length;if(d)dn=true;
+      h+=`<h3 class="gh">Otros productos <span class="sub">${d}/${S.extras.length}</span></h3>`+groupHtml(S.extras,x=>x.cat,x=>
+        `<div class="row ${x.done?'done':''}"><input type="checkbox" data-x="${x.id}" ${x.done?'checked':''}><div class="th">🛍️</div><div class="info"><div class="nm">${esc(x.name)}</div></div><button class="cart" data-xd="${x.id}" aria-label="Quitar">✕</button></div>`)}
+    m.innerHTML=any?'<div class="sbar"><button class="btn g" data-tg="1">✈️ Enviar lista a Telegram</button></div>'+h+(dn?'<button class="btn g" id="clr" style="width:100%;margin-top:8px">🧹 Quitar los tachados</button>':''):'<div class="empty">La lista está vacía.<br>Escribe arriba lo que necesites, o entra en una tienda y pulsa «+ Lista».</div>';
+    return;
+  }
+  if(cur==='cmp'){
+    const l=S.products.filter(keep).map(p=>({p,pr:rank(prices(p))})).filter(x=>x.pr.length>=2);
+    m.innerHTML=l.length?groupHtml(l,x=>x.p.cat,({p,pr})=>{
+      const k=useKg(pr),a=pr[0],z=pr[pr.length-1],sv=k?z.kg-a.kg:z.price-a.price;
+      return `<div class="row cmp" data-p="${p.id}">${pr.some(y=>y.ph)?'':thumb(p)}<div class="info"><div class="nm">${esc(p.name)}</div>
+      ${pr.map((x,i)=>`<div class="p ${i?'':'best'}"><span>${pr.some(y=>y.ph)&&(x.ph||p.photo)?`<img class="th3" src="${x.ph||p.photo}" alt="">`:''}${lbl(x)} ${bdg(x,p.name+(x.b?' · '+x.b:''))}</span><span>${eur(x.price)}${x.kg>0?' · '+eurkg(x.kg):''}</span></div>`).join('')}
+      <span class="badge">Mejor: ${lbl(a)}${sv>0.004?' · ahorras '+(k?eurkg(sv):eur(sv)):''}</span>
+      ${k?'':'<div class="sub">Pon los gramos en todas las tiendas para comparar por €/kg</div>'}</div></div>`})
+      :'<div class="empty">Pon el precio de un mismo producto en 2 o más tiendas o marcas y aquí verás cuál sale más barato.</div>';
+    $('fab').style.display='none';return;
+  }
+  if(cur==='sm'){
+    $('fab').style.display='';
+    const cols=['#1f7a4d','#2b6cb0','#c05621','#805ad5','#b83280','#2c7a7b','#975a16','#4a5568'];
+    m.innerHTML=S.stores.length?'<div class="sgrid">'+S.stores.map(s=>{
+      const n=S.products.filter(p=>p.e[s.id]).length,w=S.products.reduce((a,p)=>a+(p.e[s.id]?p.e[s.id].o.filter(o=>o.need).length:0),0),
+        col=scol(s);
+      return `<button class="stile" data-st="${s.id}" style="border-left:6px solid ${col}">${s.logo?`<img class="slogo" src="${s.logo}" alt="">`:''}<b class="sn">${esc(s.name)}</b><span class="sub">${n} producto${n===1?'':'s'}${w?' · '+w+' en lista':''}</span></button>`}).join('')+'</div>'
+      :'<div class="empty">Aún no hay supermercados. Añádelos en Ajustes.</div>';
+    return;
+  }
+  if(cur==='pr'){
+    $('fab').style.display='';
+    const l=S.products.filter(keep);
+    m.innerHTML=l.length?groupHtml(l,p=>p.cat,p=>{
+      const lines=[];S.stores.forEach(s=>{const e=p.e[s.id];if(!e)return;const o=opts(e);if(!o.length)lines.push({s,o:null});else o.forEach((x,i)=>lines.push({s,o:x,i}))});
+      const anyPh=lines.length>1&&lines.some(z=>z.o&&z.o.ph);
+      const img=z=>{const u=anyPh?((z.o&&z.o.ph)||p.photo):'';return u?`<img class="th2" src="${u}" alt="">`:''};
+      const main=anyPh?'':(lines.length===1&&lines[0].o?thumbB(p,lines[0].o):thumb(p));
+      const txt=z=>z.o?((z.o.b?'<b>'+esc(z.o.b)+'</b> · ':'')+(priceTxt(z.o)+' '+bdg(z.o,p.name+(z.o.b?' · '+z.o.b:'')))):'Sin precio';
+      return `<div class="row" data-p="${p.id}">${main}<div class="info"><div class="nm">${esc(p.name)}</div>${lines.map(z=>`<div class="sub bl">${img(z)}<span class="lt"><span class="stg" style="background:${scol(z.s)};color:#fff">${esc(z.s.name)}</span> ${txt(z)}</span>${z.o?`<button class="cart ${z.o.need?'on':''}" data-n="${p.id}|${z.s.id}|${z.i}">${z.o.need?'✓ En lista':'+ Lista'}</button>`:''}</div>`).join('')}</div></div>`})
+      :`<div class="empty">${S.products.length?'Ningún producto coincide con la búsqueda o el filtro.':'Aún no hay productos. Pulsa «+ Añadir».'}</div>`;
+    return;
+  }
+  if(cur==='rc'){$('fab').style.display='';m.innerHTML=recipesHtml();return}
+  if(cur==='pl'){$('fab').style.display='none';m.innerHTML=planView();return}
+  $('fab').style.display='';
+  const l=S.products.filter(p=>p.e[cur]&&keep(p));
+  m.innerHTML=l.length?groupHtml(l,p=>p.cat,p=>{
+    const e=p.e[cur],all=rank(prices(p)),mine=all.filter(x=>x.id===cur);let h2='';
+    if(mine.length&&all.length>1){
+      const k=useKg(all),val=x=>k?x.kg:x.price,me=mine[0],b=all[0];
+      h2=val(me)<=val(b)+1e-9?`<div class="sub best">✓ El más barato${me.b?' ('+esc(me.b)+')':''}</div>`:`<div class="sub worse">Más barato: ${lbl(b)} (${k?eurkg(b.kg):eur(b.price)})</div>`}
+    const ol=e.o.map((o,i)=>({o,i,price:o.price||0,g:o.g||0,kg:kgOf(o.price||0,o.g||0)}));
+    const lines=[...rank(ol.filter(z=>z.price>0)),...ol.filter(z=>!(z.price>0))];
+    const anyPh=lines.length>1&&lines.some(z=>z.o.ph),lineImg=z=>{const u=anyPh?(z.o.ph||p.photo):'';return u?`<img class="th2" src="${u}" alt="">`:''};
+    const pl=lines.map(z=>`<div class="sub bl">${lineImg(z)}<span class="lt">${z.o.b?'<b>'+esc(z.o.b)+'</b> · ':''}${priceTxt(z.o)} ${bdg(z.o,p.name+(z.o.b?' · '+z.o.b:''))}</span><button class="cart ${z.o.need?'on':''}" data-n="${p.id}|${cur}|${z.i}">${z.o.need?'✓ En lista':'+ Lista'}</button></div>`).join('');
+    return `<div class="row" data-p="${p.id}">${anyPh?'':thumbB(p,lines[0]&&lines[0].o)}<div class="info"><div class="nm">${esc(p.name)}</div>${pl}${h2}</div></div>`})
+    :`<div class="empty">${S.products.some(p=>p.e[cur])?'Ningún producto coincide con la búsqueda o el filtro.':'Aún no hay nada en '+esc(sname(cur))+'.<br>Pulsa «+ Añadir».'}</div>`;
+  const cs=sbyid(cur);
+  m.innerHTML=`<div class="sbar"><button class="btn g" data-back="1">‹ Supermercados</button><button class="btn g" data-upd="1">💶 Actualizar precios</button>${cs.logo?`<img class="slogo" src="${cs.logo}" alt="">`:''}<b style="border-left:6px solid ${scol(cs)};padding-left:8px">${esc(cs.name)}</b></div>`+m.innerHTML;
+}
+$('tabs').onclick=e=>{const t=e.target.closest('[data-t]');if(!t)return;if(t.dataset.t==='cfg')return stores('');cur=t.dataset.t;render()};
+$('main').onclick=e=>{
+  const st=e.target.closest('[data-st]');
+  if(st){cur=st.dataset.st;render();window.scrollTo(0,0);return}
+  if(e.target.closest('[data-back]')){cur='sm';render();return}
+  if(e.target.closest('[data-upd]')){openPrices(cur);return}
+  const rcc=e.target.closest('[data-r]');if(rcc){showRecipe(rcc.dataset.r);return}
+  const rvb=e.target.closest('[data-rv]');if(rvb){RV.mode=rvb.dataset.rv;render();return}
+  const rfc=e.target.closest('[data-rfc]');if(rfc){RV.cat=rfc.dataset.rfc;render();return}
+  const rft=e.target.closest('[data-rft]');if(rft){RV.tag=RV.tag===rft.dataset.rft?'':rft.dataset.rft;render();return}
+  const pvb=e.target.closest('[data-pv]');if(pvb){PL.view=pvb.dataset.pv;render();return}
+  const pnb=e.target.closest('[data-pn]');
+  if(pnb){const k=+pnb.dataset.pn;if(k===0)PL.anchor=new Date();else if(PL.view==='week')PL.anchor=addD(PL.anchor,7*k);else PL.anchor=new Date(PL.anchor.getFullYear(),PL.anchor.getMonth()+k,1);render();return}
+  const pab=e.target.closest('[data-pa]');if(pab){const [k,sl]=pab.dataset.pa.split('|');pickEntry(k,sl);return}
+  const peb=e.target.closest('[data-pe]');if(peb){const [k,sl,j]=peb.dataset.pe.split('|');editEntry(k,sl,+j);return}
+  const pcb=e.target.closest('[data-pc]');if(pcb){PL.view='week';PL.anchor=pd(pcb.dataset.pc);render();window.scrollTo(0,0);return}
+  if(e.target.closest('[data-pcp]')){copyWeek();return}
+  if(e.target.closest('[data-pg]')){shopGen();return}
+  const c=e.target.closest('[data-c]');
+  if(c){const [pid,sid,i]=c.dataset.c.split('|');const p=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));p.e[sid].o[+i].done=c.checked;putP(p);return}
+  const n=e.target.closest('[data-n]');
+  if(n){const [pid,sid,i]=n.dataset.n.split('|');const p0=S.products.find(x=>x.id===pid),o0=p0.e[sid].o[+i];
+    if(!o0.need){const all=rank(prices(p0)),me=all.find(x=>x.id===sid&&x.i===+i),best=all[0];
+      if(me&&best&&!(best.id===me.id&&best.i===me.i)){const k=useKg(all),val=x=>k?x.kg:x.price;if(val(best)<val(me)*0.995){askCheaper(p0,me,best,k);return}}}
+    setNeed(pid,sid,+i);return}
+  const tgb=e.target.closest('[data-tg]');
+  if(tgb){const old=tgb.textContent,parts=listParts();if(!parts.length){alert('La lista está vacía.');return}
+    tgb.disabled=true;tgSend(parts,{set textContent(v){tgb.textContent=v}}).then(()=>setTimeout(()=>{tgb.disabled=false;tgb.textContent=old},4000));return}
+  const x=e.target.closest('[data-x]');
+  if(x){const o=S.extras.find(y=>y.id===x.dataset.x);if(o)putX({...o,done:x.checked});return}
+  const xd=e.target.closest('[data-xd]');
+  if(xd){delX(xd.dataset.xd);return}
+  if(e.target.id==='clr'){S.products.forEach(p=>{if(!Object.values(p.e).some(e=>e.o.some(o=>o.need&&o.done)))return;const q=JSON.parse(JSON.stringify(p));
+    Object.values(q.e).forEach(e=>e.o.forEach(o=>{if(o.need&&o.done){o.need=false;o.done=false}}));putP(q)});
+    S.extras.forEach(y=>{if(y.done)delX(y.id)});return}
+  const r=e.target.closest('[data-p]');if(r)openP(r.dataset.p)};
+$('fab').onclick=()=>cur==='rc'?editRecipe(null):openP(null);
+$('fabs').onclick=()=>stores('');
+$('q').oninput=()=>{Q=$('q').value;render()};
+$('fc').onchange=()=>{FC=$('fc').value;render()};
+document.addEventListener('click',e=>{const bd=e.target.closest('.nsb[data-ns]');if(bd){e.stopPropagation();showDet(bd.dataset)}},true);
+$('det').onclick=e=>{if(e.target.id==='det')$('det').classList.remove('show')};
+$('upm').onclick=e=>{if(e.target.id==='upm')$('upm').classList.remove('show')};
+$('chp').onclick=e=>{if(e.target.id==='chp')$('chp').classList.remove('show')};
+$('mnl').onclick=e=>{if(e.target.id==='mnl')$('mnl').classList.remove('show')};
+document.addEventListener('click',e=>{const im=e.target.closest('#main img.th,#main img.th2,#main img.th3');if(im){e.stopPropagation();$('lbi').src=im.src;$('lb').classList.add('show')}},true);
+$('lb').onclick=()=>{$('lb').classList.remove('show');$('lbi').removeAttribute('src')};
+function addX(){const n=$('xn').value.trim();if(!n){$('xn').focus();return}
+  putX({id:'x'+Date.now(),name:n,cat:$('xc').value,done:false});$('xn').value='';$('xn').focus()}
+$('xa').onclick=addX;
+$('xn').onkeydown=e=>{if(e.key==='Enter')addX()};
+
+function openP(id){
+  const p=id?S.products.find(x=>x.id===id):{id:'p'+Date.now(),name:'',photo:'',cat:'',e:S.stores.some(s=>s.id===cur)?{[cur]:{o:[],done:false,need:false}}:{}};
+  edit=JSON.parse(JSON.stringify(p));edit.isNew=!id;
+  Object.values(edit.e).forEach(v=>{if(!Array.isArray(v.o)){v.o=opts(v);delete v.price;delete v.g}});
+  drawForm();$('modal').classList.add('show');
+}
+const shrink=(f,cb)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const z=520/Math.max(im.width,im.height,520),cv=document.createElement('canvas');cv.width=im.width*z;cv.height=im.height*z;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',.7));URL.revokeObjectURL(u)};im.src=u};
+const shrinkLogo=(f,cb)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const z=160/Math.max(im.width,im.height,160),cv=document.createElement('canvas');cv.width=Math.round(im.width*z);cv.height=Math.round(im.height*z);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);cb(cv.toDataURL('image/png'));URL.revokeObjectURL(u)};im.src=u};
+async function refreshAll(btn){
+  const items=[];S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>e.o.forEach((o,i)=>{if(o.bc&&!o.mn)items.push({pid:p.id,sid,i,bc:o.bc})})));
+  if(!items.length){btn.textContent='No hay marcas con código de barras';return}
+  let ok=0;btn.disabled=true;
+  for(let k=0;k<items.length;k++){const it=items[k];btn.textContent=`Actualizando ${k+1}/${items.length}…`;
+    try{const d=await lookup(it.bc);const p=S.products.find(x=>x.id===it.pid);
+      if(d&&p&&p.e[it.sid]&&p.e[it.sid].o[it.i]){const q=JSON.parse(JSON.stringify(p));
+        Object.assign(q.e[it.sid].o[it.i],{ns:d.ns,nova:d.nova,eco:d.eco,ad:d.ad==null?null:d.ad,og:d.og,np:d.np==null?null:d.np,lq:d.lq?1:0,ps:d.ps||'',nd:d.nd||''});putP(q);ok++}
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,700))}
+  btn.disabled=false;btn.textContent=`Listo: ${ok} de ${items.length} actualizadas`;
+}
+const n2=v=>parseFloat(String(v).replace(',','.'))||0;
+const sh=sel=>$('sheet').querySelector(sel),shAll=sel=>[...$('sheet').querySelectorAll(sel)];
+function syncForm(){
+  edit.name=$('name').value;edit.cat=$('cat').value;
+  S.stores.forEach(s=>{
+    if(!edit.e[s.id])return;
+    const rows=shAll(`.orow[data-sid="${s.id}"]`);if(!rows.length)return;
+    edit.e[s.id].o=rows.map(r=>({b:r.querySelector('.ob').value.trim(),price:n2(r.querySelector('.op').value),g:n2(r.querySelector('.og').value),bc:r.querySelector('.oc').value.trim(),ns:r.dataset.ns||'',nova:+r.dataset.nova||0,eco:r.dataset.eco||'',ad:(r.dataset.ad===undefined||r.dataset.ad==='?')?null:r.dataset.ad,og:+r.dataset.og||0,np:(r.dataset.np===undefined||r.dataset.np==='')?null:+r.dataset.np,lq:+r.dataset.lq||0,ps:r.dataset.ps||'',nd:r.dataset.nd||'',mn:r.dataset.mn||'',need:r.dataset.need==='1',done:r.dataset.done==='1',ph:r.dataset.ph||''}))});
+}
+function mergeInto(pid){
+  syncForm();const t=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));
+  Object.values(t.e).forEach(v=>{if(!Array.isArray(v.o)){v.o=opts(v);delete v.price;delete v.g}});
+  Object.entries(edit.e).forEach(([k,v])=>{const d=v.o.filter(x=>x.b||x.price>0||x.g>0||x.bc||x.ph||x.need||x.mn);
+    if(!t.e[k])t.e[k]={done:false,need:false,o:d};else t.e[k].o=[...t.e[k].o,...d]});
+  if(!t.photo&&edit.photo)t.photo=edit.photo;
+  t.isNew=false;edit=t;drawForm();
+}
+function drawForm(){
+  const id=!edit.isNew,top=$('sheet').scrollTop;
+  const inS=S.stores.filter(s=>edit.e[s.id]),outS=S.stores.filter(s=>!edit.e[s.id]);
+  $('sheet').innerHTML=`<h2>${id?'Editar producto':'Nuevo producto'}</h2>
+  <div class="photo"><div id="pv">${thumb(edit)}</div><label class="btn g">📷 Foto general<input type="file" accept="image/*" id="file" hidden></label></div>
+  <label class="f">Nombre del producto</label><input type="text" id="name" value="${esc(edit.name)}" placeholder="Varitas de merluza"><div class="addst" id="sug" style="margin-top:6px"></div>
+  <label class="f">Categoría</label><select id="cat">${catOpts(edit.cat||'')}</select>
+  ${inS.length?'<label class="f">Marca (opcional), precio y gramos en cada tienda. Con «+ Otra marca» metes varias y se comparan todas.</label>':''}
+  ${inS.map(s=>{const e=edit.e[s.id],o=(e.o&&e.o.length)?e.o:[{b:'',price:0,g:0}];
+    return `<div class="sbox"><div class="srow"><span><b>${esc(s.name)}</b></span><button class="btn g" data-ao="${s.id}">+ Otra marca</button><button class="btn r" data-rs="${s.id}">Quitar</button></div>
+    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ph="${x.ph||''}"><label class="oph" title="Foto de esta marca"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'📷'}</span><input type="file" accept="image/*" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
+  ${outS.length?`<label class="f">${inS.length?'¿Se vende en otra tienda? Añádela:':'¿Dónde se vende? Elige la tienda:'}</label><div class="addst">${outS.map(s=>`<button class="btn g" data-as="${s.id}">+ ${esc(s.name)}</button>`).join('')}</div>`:''}
+  <div class="acts">${id?'<button class="btn r" id="del">Eliminar</button>':'<span></span>'}<span><button class="btn g" id="cx">Cancelar</button> <button class="btn" id="ok">Guardar</button></span></div>`;
+  $('file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
+    im.onload=()=>{const z=520/Math.max(im.width,im.height,520),cv=document.createElement('canvas');cv.width=im.width*z;cv.height=im.height*z;
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);edit.photo=cv.toDataURL('image/jpeg',.7);$('pv').innerHTML=thumb(edit);URL.revokeObjectURL(u)};im.src=u};
+  const upd=r=>{const k=kgOf(n2(r.querySelector('.op').value),n2(r.querySelector('.og').value));r.querySelector('.kgv').textContent=k>0?'= '+eurkg(k):''};
+  shAll('.orow').forEach(r=>{upd(r);r.querySelectorAll('input').forEach(i=>i.oninput=()=>upd(r))});
+  const apply=async(row,raw)=>{const st=row.querySelector('.osc'),code=String(raw||'').replace(/\D/g,'');row.querySelector('.oc').value=code;
+    const clr=()=>{if(row.dataset.mn)return;row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd=''};
+    if(code.length<8){clr();st.innerHTML='';return}
+    st.textContent='Buscando en Open Food Facts…';
+    try{const d=await lookup(code);
+      if(!d){clr();st.textContent='No encontrado en Open Food Facts';return}
+      row.dataset.ns=d.ns;row.dataset.nova=d.nova;row.dataset.eco=d.eco;row.dataset.ad=d.ad==null?'?':d.ad;row.dataset.og=d.og;row.dataset.np=d.np==null?'':d.np;row.dataset.lq=d.lq?1:0;row.dataset.ps=d.ps||'';row.dataset.nd=d.nd||'';row.dataset.mn='';
+      const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
+      st.innerHTML=(bdg(d,tt)?bdg(d,tt)+' '+det(d):((d.ns||d.np!=null)?'Faltan los ingredientes en Open Food Facts (sin nota)':'Sin datos nutricionales en Open Food Facts (sin nota)'))+(d.name?' <span>'+esc(d.name)+'</span>':'')
+    }catch(e){st.textContent='No se pudo consultar (¿sin conexión?)'}};
+  shAll('.orow').forEach(row=>{row.querySelector('.oc').onchange=e=>apply(row,e.target.value);
+    row.querySelector('.sb').onclick=async()=>{const c=await scanCode();if(c)apply(row,c)};
+    row.querySelector('.sq').onclick=()=>openSearch(row,apply);
+    row.querySelector('.sm2').onclick=()=>openManual(row)});
+  shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if((row.dataset.ad==='?'||!row.dataset.nd)&&c.length>=8)apply(row,c)});
+  shAll('.orow').forEach(row=>{row.querySelector('.ofile').onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{row.dataset.ph=u;row.querySelector('.opi').innerHTML=`<img src="${u}" alt="">`})}});
+  shAll('[data-as]').forEach(b=>b.onclick=()=>{syncForm();edit.e[b.dataset.as]={done:false,need:false,o:[{b:'',price:0,g:0}]};drawForm()});
+  shAll('[data-rs]').forEach(b=>b.onclick=()=>{syncForm();delete edit.e[b.dataset.rs];drawForm()});
+  shAll('[data-ao]').forEach(b=>b.onclick=()=>{syncForm();const e=edit.e[b.dataset.ao];
+    if(!e.o.length)e.o.push({b:'',price:0,g:0});e.o.push({b:'',price:0,g:0});drawForm()});
+  shAll('[data-rm]').forEach(b=>b.onclick=()=>{syncForm();const [sid,i]=b.dataset.rm.split(':');
+    if(edit.e[sid])edit.e[sid].o.splice(+i,1);drawForm()});
+  const sug=()=>{
+    if(!edit.isNew){$('sug').innerHTML='';return}
+    const t=norm($('name').value.trim());if(t.length<2){$('sug').innerHTML='';return}
+    const w=t.split(/\s+/).filter(x=>x.length>1);
+    const m=S.products.filter(p=>{const n=norm(p.name);return n&&(t.includes(n)||w.every(x=>n.includes(x)))}).slice(0,3);
+    $('sug').innerHTML=m.length?'<div class="sub" style="flex:1 1 100%">¿Es el mismo producto? Toca para añadirlo ahí:</div>'+m.map(p=>`<button class="btn g" data-sg="${p.id}">${esc(p.name)} <span class="sub">(${S.stores.filter(x=>p.e[x.id]).map(x=>esc(x.name)).join(', ')})</span></button>`).join(''):''};
+  $('name').oninput=sug;sug();
+  $('sug').onclick=ev=>{const b=ev.target.closest('[data-sg]');if(b)mergeInto(b.dataset.sg)};
+  $('cx').onclick=close;
+  if(id)$('del').onclick=()=>{if(confirm('¿Eliminar este producto?')){delP(edit.id);close()}};
+  $('ok').onclick=()=>{
+    syncForm();const n=edit.name.trim();if(!n){$('name').focus();return}
+    const e={};Object.entries(edit.e).forEach(([k,v])=>{e[k]={done:!!v.done,need:!!v.need,o:v.o.filter(x=>x.b||x.price>0||x.g>0||x.bc||x.ph||x.need||x.mn)}});
+    if(!Object.keys(e).length){alert('Añade al menos una tienda donde se venda');return}
+    putP({id:edit.id,name:n,photo:edit.photo,cat:edit.cat,e});close()};
+  $('sheet').scrollTop=top;
+}
+let SEC='';
+function stores(sec){
+  if(sec!==undefined)SEC=sec;
+  const back=t=>`<div class="sbar"><button class="btn g" id="sbk">‹ Ajustes</button><b>${t}</b></div>`;
+  const email=(typeof auth!=='undefined'&&auth&&auth.currentUser&&auth.currentUser.email)||'';
+  let html='',wire=()=>{};
+  if(!SEC){
+    const tile=(k,ic,t,sub)=>`<button class="stile" data-set="${k}"><span class="sico">${ic}</span><b class="sn">${t}</b><span class="sub">${sub}</span></button>`;
+    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Categorías',S.cats.length+' de productos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
+    wire=()=>document.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const k=b.dataset.set;if(k==='out'){if(confirm('¿Cerrar sesión?')){close();signOut(auth)}return}stores(k)});
+  }else if(SEC==='stores'){
+    html=back('🏪 Supermercados')+S.stores.map(s=>`<div class="sedit"><div class="srow"><input type="text" value="${esc(s.name)}" data-sn="${s.id}"><input type="color" value="${scol(s)}" data-sc="${s.id}"><button class="btn r" data-d="${s.id}">Quitar</button></div><div class="srow"><label class="btn g" style="flex:none">🖼️ ${s.logo?'Cambiar logo':'Añadir logo'}<input type="file" accept="image/*" hidden data-sl="${s.id}"></label>${s.logo?`<img class="slogo" src="${s.logo}" alt=""><button class="btn g" data-rl="${s.id}">Quitar logo</button>`:''}</div></div>`).join('')
+      +`<label class="f">Añadir supermercado</label><div class="srow"><input type="text" id="ns" placeholder="Mercadona, Eroski…"><button class="btn" id="add">Añadir</button></div>`;
+    wire=()=>{
+      document.querySelectorAll('[data-sn]').forEach(i=>i.onchange=()=>{const n=i.value.trim();if(!n){i.value=sname(i.dataset.sn);return}putStores(S.stores.map(s=>s.id===i.dataset.sn?{...s,name:n}:s));render()});
+      document.querySelectorAll('[data-sc]').forEach(i=>i.onchange=()=>{putStores(S.stores.map(s=>s.id===i.dataset.sc?{...s,color:i.value}:s));render()});
+      document.querySelectorAll('[data-sl]').forEach(i=>i.onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrinkLogo(f,u=>{putStores(S.stores.map(s=>s.id===i.dataset.sl?{...s,logo:u}:s));stores();render()})});
+      document.querySelectorAll('[data-rl]').forEach(b=>b.onclick=()=>{putStores(S.stores.map(s=>s.id===b.dataset.rl?{...s,logo:''}:s));stores();render()});
+      $('add').onclick=()=>{const n=$('ns').value.trim();if(n){putStores([...S.stores,{id:'s'+Date.now(),name:n}]);stores()}};
+      document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{if(S.stores.length<2)return;if(!confirm('¿Quitar esta tienda y sus precios?'))return;
+        const id=b.dataset.d;putStores(S.stores.filter(x=>x.id!==id));
+        S.products.forEach(p=>{if(!p.e[id])return;const q=JSON.parse(JSON.stringify(p));delete q.e[id];Object.keys(q.e).length?putP(q):delP(p.id)});stores()})};
+  }else if(SEC==='cats'){
+    html=back('🏷️ Categorías de productos')+(S.cats.map(c=>`<div class="srow"><span>${esc(c.name)}</span><button class="btn r" data-dc="${c.id}">Quitar</button></div>`).join('')||'<div class="sub">No hay categorías.</div>')
+      +`<label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas…"><button class="btn" id="addc">Añadir</button></div>`;
+    wire=()=>{
+      $('addc').onclick=()=>{const n=$('nc').value.trim();if(n){putCats([...S.cats,{id:'c'+Date.now(),name:n}]);stores()}};
+      document.querySelectorAll('[data-dc]').forEach(b=>b.onclick=()=>{if(!confirm('¿Quitar esta categoría? Sus productos pasarán a «Sin categoría».'))return;
+        const id=b.dataset.dc;putCats(S.cats.filter(c=>c.id!==id));
+        S.products.forEach(p=>{if(p.cat===id)putP({...p,cat:''})});
+        S.extras.forEach(x=>{if(x.cat===id)putX({...x,cat:''})});stores()})};
+  }else if(SEC==='rcats'){
+    html=back('🍳 Categorías de recetas')+`<div class="chips" style="margin-top:6px;flex-wrap:wrap">${S.rcats.map(c=>`<span class="chip">${esc(c)} <button class="x" data-rcd="${esc(c)}" type="button">✕</button></span>`).join('')||'<span class="sub">No hay categorías.</span>'}</div>
+      <label class="f">Añadir categoría</label><div class="srow"><input type="text" id="rcn" placeholder="Postres, Vegano, Aperitivos…"><button class="btn" id="rcb">Añadir</button></div>`;
+    wire=()=>{
+      document.querySelectorAll('[data-rcd]').forEach(b=>b.onclick=()=>{putRcats(S.rcats.filter(c=>c!==b.dataset.rcd));stores()});
+      $('rcb').onclick=()=>{const n=$('rcn').value.trim();if(n&&!S.rcats.includes(n)){putRcats([...S.rcats,n]);stores()}}};
+  }else if(SEC==='tg'){
+    html=back('✈️ Telegram')+`<div class="sub">Para enviar la lista al grupo. El código del bot se guarda en Firebase (solo lo leen vuestras cuentas), no en la página.</div>
+      <label class="f">Código del bot (token)</label><input type="password" id="tgt" autocomplete="off" placeholder="${TG.token?'Ya guardado (escribe otro para cambiarlo)':'123456789:AA…'}">
+      <label class="f">ID del grupo</label><input type="text" id="tgc" value="${esc(TG.chat||'')}" placeholder="-100…">
+      <div class="srow" style="margin-top:8px"><button class="btn" id="tgs">Guardar</button><button class="btn g" id="tgp">Enviar prueba</button></div><div class="sub" id="tgm" style="margin-top:6px"></div>`;
+    wire=()=>{
+      $('tgs').onclick=()=>{const t=$('tgt').value.trim()||TG.token||'',c=$('tgc').value.trim();
+        if(!/^\d+:[\w-]{30,}$/.test(t)){$('tgm').textContent='El código del bot no tiene el formato esperado (123456789:AA…).';return}
+        if(!/^-?\d+$/.test(c)){$('tgm').textContent='El ID del grupo debe ser un número, como -100123456789.';return}
+        TG={token:t,chat:c};setDoc(doc(db,'config','telegram'),TG).catch(wfail);$('tgt').value='';$('tgm').textContent='Guardado.'};
+      $('tgp').onclick=()=>tgSend(['✅ Prueba desde la app de la compra'],$('tgm'))};
+  }else if(SEC==='notes'){
+    html=back('🔄 Notas de productos')+`<div class="sub">Vuelve a consultar Open Food Facts de todas las marcas que tengan código de barras y recalcula sus notas. Las que tengan datos escritos a mano no se tocan.</div><div style="margin-top:14px"><button class="btn" id="rfa">🔄 Actualizar todas las notas</button></div>`;
+    wire=()=>{$('rfa').onclick=()=>refreshAll($('rfa'))};
+  }
+  $('sheet').innerHTML=html+`<div class="acts"><span></span><button class="btn g" id="cx">Cerrar</button></div>`;
+  $('modal').classList.add('show');$('cx').onclick=()=>{close();render()};
+  if(SEC)$('sbk').onclick=()=>stores('');
+  wire();
+}
+function close(){$('modal').classList.remove('show')}
+$('modal').onclick=e=>{if(e.target.id==='modal')close()};
+// Deslizar el dedo para cambiar de pestaña: izquierda = siguiente, derecha = anterior
+(()=>{let t0=null;const ORD=['list','sm','pr','cmp','rc','pl'];
+  document.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1||document.querySelector('.modal.show,#lb.show,#scan.show,#login.show')||e.target.closest('input,textarea,select,.tabs,details')){t0=null;return}
+    const t=e.touches[0];if(t.clientX<24||t.clientX>window.innerWidth-24){t0=null;return}
+    t0={x:t.clientX,y:t.clientY,t:Date.now()}},{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!t0)return;const t=e.changedTouches[0],dx=t.clientX-t0.x,dy=t.clientY-t0.y,dt=Date.now()-t0.t;t0=null;
+    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6||dt>700)return;
+    const inStore=S.stores.some(s=>s.id===cur),i=ORD.indexOf(cur);if(!inStore&&i<0)return;
+    const next=dx<0?(inStore?'pr':ORD[Math.min(i+1,ORD.length-1)]):(inStore?'sm':ORD[Math.max(i-1,0)]);
+    if(next===cur)return;cur=next;render();window.scrollTo(0,0)},{passive:true});
+})();
+render();startAuth();
+</script></body></html>
