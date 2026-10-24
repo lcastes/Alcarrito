@@ -62,13 +62,14 @@ input[type=date]{width:100%;padding:11px;border-radius:10px;border:1px solid var
 .qchip{margin-top:4px;background:var(--ac2);color:var(--ac);border:0;border-radius:12px;padding:3px 10px;font:inherit;font-size:13px;cursor:pointer}.qchip:not(.on){background:none;border:1px dashed var(--bd);color:var(--mu)}
 .irow{display:flex;gap:6px;align-items:flex-start;margin-top:8px}.irow .iq{width:68px;flex:none}.irow .iu{width:80px;flex:none}.ipw{flex:1;min-width:0}.irow .ip.linked{border-color:var(--ac);background:var(--ac2)}
 .isg{display:flex;flex-direction:column;gap:2px;margin-top:2px}.isb{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font:inherit;cursor:pointer}.irow .ix{background:none;border:0;color:var(--wa);font-size:18px;padding:8px 4px;cursor:pointer}
+.ocr{box-shadow:0 0 0 2px #e0b400!important}.ocrt{white-space:pre-wrap;font-size:12px;color:var(--mu);max-height:140px;overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;margin:6px 0}
 .sc-ex{background:#1e8f4e}.sc-bu{background:#6aa81f}.sc-me{background:#e2861b}.sc-ma{background:#d33a2c}
 .ns-a,.nv-1{background:#1e8f4e}.ns-b,.nv-2{background:#6aa81f}.ns-c,.nv-3{background:#e8a900;color:#222}.ns-d,.nv-4{background:#e2661b}.ns-e{background:#d33a2c}
 .orow .oc{flex:1 1 140px;width:auto;min-width:0}.orow .sb,.orow .sm2{padding:8px 12px}
 #scan{position:fixed;inset:0;background:#000;display:none;z-index:30;flex-direction:column}#scan.show{display:flex}
 #scan video{flex:1;width:100%;min-height:0;object-fit:cover}.scb{padding:14px;display:flex;justify-content:space-between;align-items:center;color:#fff;gap:10px}
 .addst{display:flex;gap:8px;flex-wrap:wrap}
-.orow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0 36px}.orow .ob{flex:1 1 calc(100% - 56px);width:auto;min-width:0}.oph{width:44px;height:44px;border-radius:8px;background:var(--ac2);display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;cursor:pointer;font-size:20px}.oph img{width:100%;height:100%;object-fit:cover}
+.orow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0 36px}.orow .ob{flex:1 1 calc(100% - 108px);width:auto;min-width:0}.oph{width:44px;height:44px;border-radius:8px;background:var(--ac2);display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;cursor:pointer;font-size:20px}.oph img{width:100%;height:100%;object-fit:cover}
 .bl{display:flex;gap:8px;align-items:center;margin-top:4px}.th2{width:34px;height:34px;border-radius:8px;object-fit:cover;flex:none}.th3{width:26px;height:26px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px}
 .orow .ob0{}.orow input[type=number]{width:92px;flex:none}.orow .kgv{flex:1;margin:0;min-width:70px}.orow .rm{padding:6px 10px}
 main{padding:12px;max-width:640px;margin:auto}
@@ -137,6 +138,11 @@ function delP(id){deleteDoc(doc(db,'products',id)).catch(wfail)}
 function putX(x){setDoc(doc(db,'extras',x.id),{name:x.name,cat:x.cat||'',done:!!x.done,ql:x.ql||[]}).catch(wfail)}
 function delX(id){deleteDoc(doc(db,'extras',id)).catch(wfail)}
 function putCats(l){S.cats=l;setDoc(doc(db,'config','cats'),{list:l}).catch(wfail)}
+const KINDS={'':'Automático',normal:'Normal',cheese:'Queso',bev:'Bebida',fresh:'Fresco / materia prima'};
+function inferKind(name){const n=norm(name);if(/\bquesos?\b/.test(n))return 'cheese';if(/bebida|zumo|refresco|infusion|cerveza|\bvinos?\b|\baguas?\b/.test(n))return 'bev';if(/fresc|natural|basico|materia prima/.test(n))return 'fresh';return 'normal'}
+const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));return c?(c.kind||inferKind(c.name)):'normal'};
+const kindFlags=()=>{const k=catKind({cat:$('cat')?$('cat').value:''});return {cheese:k==='cheese',bev:k==='bev'}};
+let MPREV=null;
 function putStores(l){S.stores=l;if(!['list','cmp','sm','pr','rc','pl'].includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
   setDoc(doc(db,'config','stores'),{list:l}).catch(wfail)}
 function showLogin(msg,btn){$('lmsg').textContent=msg;$('lbtn').style.display=btn?'':'none';$('login').classList.add('show')}
@@ -189,8 +195,8 @@ const prices=p=>{const r=[];Object.entries(p.e).forEach(([k,v])=>{if(!S.stores.s
   opts(v).forEach((o,i)=>{if(o.price>0)r.push({id:k,i,b:o.b||'',price:o.price,g:o.g||0,kg:kgOf(o.price,o.g||0),ns:o.ns||'',nova:o.nova||0,eco:o.eco||'',ad:o.ad==null?null:o.ad,og:o.og?1:0,ph:o.ph||'',np:o.np==null?null:o.np,lq:o.lq?1:0,ps:o.ps||'',nd:o.nd||''})})});return r};
 // Clasificación de aditivos: APROXIMADA y propia (no es la de Yuka). Edita estas listas si quieres.
 const HI=new Set(['e249','e250','e251','e252','e171','e123','e128','e924','e924a','e924b']);
-const MO=new Set(['e951','e950','e955','e954','e102','e104','e110','e122','e124','e129','e211','e320','e321','e150c','e150d','e220','e221','e222','e223','e224','e226','e227','e228','e338','e339','e340','e341','e450','e451','e452','e407','aroma']);
-const LO=new Set(['e330','e300','e322','e202','e415','e412','e440','e471','e500','e306','e307','e308','e309']);
+const MO=new Set(['e951','e950','e955','e954','e102','e104','e110','e122','e124','e129','e211','e320','e321','e150c','e150d','e220','e221','e222','e223','e224','e226','e227','e228','e338','e339','e340','e341','e450','e451','e452','e407','aroma','e621','e631','e627','e433','e432','e210','e212','e282','e952']);
+const LO=new Set(['e270','e296','e297','e260','e331','e333','e334','e301','e200','e203','e235','e410','e414','e401','e406','e460','e461','e472','e100','e101','e140','e160a','e160c','e160d','e163','e170','e150a','e422','e330','e300','e322','e202','e415','e412','e440','e471','e500','e306','e307','e308','e309']);
 const adList=x=>String(x.ad||'').split(',').filter(c=>c&&c[0]!=='_'); // los tokens que empiezan por _ son marcas internas (p. ej. _qs = queso sencillo), no aditivos
 let ADDS={},TG={};
 const kOf=c=>{const o=ADDS[c];if(o&&o.r)return o.r;return HI.has(c)?'r':MO.has(c)?'y':LO.has(c)?'g':'n'};
@@ -247,7 +253,16 @@ const ADI={
  e450:['Difosfatos','Estabilizante y gasificante (embutidos, bollería).',PHO],e451:['Trifosfatos','Estabilizante (embutidos, pescado procesado).',PHO],e452:['Polifosfatos','Estabilizante y retenedor de agua.',PHO],
  e407:['Carragenanos','Espesante y gelificante (lácteos, postres, fiambres).','Algunos estudios plantean posible irritación intestinal; se considera seguro a las dosis autorizadas.'],
  aroma:['Aromas (sin especificar)','Dan sabor al producto. Cuando la etiqueta solo dice «aromas», sin indicar que son naturales, no se sabe de qué tipo son.','Yuka los muestra como un aditivo («sabor artificial») porque no se declara su origen ni su composición.'],
- e306:['Extracto rico en tocoferoles','Antioxidante: evita que las grasas se pongan rancias.',NOP,'Son formas de la vitamina E.'],e307:['Alfa-tocoferol','Antioxidante.',NOP,'Es vitamina E.'],e308:['Gamma-tocoferol','Antioxidante.',NOP,'Es una forma de la vitamina E.'],e309:['Delta-tocoferol','Antioxidante.',NOP,'Es una forma de la vitamina E.'],
+ e270:['Ácido láctico','Acidulante y conservante (encurtidos, lácteos, bebidas).',NOP,'Se forma de manera natural en los lácteos fermentados.'],e296:['Ácido málico','Acidulante (refrescos, caramelos).',NOP,'Está presente de forma natural en la manzana.'],e297:['Ácido fumárico','Acidulante.',NOP],e260:['Ácido acético','Acidulante y conservante (es el componente del vinagre).',NOP],
+ e331:['Citratos de sodio','Regulador de acidez.',NOP],e333:['Citratos de calcio','Regulador de acidez y firmeza.',NOP],e334:['Ácido tartárico','Acidulante.',NOP],e301:['Ascorbato de sodio','Antioxidante.',NOP,'Es una forma de la vitamina C.'],e200:['Ácido sórbico','Conservante.',NOP],e203:['Sorbato cálcico','Conservante.',NOP],e235:['Natamicina','Conservante natural de la corteza de quesos y embutidos curados.',NOP],
+ e210:['Ácido benzoico','Conservante (refrescos, salsas).','Combinado con vitamina C puede formar benceno; algunos estudios lo relacionan con hiperactividad en niños.'],e212:['Benzoato potásico','Conservante (refrescos, salsas).','Combinado con vitamina C puede formar benceno; algunos estudios lo relacionan con hiperactividad en niños.'],e282:['Propionato cálcico','Conservante (pan y bollería).','Evidencia limitada de posibles efectos de irritabilidad en niños.'],
+ e410:['Goma garrofín','Espesante.',NOP],e414:['Goma arábiga','Espesante y estabilizante.',NOP],e401:['Alginato sódico','Espesante y gelificante.',NOP],e406:['Agar','Gelificante de origen vegetal (algas).',NOP],e460:['Celulosa','Espesante y antiaglomerante.',NOP],e461:['Metilcelulosa','Espesante.',NOP],e466:['Carboximetilcelulosa','Espesante y estabilizante.','En cantidades altas puede dar molestias digestivas.'],e472:['Ésteres de mono y diglicéridos','Emulgente.',NOP],e1422:['Almidón modificado','Espesante.','Se considera seguro a las dosis habituales.'],
+ e621:['Glutamato monosódico','Potenciador del sabor (snacks, sopas, salsas).','Algunas personas sensibles refieren molestias (dolor de cabeza, sofocos); se considera seguro a las dosis habituales.'],e631:['Inosinato disódico','Potenciador del sabor.','Aporta purinas; conviene limitarlo en personas con gota.'],e627:['Guanilato disódico','Potenciador del sabor.','Aporta purinas; conviene limitarlo en personas con gota.'],
+ e433:['Polisorbato 80','Emulgente (helados, salsas).','Algunos estudios en animales lo relacionan con alteraciones de la flora intestinal; evidencia limitada en personas.'],e432:['Polisorbato 20','Emulgente.','Algunos estudios en animales lo relacionan con alteraciones de la flora intestinal; evidencia limitada en personas.'],
+ e420:['Sorbitol','Edulcorante (polialcohol) y humectante.','En cantidades altas tiene efecto laxante.'],e421:['Manitol','Edulcorante (polialcohol).','En cantidades altas tiene efecto laxante.'],e422:['Glicerol','Humectante.',NOP],e953:['Isomalt','Edulcorante (polialcohol).','En cantidades altas tiene efecto laxante.'],e965:['Maltitol','Edulcorante (polialcohol).','En cantidades altas tiene efecto laxante.'],e967:['Xilitol','Edulcorante (polialcohol).','En cantidades altas tiene efecto laxante.'],e968:['Eritritol','Edulcorante (polialcohol).','En cantidades altas puede dar molestias digestivas.'],
+ e952:['Ciclamato','Edulcorante sin calorías.','No está autorizado en algunos países, como EE. UU.; evidencia limitada.',SWP],e960:['Glicósidos de esteviol (estevia)',SWT,'Se considera seguro a las dosis permitidas.',SWP],
+ e100:['Curcumina','Colorante amarillo (de la cúrcuma).',NOP],e101:['Riboflavina','Colorante amarillo.',NOP,'Es la vitamina B2.'],e120:['Cochinilla (ácido carmínico)','Colorante rojo de origen animal (insecto).','Puede provocar reacciones alérgicas en personas sensibles y no es apto para veganos.'],e140:['Clorofilas','Colorante verde.',NOP],e160a:['Carotenos','Colorante naranja.',NOP,'Son precursores de la vitamina A.'],e160b:['Annatto (bixina)','Colorante naranja.','Puede dar reacciones en personas sensibles.'],e160c:['Extracto de pimentón','Colorante rojo.',NOP],e160d:['Licopeno','Colorante rojo (del tomate).',NOP],e163:['Antocianinas','Colorante de origen vegetal.',NOP],e170:['Carbonato cálcico','Colorante blanco y regulador de acidez.',NOP,'Aporta calcio.'],e150a:['Caramelo','Colorante marrón.',NOP],
+ e306:['Extracto rico en tocoferoles\','Antioxidante: evita que las grasas se pongan rancias.',NOP,'Son formas de la vitamina E.'],e307:['Alfa-tocoferol','Antioxidante.',NOP,'Es vitamina E.'],e308:['Gamma-tocoferol','Antioxidante.',NOP,'Es una forma de la vitamina E.'],e309:['Delta-tocoferol','Antioxidante.',NOP,'Es una forma de la vitamina E.'],
  e330:['Ácido cítrico','Acidulante y conservante natural (refrescos, conservas).',NOP,'Está presente de forma natural en los cítricos.'],
  e300:['Ácido ascórbico','Antioxidante; evita que los alimentos se oscurezcan.',NOP,'Es la vitamina C.'],
  e322:['Lecitinas','Emulgente: mezcla agua y grasa (chocolate, margarinas, panes).','Si procede de soja, se declara como alérgeno; por lo demás, nada relevante a las dosis habituales.'],
@@ -334,10 +349,13 @@ function openSearch(row,apply){
 const FVRE=/tomat|naranja|orange|manzana|apple|zanahoria|carrot|cebolla|onion|pimiento|pepper|lim[oó]n|lemon|patata|potato|fruta|fruit|verdura|vegetable|espinaca|spinach|pl[aá]tano|banana|\buva|grape|fresa|strawberr|melocot|peach|\bpera\b|\bpear|pi[ñn]a\b|pineapple|mango|lechuga|lettuce|pepino|cucumber|calabac|zucchini|repollo|cabbage|br[oó]coli|broccoli|\bajo\b|garlic|champi|mushroom|jud[ií]a|\bbean|guisante|\bpea\b|lenteja|lentil|garbanzo|chickpea|aceituna|olive|frambuesa|raspberr|ar[aá]ndano|blueberr|cereza|cherr|albaricoque|apricot|mel[oó]n|sand[ií]a|watermelon|calabaza|pumpkin|remolacha|beet|puerro|leek|\bapio\b|celery|berenjena|aubergine|eggplant/i;
 const fvFromIng=list=>{let t=0;const walk=a=>(a||[]).forEach(i=>{if(i.ingredients&&i.ingredients.length)return walk(i.ingredients);
   const pc=i.percent_estimate??i.percent;if(pc>0&&FVRE.test((i.id||'')+' '+(i.text||'')))t+=pc});walk(list);return Math.min(100,t)};
+const ADN=[['acido citrico','e330'],['citrato de sodio','e331'],['citrato sodico','e331'],['citrato de calcio','e333'],['acido lactico','e270'],['acido malico','e296'],['acido fumarico','e297'],['acido acetico','e260'],['acido tartarico','e334'],['acido fosforico','e338'],['acido ascorbico','e300'],['ascorbato de sodio','e301'],['ascorbato sodico','e301'],['vitamina c','e300'],['tocoferol','e306'],['sorbato de potasio','e202'],['sorbato potasico','e202'],['sorbato de calcio','e203'],['sorbato calcico','e203'],['acido sorbico','e200'],['benzoato de sodio','e211'],['benzoato sodico','e211'],['benzoato de potasio','e212'],['benzoato potasico','e212'],['acido benzoico','e210'],['propionato de calcio','e282'],['propionato calcico','e282'],['natamicina','e235'],['nitrito de sodio','e250'],['nitrito sodico','e250'],['nitrito de potasio','e249'],['nitrito potasico','e249'],['nitrato de sodio','e251'],['nitrato sodico','e251'],['nitrato de potasio','e252'],['nitrato potasico','e252'],['dioxido de azufre','e220'],['metabisulfito','e223'],['bisulfito','e222'],['sulfito','e221'],['lecitina','e322'],['goma xantana','e415'],['goma guar','e412'],['goma garrofin','e410'],['goma de algarrobo','e410'],['goma arabiga','e414'],['goma de acacia','e414'],['pectina','e440'],['agar','e406'],['alginato','e401'],['carragenano','e407'],['metilcelulosa','e461'],['carboximetilcelulosa','e466'],['celulosa','e460'],['almidon modificado','e1422'],['mono y digliceridos','e471'],['monoglicerido','e471'],['polisorbato 80','e433'],['polisorbato 20','e432'],['bicarbonato sodico','e500'],['bicarbonato de sodio','e500'],['difosfato','e450'],['trifosfato','e451'],['polifosfato','e452'],['glutamato monosodico','e621'],['glutamato','e621'],['inosinato','e631'],['guanilato','e627'],['sucralosa','e955'],['aspartamo','e951'],['acesulfamo','e950'],['sacarina','e954'],['ciclamato','e952'],['glicosidos de esteviol','e960'],['sorbitol','e420'],['manitol','e421'],['xilitol','e967'],['eritritol','e968'],['maltitol','e965'],['isomalt','e953'],['glicerol','e422'],['curcumina','e100'],['riboflavina','e101'],['tartrazina','e102'],['amarillo anaranjado','e110'],['amarillo de quinoleina','e104'],['acido carminico','e120'],['cochinilla','e120'],['carmin','e120'],['azorrubina','e122'],['ponceau','e124'],['rojo allura','e129'],['clorofila','e140'],['betacaroteno','e160a'],['beta-caroteno','e160a'],['caroteno','e160a'],['bixina','e160b'],['annatto','e160b'],['capsantina','e160c'],['licopeno','e160d'],['antocianina','e163'],['dioxido de titanio','e171'],['butilhidroxianisol','e320'],['butilhidroxitolueno','e321']].map(([n,c])=>[new RegExp('\\b'+n+'(es|s)?\\b'),c]);
+function nameAdds(text){const t=norm(String(text||'')),o=[];ADN.forEach(([re,c])=>{if(re.test(t)&&!o.includes(c))o.push(c)});
+  if(/colorante[^,;.]{0,25}caramelo/.test(t)&&!o.some(c=>/^e150/.test(c)))o.push('e150a');return o}
 const SW=['e950','e951','e952','e954','e955','e957','e959','e960','e960a','e960b','e960c','e960d','e961','e962','e969'];
 function nsPoints(p){
   const n=p.nutriments||{},tags=p.categories_tags||[],has=(...k)=>k.some(x=>tags.includes(x));
-  const bev=has('en:beverages')&&!has('en:milks'),fat=has('en:fats','en:vegetable-fats','en:vegetable-oils','en:butters','en:margarines');
+  const bev=(has('en:beverages')&&!has('en:milks'))||!!p._bev,fat=has('en:fats','en:vegetable-fats','en:vegetable-oils','en:butters','en:margarines');
   const kj=n['energy-kj_100g']??n['energy_100g']??(n['energy-kcal_100g']!=null?n['energy-kcal_100g']*4.184:null);
   const sug=n['sugars_100g'],sat=n['saturated-fat_100g'];const sa=n['salt_100g'],so=n['sodium_100g'];let na=(sa!=null&&!isNaN(sa)&&sa<=100)?sa/2.5:null;
   if(so!=null&&!isNaN(so)&&so<=40&&(na==null||(so>=na*0.5&&so<=na*2)))na=so; // si sodio y sal no cuadran (error de unidades en la base de datos), mando la sal
@@ -357,7 +375,7 @@ function nsPoints(p){
   while((mm=re.exec(txt))){if(FVRE.test(mm[1])){const v=Math.min(100,parseFloat(mm[2].replace(',','.')));if(v>fv){fv=v;lab='según la etiqueta: '+mm[1].trim().toLowerCase()}}}
   const fp=bev?(fv>80?10:fv>60?4:fv>40?2:0):(fv>80?5:fv>60?2:fv>40?1:0);
   const fib=n['fiber_100g']||0,pro=n['proteins_100g']||0,fi=cnt(fib,[0.9,1.9,2.8,3.7,4.7]),pr=cnt(pro,[1.6,3.2,4.8,6.4,8]);
-  const prOk=bev||has('en:cheeses')||!(N>=11&&fp<5);
+  const prOk=bev||has('en:cheeses')||!!p._cheese||!(N>=11&&fp<5);
   const np=N-fi-fp-(prOk?pr:0),f1=v=>String(Math.round(v*10)/10).replace('.',',');
   const nd=`Datos usados: energía ${f1(kj)} kJ (${pe}), azúcares ${f1(sug)} g (${pz}), grasa saturada ${f1(sat)} g (${pg}), sodio ${Math.round(na*1000)} mg (${pn})${sw?', edulcorantes (+4)':''} · fruta y verdura ${f1(fv)} %${lab?' ('+lab+')':''} (−${fp}), fibra ${f1(fib)} g (−${fi}), proteínas ${f1(pro)} g (${prOk?'−'+pr:'no cuentan'}) · ${bev?'bebida':'alimento'}`;
   return {np,lq,ps:'o',nd};
@@ -366,11 +384,76 @@ const ingN=p=>{const c=a=>(a||[]).reduce((t,i)=>t+((i.ingredients&&i.ingredients
 const hasAroma=p=>{const t=[p.ingredients_text,p.ingredients_text_es,p.ingredients_text_en,p.ingredients_text_fr].filter(Boolean).join(' ; ')
   .replace(/aromas?\s+natural(es)?|natural(es)?\s+aromas?|natural\s+flavou?r(ing)?s?|flavou?r(ing)?s?\s+natural|ar[oô]mes?\s+naturel(le)?s?|sin\s+aromas?|no\s+(artificial\s+)?flavou?rs?|without\s+(artificial\s+)?flavou?rs?/gi,'');
   return /\b(aromas?|aromatizantes?|flavou?rings?|flavou?rs?|ar[oô]mes?)\b/i.test(t)};
+// ===== LECTURA DE FOTOS (OCR) de ingredientes y tabla nutricional =====
+function loadTess(){return window.Tesseract?Promise.resolve():new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>ko(new Error('lib'));document.head.appendChild(sc)})}
+function prepImage(file){return new Promise((ok,ko)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{
+  const z=Math.min(1,2000/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*z);cv.height=Math.round(im.height*z);
+  const cx=cv.getContext('2d');cx.drawImage(im,0,0,cv.width,cv.height);
+  const img=cx.getImageData(0,0,cv.width,cv.height),d=img.data,hist=new Array(256).fill(0);
+  for(let i=0;i<d.length;i+=4){const g=Math.round(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);d[i]=d[i+1]=d[i+2]=g;hist[g]++}
+  const tot=cv.width*cv.height;let lo=0,hi=255,a=0;
+  for(let v=0;v<256;v++){a+=hist[v];if(a>tot*0.02){lo=v;break}}a=0;for(let v=255;v>=0;v--){a+=hist[v];if(a>tot*0.02){hi=v;break}}
+  const sc=hi>lo?255/(hi-lo):1;for(let i=0;i<d.length;i+=4){const g=Math.max(0,Math.min(255,(d[i]-lo)*sc));d[i]=d[i+1]=d[i+2]=g}
+  cx.putImageData(img,0,0);URL.revokeObjectURL(u);ok(cv)};im.onerror=()=>ko(new Error('img'));im.src=u})}
+async function ocrImage(file,onProg){await loadTess();const cv=await prepImage(file);
+  const w=await Tesseract.createWorker('spa+eng',1,{logger:m=>{if(m.status==='recognizing text')onProg&&onProg(Math.round(m.progress*100))}});
+  try{try{await w.setParameters({tessedit_pageseg_mode:'6'})}catch(e){}const r=await w.recognize(cv);return (r.data&&r.data.text)||''}finally{try{await w.terminate()}catch(e){}}}
+function parseNutri(text){
+  const L=String(text||'').replace(/\r/g,'').split('\n').map(l=>l.trim().replace(/(\d)[oO](?=[\d.,\s]|$)/g,'$10').replace(/\bO(?=[,.]\d)/g,'0')).filter(Boolean);
+  const num=x=>parseFloat(String(x).replace(',','.'));let col=0;
+  const hd=L.find(l=>/100\s*(g|ml)/i.test(l)&&/(porci[oó]n|raci[oó]n|portion|serving)/i.test(l));
+  if(hd){col=hd.search(/100\s*(g|ml)/i)<hd.search(/(porci[oó]n|raci[oó]n|portion|serving)/i)?0:1}
+  const pick=a=>a.length?a[Math.min(col,a.length-1)]:null;
+  const grams=(l,kw)=>{const i=l.search(kw);const rest=i>=0?l.slice(i).replace(kw,' '):l;
+    let v=[...rest.matchAll(/(\d+(?:[.,]\d+)?)\s*(mg|µg|mcg|g)\b/gi)].map(m=>/mg/i.test(m[2])?num(m[1])/1000:/µg|mcg/i.test(m[2])?num(m[1])/1e6:num(m[1]));
+    if(!v.length)v=[...rest.matchAll(/(\d+(?:[.,]\d+)?)/g)].map(m=>num(m[1]));return pick(v)};
+  const find=(re,not)=>{for(let i=0;i<L.length;i++){if(re.test(L[i])&&!(not&&not.test(L[i]))){let l=L[i];if(!/\d/.test(l)&&L[i+1])l+=' '+L[i+1];return l}}return null};
+  const out={kcal:null,kj:null,sz:null,sf:null,sl:null,fb:null,pr:null};
+  const le=find(/valor\s+energ|energ[ií]a|energy/i);
+  if(le){const kj=[...le.matchAll(/(\d+(?:[.,]\d+)?)\s*kj/gi)].map(m=>num(m[1])),kc=[...le.matchAll(/(\d+(?:[.,]\d+)?)\s*kcal/gi)].map(m=>num(m[1]));out.kj=pick(kj);out.kcal=pick(kc)}
+  let l=find(/saturad|saturates?\b|saturated/i);if(l)out.sf=grams(l,/de\s+las\s+cuales\s+saturadas|saturadas?|of\s+which\s+saturat(es|ed)|saturat(es|ed)(\s+fat)?/i);
+  l=find(/az[uú]cares|sugars/i,/polialcohol/i);if(l)out.sz=grams(l,/de\s+los\s+cuales\s+az[uú]cares|az[uú]cares|sugars/i);
+  l=find(/fibra|fib(er|re)/i);if(l)out.fb=grams(l,/fibra\s+alimentaria|fibra|fib(er|re)/i);
+  l=find(/prote[ií]nas?|protein/i);if(l)out.pr=grams(l,/prote[ií]nas?|protein/i);
+  l=find(/\bsal\b|\bsalt\b/i);if(l)out.sl=grams(l,/\bsal\b|\bsalt\b/i);
+  else{l=find(/sodio|sodium/i);if(l){const v=grams(l,/sodio|sodium/i);if(v!=null)out.sl=Math.round(v*2.5*1000)/1000}}
+  return out}
+function splitTop(t){const o=[];let d=0,c='';for(const ch of t){if(ch==='(')d++;if(ch===')')d=Math.max(0,d-1);if((ch===','||ch===';')&&d===0){o.push(c);c=''}else c+=ch}o.push(c);return o.map(x=>x.trim().replace(/\.$/,'')).filter(Boolean)}
+function parseIngText(text){
+  let t=String(text||'').replace(/\s*\n\s*/g,' ').replace(/\s+/g,' ').trim();const full=t;
+  const m=t.match(/ingredientes?\s*[:.]?\s*/i);if(m)t=t.slice(m.index+m[0].length);
+  t=t.replace(/\s*(puede contener|contiene trazas|trazas de|informaci[oó]n nutricional|valores medios|conservar|consumir preferentemente|modo de empleo|elaborado en|envasado en).*/i,'').trim();
+  const items=splitTop(t),codes=[],byName=[];
+  [...t.matchAll(/\bE\s?-?\s?(\d{3,4}[a-z]?)\b/gi)].forEach(x=>{const c='e'+x[1].toLowerCase();if(!codes.includes(c))codes.push(c)});
+  const nt=nName(t);nameAdds(t).forEach(c=>{if(!codes.includes(c)){codes.push(c);byName.push(((ADI[c]||[c.toUpperCase()])[0]).split('(')[0].trim()+' ('+c.toUpperCase()+')')}});
+  Object.entries(ADI).forEach(([c,v])=>{if(c==='aroma'||codes.includes(c))return;const nm=nName(String(v[0]).split('(')[0]);if(nm.length>4&&nt.includes(nm)){codes.push(c);byName.push(String(v[0]).split('(')[0].trim()+' ('+c.toUpperCase()+')')}});
+  let fv=null;
+  [...t.matchAll(/([a-záéíóúñü' -]{3,40}?)\s*\(?\s*(\d+(?:[.,]\d+)?)\s*%/gi)].forEach(x=>{if(FVRE.test(x[1])){const v=parseFloat(x[2].replace(',','.'));if(v>(fv||0))fv=Math.min(100,v)}});
+  [...t.matchAll(/(\d+(?:[.,]\d+)?)\s*%\s*(?:de\s+)?([a-záéíóúñü ]{3,30})/gi)].forEach(x=>{if(FVRE.test(x[2])){const v=parseFloat(x[1].replace(',','.'));if(v>(fv||0))fv=Math.min(100,v)}});
+  [...t.matchAll(/([a-záéíóúñü' -]{3,40}?)\s*\(\s*(\d+(?:[.,]\d+)?)\s*g\s*(?:per|por|pour|für|pro)\s*100\s*g/gi)].forEach(x=>{if(FVRE.test(x[1])){const v=Math.min(100,parseFloat(x[2].replace(',','.')));if(v>(fv||0))fv=v}});
+  if(items.length===1&&FVRE.test(items[0])&&fv==null)fv=100;
+  return {codes,byName,aroma:hasAroma({ingredients_text:t}),og:/ecol[oó]gic|agricultura\s+ecol|\bbio\b|organic/i.test(full),n:items.length,fv,block:t}}
+function applyOcr(kind,text){
+  const filled=[],set=(id,v,lab)=>{if(v==null||isNaN(v))return;$(id).value=String(Math.round(v*1000)/1000);$(id).classList.add('ocr');filled.push(lab)};let extra='';
+  if(kind==='n'){const r=parseNutri(text);
+    if(r.kcal!=null){set('me',r.kcal,'energía');$('meu').value='kcal'}else if(r.kj!=null){set('me',r.kj,'energía');$('meu').value='kj'}
+    set('msz',r.sz,'azúcares');set('msf',r.sf,'grasa saturada');set('msl',r.sl,'sal');set('mfb',r.fb,'fibra');set('mpr',r.pr,'proteínas');$('mptn').textContent=text}
+  else{const r=parseIngText(text);
+    if(r.codes.length){const prev=String($('mad').value).toLowerCase().match(/e\s*-?\s*\d{3,4}[a-z]?/g)||[];const all=[...new Set([...prev.map(c=>c.replace(/[\s-]/g,'')),...r.codes])];$('mad').value=all.map(c=>c.toUpperCase()).join(', ');$('mad').classList.add('ocr');filled.push('aditivos')}
+    if(r.byName.length)extra=' Aditivos reconocidos por su nombre: '+r.byName.join(', ')+'.';
+    if(r.aroma){$('mar').checked=true;filled.push('aromas')}if(r.og){$('mog').checked=true;filled.push('ecológico')}
+    set('mfv',r.fv,'fruta y verdura');set('mni',r.n,'nº de ingredientes');$('mpti').textContent=text}
+  $('mpst').textContent=filled.length?'He leído: '+filled.join(', ')+'.'+extra+' Revisa los campos marcados en amarillo y corrige lo que haga falta antes de calcular.':'No he encontrado datos en esa foto. Prueba con más luz, la tabla bien enfocada y sin reflejos.'}
 function openManual(row){
   let m={};try{m=JSON.parse(row.dataset.mn||'{}')}catch(e){}
   const v=k=>m[k]===undefined||m[k]===null?'':m[k];
   const fld=(id,l,k)=>`<div style="flex:1;min-width:120px"><label class="f">${l}</label><input type="number" id="${id}" step="any" inputmode="decimal" value="${esc(v(k))}"></div>`;
   $('mnsheet').innerHTML=`<h2>Datos a mano</h2><div class="sub">Valores por 100 g (o 100 ml), tal como salen en la etiqueta o en Yuka. Si escribes datos aquí, tienen prioridad sobre los de Open Food Facts en esta marca.</div>
+  <div class="sub" style="margin-top:10px"><b>📷 Leer desde fotos</b> (opcional): haz una foto de la tabla nutricional y otra de los ingredientes y rellenará los campos. Después revisa lo que ha leído. La imagen se procesa en tu móvil; no se sube a ningún sitio.</div>
+  <div class="sub" style="margin-top:8px"><b>Tabla nutricional</b></div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="mph1c" hidden></label><label class="btn g">🖼️ Elegir archivo<input type="file" accept="image/*" id="mph1" hidden></label></div>
+  <div class="sub" style="margin-top:8px"><b>Ingredientes</b></div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="mph2c" hidden></label><label class="btn g">🖼️ Elegir archivo<input type="file" accept="image/*" id="mph2" hidden></label></div>
+  <div class="sub" id="mpst" style="margin-top:6px"></div>
+  <details><summary class="sub">Texto leído (para comprobar)</summary><pre id="mptn" class="ocrt"></pre><pre id="mpti" class="ocrt"></pre></details>
   <label class="f">Tipo de producto</label><select id="mt"><option value="food">Alimento</option><option value="bev">Bebida (zumos, refrescos, leches vegetales…)</option><option value="cheese">Queso</option></select>
   <div class="srow" style="flex-wrap:wrap">${fld('me','Energía','e')}<div style="width:96px"><label class="f">Unidad</label><select id="meu"><option value="kcal">kcal</option><option value="kj">kJ</option></select></div></div>
   <div class="srow" style="flex-wrap:wrap">${fld('msz','Azúcares (g)','sz')}${fld('msf','Grasa saturada (g)','sf')}</div>
@@ -385,6 +468,11 @@ function openManual(row){
   $('mt').value=m.t||'food';$('meu').value=m.eu||'kcal';$('mar').checked=!!m.ar;$('mog').checked=!!m.og;
   const tg=()=>{$('mnr').style.display=$('mt').value==='cheese'?'':'none'};$('mt').onchange=tg;tg();
   $('mnl').classList.add('show');
+  const ph=(inp,kind)=>{$(inp).onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
+    $('mpst').textContent='Leyendo la foto… (la primera vez descarga el lector, puede tardar un poco)';
+    try{const text=await ocrImage(f,pc=>{$('mpst').textContent='Leyendo la foto… '+pc+' %'});applyOcr(kind,text)}
+    catch(e){$('mpst').textContent=(e&&e.message==='lib')?'No he podido cargar el lector de fotos (¿sin conexión?). Escribe los datos a mano.':'No he podido leer esa foto. Prueba con más luz o escribe los datos a mano.'}}};
+  ph('mph1','n');ph('mph2','i');ph('mph1c','n');ph('mph2c','i');
   $('mncx').onclick=()=>$('mnl').classList.remove('show');
   if(row.dataset.mn)$('mnrm').onclick=()=>{row.dataset.mn='';row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.querySelector('.osc').innerHTML='';$('mnl').classList.remove('show')};
   $('mncalc').onclick=()=>{
@@ -638,7 +726,7 @@ function pickSlot(rc,sv){
 function editRecipe(id){
   const rc=id?JSON.parse(JSON.stringify(S.recipes.find(x=>x.id===id))):{id:'r'+Date.now(),title:'',photo:'',servings:2,it:'',steps:'',url:'',tags:[],notes:'',cat:''};
   const d=mdl(`<h2>${id?'Editar receta':'Nueva receta'}</h2>
-  <div class="photo"><div id="rpv">${rc.photo?`<img class="th" src="${rc.photo}" alt="">`:'<div class="th">🍳</div>'}</div><label class="btn g">📷 Foto<input type="file" accept="image/*" id="rfo" hidden></label></div>
+  <div class="photo"><div id="rpv">${rc.photo?`<img class="th" src="${rc.photo}" alt="">`:'<div class="th">🍳</div>'}</div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="rfo2" hidden></label><label class="btn g">🖼️ Archivos<input type="file" accept="image/*" id="rfo" hidden></label></div></div>
   <label class="f">Título</label><input type="text" id="rti" value="${esc(rc.title)}" placeholder="Lentejas estofadas">
   <label class="f">Categoría</label><select id="rca"><option value="">Sin categoría</option>${[...new Set([...S.rcats,rc.cat].filter(Boolean))].map(c=>`<option value="${esc(c)}" ${rc.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
   <label class="f">Para cuántas personas</label><input type="number" id="rsv" min="1" value="${rc.servings||2}">
@@ -653,7 +741,7 @@ function editRecipe(id){
   const allT=[...new Set(S.recipes.flatMap(x=>x.tags||[]))];
   q('#rtc').innerHTML=allT.map(t=>`<button class="chip" data-tg2="${esc(t)}" type="button">#${esc(t)}</button>`).join('');
   q('#rtc').onclick=ev=>{const b=ev.target.closest('[data-tg2]');if(!b)return;const c2=q('#rta').value.split(',').map(x=>x.trim()).filter(Boolean);if(!c2.includes(b.dataset.tg2)){c2.push(b.dataset.tg2);q('#rta').value=c2.join(', ')}};
-  q('#rfo').onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{rc.photo=u;q('#rpv').innerHTML=`<img class="th" src="${u}" alt="">`})};
+  const rph=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{rc.photo=u;q('#rpv').innerHTML=`<img class="th" src="${u}" alt="">`})};q('#rfo').onchange=rph;q('#rfo2').onchange=rph;
   q('#rcx').onclick=()=>d.remove();
   if(id)q('#rdl').onclick=()=>{if(confirm('¿Eliminar esta receta? Se quitará también del planning.')){deleteDoc(doc(db,'recipes',id)).catch(wfail);Object.keys(S.plan).forEach(k=>{const dd=getDay(k);let ch=false;SLS.forEach(sl=>{const n=dd[sl].length;dd[sl]=dd[sl].filter(e=>e.r!==id);if(dd[sl].length!==n)ch=true});if(ch)savePlan(k,dd)});d.remove()}};
   q('#rsa').onclick=()=>{const t=q('#rti').value.trim();if(!t){q('#rti').focus();return}
@@ -710,10 +798,10 @@ function planView(){
       return `<button class="mcell ${k===today?'today':''}" data-pc="${k}"><b>${i+1}</b>${ev.slice(0,3).map(t=>`<span>${esc(t)}</span>`).join('')}${ev.length>3?`<span>+${ev.length-3}</span>`:''}</button>`}).join('')+'</div>'}
   return `<div class="plbar"><div class="seg seg2"><button class="btn ${PL.view==='week'?'':'g'}" data-pv="week">📅 Vista semanal</button><button class="btn ${PL.view==='month'?'':'g'}" data-pv="month">🗓️ Vista mensual</button></div><div class="seg"><button class="btn g" data-pn="-1">‹</button><button class="btn g" data-pn="0">Hoy</button><button class="btn g" data-pn="1">›</button></div></div>
   <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn" data-pg="1" style="width:100%;margin-top:12px">🛒 Agregar a la lista de la compra</button>`}
-async function lookup(code){
+async function lookup(code,fl){fl=fl||{};
   const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score`);
-  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'',q=nsPoints(p);
-  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>t.replace(/^[a-z]{2}:/,'')),...(hasAroma(p)?['aroma']:[])];if(!a.length&&(p.categories_tags||[]).includes('en:cheeses')&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||''};
+  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'',p._cheese=!!fl.cheese;p._bev=!!fl.bev;const q=nsPoints(p);
+  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>t.replace(/^[a-z]{2}:/,'')),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||''};
 }
 const loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s)});
 function scanCode(){return new Promise(async resolve=>{
@@ -740,7 +828,7 @@ const bestO=(p,sid)=>rank(prices(p).filter(x=>x.id===sid))[0];
 const lbl=x=>esc(sname(x.id))+(x.b?' · '+esc(x.b):'');
 const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const brands=p=>Object.values(p.e).flatMap(v=>opts(v).map(o=>o.b||''));
-const keep=p=>(!FC||(FC==='-'?!S.cats.some(c=>c.id===p.cat):p.cat===FC))&&(!Q.trim()||[p.name,...brands(p)].some(t=>norm(t).includes(norm(Q.trim()))));
+const keep=p=>(!FC||(FC==='@fresh'?catKind(p)==='fresh':FC==='@pack'?catKind(p)!=='fresh':FC==='-'?!S.cats.some(c=>c.id===p.cat):p.cat===FC))&&(!Q.trim()||[p.name,...brands(p)].some(t=>norm(t).includes(norm(Q.trim()))));
 const useKg=l=>l.length>1&&l.every(x=>x.kg>0);
 const rank=l=>{const k=useKg(l);return [...l].sort((a,b)=>k?a.kg-b.kg:a.price-b.price)};
 const priceTxt=e=>e.price>0?eur(e.price)+(e.g>0?' ('+e.g+' g) · '+eurkg(kgOf(e.price,e.g)):''):'Sin precio';
@@ -760,7 +848,7 @@ function render(){
   try{const on=$('tabs').querySelector('.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'})}catch(e){}
   const xs=$('xc'),pv=xs.value;xs.innerHTML=catOpts(pv);if(xs.selectedIndex<0)xs.selectedIndex=0;
   $('quick').style.display=cur==='list'?'flex':'none';
-  const fs=$('fc');fs.innerHTML='<option value="">Todas las categorías</option>'+S.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')+'<option value="-">Sin categoría</option>';
+  const fs=$('fc');fs.innerHTML='<option value="">Todas las categorías</option><option value="@fresh">🥬 Solo frescos</option><option value="@pack">📦 Solo envasados</option>'+S.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')+'<option value="-">Sin categoría</option>';
   if(![...fs.options].some(o=>o.value===FC))FC='';fs.value=FC;
   $('filt').style.display=(inStore||cur==='pr'||cur==='cmp'||cur==='rc')?'flex':'none';$('fc').style.display=cur==='rc'?'none':'';$('q').placeholder=cur==='rc'?'Buscar receta, etiqueta o ingrediente…':'Buscar producto o marca…';$('fab').textContent=cur==='rc'?'+ Receta':'+ Añadir';
   const m=$('main');
@@ -898,7 +986,7 @@ async function refreshAll(btn){
   if(!items.length){btn.textContent='No hay marcas con código de barras';return}
   let ok=0;btn.disabled=true;
   for(let k=0;k<items.length;k++){const it=items[k];btn.textContent=`Actualizando ${k+1}/${items.length}…`;
-    try{const d=await lookup(it.bc);const p=S.products.find(x=>x.id===it.pid);
+    try{const p=S.products.find(x=>x.id===it.pid),kk=catKind(p);const d=await lookup(it.bc,{cheese:kk==='cheese',bev:kk==='bev'});
       if(d&&p&&p.e[it.sid]&&p.e[it.sid].o[it.i]){const q=JSON.parse(JSON.stringify(p));
         Object.assign(q.e[it.sid].o[it.i],{ns:d.ns,nova:d.nova,eco:d.eco,ad:d.ad==null?null:d.ad,og:d.og,np:d.np==null?null:d.np,lq:d.lq?1:0,ps:d.ps||'',nd:d.nd||''});putP(q);ok++}
     }catch(e){}
@@ -923,39 +1011,41 @@ function mergeInto(pid){
   t.isNew=false;edit=t;drawForm();
 }
 function drawForm(){
-  const id=!edit.isNew,top=$('sheet').scrollTop;
+  const id=!edit.isNew,top=$('sheet').scrollTop;$('sheet').classList.remove('fresh');
   const inS=S.stores.filter(s=>edit.e[s.id]),outS=S.stores.filter(s=>!edit.e[s.id]);
   $('sheet').innerHTML=`<h2>${id?'Editar producto':'Nuevo producto'}</h2>
-  <div class="photo"><div id="pv">${thumb(edit)}</div><label class="btn g">📷 Foto general<input type="file" accept="image/*" id="file" hidden></label></div>
+  <div class="photo"><div id="pv">${thumb(edit)}</div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="file2" hidden></label><label class="btn g">🖼️ Archivos<input type="file" accept="image/*" id="file" hidden></label></div></div>
   <label class="f">Nombre del producto</label><input type="text" id="name" value="${esc(edit.name)}" placeholder="Varitas de merluza"><div class="addst" id="sug" style="margin-top:6px"></div>
   <label class="f">Categoría</label><select id="cat">${catOpts(edit.cat||'')}</select>
   ${inS.length?'<label class="f">Marca (opcional), precio y gramos en cada tienda. Con «+ Otra marca» metes varias y se comparan todas.</label>':''}
   ${inS.map(s=>{const e=edit.e[s.id],o=(e.o&&e.o.length)?e.o:[{b:'',price:0,g:0}];
     return `<div class="sbox"><div class="srow"><span><b>${esc(s.name)}</b></span><button class="btn g" data-ao="${s.id}">+ Otra marca</button><button class="btn r" data-rs="${s.id}">Quitar</button></div>
-    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ql="${esc(JSON.stringify(x.ql||[]))}" data-ph="${x.ph||''}"><label class="oph" title="Foto de esta marca"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'📷'}</span><input type="file" accept="image/*" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
+    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ql="${esc(JSON.stringify(x.ql||[]))}" data-ph="${x.ph||''}"><label class="oph" title="Elegir de archivos"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'🖼️'}</span><input type="file" accept="image/*" class="ofile" hidden></label><label class="oph" title="Hacer foto">📷<input type="file" accept="image/*" capture="environment" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
   ${outS.length?`<label class="f">${inS.length?'¿Se vende en otra tienda? Añádela:':'¿Dónde se vende? Elige la tienda:'}</label><div class="addst">${outS.map(s=>`<button class="btn g" data-as="${s.id}">+ ${esc(s.name)}</button>`).join('')}</div>`:''}
   <div class="acts">${id?'<button class="btn r" id="del">Eliminar</button>':'<span></span>'}<span><button class="btn g" id="cx">Cancelar</button> <button class="btn" id="ok">Guardar</button></span></div>`;
-  $('file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
+  const gph=ev=>{const f=ev.target.files[0];if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
     im.onload=()=>{const z=520/Math.max(im.width,im.height,520),cv=document.createElement('canvas');cv.width=im.width*z;cv.height=im.height*z;
-      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);edit.photo=cv.toDataURL('image/jpeg',.7);$('pv').innerHTML=thumb(edit);URL.revokeObjectURL(u)};im.src=u};
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);edit.photo=cv.toDataURL('image/jpeg',.7);$('pv').innerHTML=thumb(edit);URL.revokeObjectURL(u)};im.src=u};$('file').onchange=gph;$('file2').onchange=gph;
   const upd=r=>{const k=kgOf(n2(r.querySelector('.op').value),n2(r.querySelector('.og').value));r.querySelector('.kgv').textContent=k>0?'= '+eurkg(k):''};
   shAll('.orow').forEach(r=>{upd(r);r.querySelectorAll('input').forEach(i=>i.oninput=()=>upd(r))});
   const apply=async(row,raw)=>{const st=row.querySelector('.osc'),code=String(raw||'').replace(/\D/g,'');row.querySelector('.oc').value=code;
     const clr=()=>{if(row.dataset.mn)return;row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd=''};
     if(code.length<8){clr();st.innerHTML='';return}
     st.textContent='Buscando en Open Food Facts…';
-    try{const d=await lookup(code);
+    try{const d=await lookup(code,kindFlags());
       if(!d){clr();st.textContent='No encontrado en Open Food Facts';return}
       row.dataset.ns=d.ns;row.dataset.nova=d.nova;row.dataset.eco=d.eco;row.dataset.ad=d.ad==null?'?':d.ad;row.dataset.og=d.og;row.dataset.np=d.np==null?'':d.np;row.dataset.lq=d.lq?1:0;row.dataset.ps=d.ps||'';row.dataset.nd=d.nd||'';row.dataset.mn='';
       const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
-      st.innerHTML=(bdg(d,tt)?bdg(d,tt)+' '+det(d):((d.ns||d.np!=null)?'Faltan los ingredientes en Open Food Facts (sin nota)':'Sin datos nutricionales en Open Food Facts (sin nota)'))+(d.name?' <span>'+esc(d.name)+'</span>':'')
+      st.innerHTML=(bdg(d,tt)?bdg(d,tt)+' '+det(d):((d.ns||d.np!=null)?'Faltan los ingredientes en Open Food Facts (sin nota). Pulsa «✍️ A mano» para leerlos de una foto':'Sin datos nutricionales en Open Food Facts (sin nota). Pulsa «✍️ A mano» para leerlos de una foto'))+(d.name?' <span>'+esc(d.name)+'</span>':'')
     }catch(e){st.textContent='No se pudo consultar (¿sin conexión?)'}};
   shAll('.orow').forEach(row=>{row.querySelector('.oc').onchange=e=>apply(row,e.target.value);
     row.querySelector('.sb').onclick=async()=>{const c=await scanCode();if(c)apply(row,c)};
     row.querySelector('.sq').onclick=()=>openSearch(row,apply);
     row.querySelector('.sm2').onclick=()=>openManual(row)});
   shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if((row.dataset.ad==='?'||!row.dataset.nd)&&c.length>=8)apply(row,c)});
-  shAll('.orow').forEach(row=>{row.querySelector('.ofile').onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{row.dataset.ph=u;row.querySelector('.opi').innerHTML=`<img src="${u}" alt="">`})}});
+  shAll('.orow').forEach(row=>{row.querySelectorAll('.ofile').forEach(fi=>{fi.onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{row.dataset.ph=u;row.querySelector('.opi').innerHTML=`<img src="${u}" alt="">`})}})});
+  const applyKindUI=()=>{$('sheet').classList[catKind({cat:$('cat').value})==='fresh'?'add':'remove']('fresh')};
+  $('cat').onchange=()=>{applyKindUI();shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if(c.length>=8&&!row.dataset.mn)apply(row,c)})};applyKindUI();
   shAll('[data-as]').forEach(b=>b.onclick=()=>{syncForm();edit.e[b.dataset.as]={done:false,need:false,o:[{b:'',price:0,g:0}]};drawForm()});
   shAll('[data-rs]').forEach(b=>b.onclick=()=>{syncForm();delete edit.e[b.dataset.rs];drawForm()});
   shAll('[data-ao]').forEach(b=>b.onclick=()=>{syncForm();const e=edit.e[b.dataset.ao];
@@ -1002,9 +1092,10 @@ function stores(sec){
         const id=b.dataset.d;putStores(S.stores.filter(x=>x.id!==id));
         S.products.forEach(p=>{if(!p.e[id])return;const q=JSON.parse(JSON.stringify(p));delete q.e[id];Object.keys(q.e).length?putP(q):delP(p.id)});stores()})};
   }else if(SEC==='cats'){
-    html=back('🏷️ Categorías de productos')+(S.cats.map(c=>`<div class="srow"><span>${esc(c.name)}</span><button class="btn r" data-dc="${c.id}">Quitar</button></div>`).join('')||'<div class="sub">No hay categorías.</div>')
-      +`<label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas…"><button class="btn" id="addc">Añadir</button></div>`;
+    html=back('🏷️ Categorías de productos')+(S.cats.map(c=>`<div class="srow"><span>${esc(c.name)}</span><select data-ck="${c.id}" style="max-width:160px;flex:none">${Object.entries(KINDS).map(([k,l])=>`<option value="${k}" ${(c.kind||'')===k?'selected':''}>${k===''?'Auto ('+KINDS[inferKind(c.name)]+')':l}</option>`).join('')}</select><button class="btn r" data-dc="${c.id}">Quitar</button></div>`).join('')||'<div class="sub">No hay categorías.</div>')
+      +`<div class="sub" style="margin-top:8px">Tipo de análisis: <b>Queso</b> analiza los productos de esa categoría como queso; <b>Bebida</b> usa la escala de bebidas; <b>Fresco</b> es para materia prima (sin código de barras ni nota) y se puede filtrar aparte. «Auto» lo deduce del nombre.</div><label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas…"><button class="btn" id="addc">Añadir</button></div>`;
     wire=()=>{
+      document.querySelectorAll('[data-ck]').forEach(sl=>sl.onchange=()=>{putCats(S.cats.map(c=>c.id===sl.dataset.ck?{...c,kind:sl.value}:c));stores()});
       $('addc').onclick=()=>{const n=$('nc').value.trim();if(n){putCats([...S.cats,{id:'c'+Date.now(),name:n}]);stores()}};
       document.querySelectorAll('[data-dc]').forEach(b=>b.onclick=()=>{if(!confirm('¿Quitar esta categoría? Sus productos pasarán a «Sin categoría».'))return;
         const id=b.dataset.dc;putCats(S.cats.filter(c=>c.id!==id));
@@ -1036,7 +1127,7 @@ function stores(sec){
   if(SEC)$('sbk').onclick=()=>stores('');
   wire();
 }
-function close(){$('modal').classList.remove('show')}
+function close(){$('modal').classList.remove('show');$('sheet').classList.remove('fresh')}
 $('modal').onclick=e=>{if(e.target.id==='modal')close()};
 // Deslizar el dedo para cambiar de pestaña: izquierda = siguiente, derecha = anterior
 (()=>{let t0=null;const ORD=['list','sm','pr','cmp','rc','pl'];
