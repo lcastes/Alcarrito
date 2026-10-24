@@ -63,6 +63,9 @@ input[type=date]{width:100%;padding:11px;border-radius:10px;border:1px solid var
 .irow{display:flex;gap:6px;align-items:flex-start;margin-top:8px}.irow .iq{width:68px;flex:none}.irow .iu{width:80px;flex:none}.ipw{flex:1;min-width:0}.irow .ip.linked{border-color:var(--ac);background:var(--ac2)}
 .isg{display:flex;flex-direction:column;gap:2px;margin-top:2px}.isb{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font:inherit;cursor:pointer}.irow .ix{background:none;border:0;color:var(--wa);font-size:18px;padding:8px 4px;cursor:pointer}
 .ocr{box-shadow:0 0 0 2px #e0b400!important}.ocrt{white-space:pre-wrap;font-size:12px;color:var(--mu);max-height:140px;overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;margin:6px 0}
+.pbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.pbtns .btn{flex:1;min-width:130px;text-align:center}
+.sheet.fresh .orow .oc,.sheet.fresh .orow .sb,.sheet.fresh .orow .sq,.sheet.fresh .orow .sm2,.sheet.fresh .orow .osc{display:none}
+.mpre{margin-top:12px;padding:10px;border:1px dashed var(--bd);border-radius:12px}.mpre .nsb{pointer-events:none}
 .sc-ex{background:#1e8f4e}.sc-bu{background:#6aa81f}.sc-me{background:#e2861b}.sc-ma{background:#d33a2c}
 .ns-a,.nv-1{background:#1e8f4e}.ns-b,.nv-2{background:#6aa81f}.ns-c,.nv-3{background:#e8a900;color:#222}.ns-d,.nv-4{background:#e2661b}.ns-e{background:#d33a2c}
 .orow .oc{flex:1 1 140px;width:auto;min-width:0}.orow .sb,.orow .sm2{padding:8px 12px}
@@ -443,6 +446,7 @@ function applyOcr(kind,text){
     if(r.byName.length)extra=' Aditivos reconocidos por su nombre: '+r.byName.join(', ')+'.';
     if(r.aroma){$('mar').checked=true;filled.push('aromas')}if(r.og){$('mog').checked=true;filled.push('ecológico')}
     set('mfv',r.fv,'fruta y verdura');set('mni',r.n,'nº de ingredientes');$('mpti').textContent=text}
+  if(MPREV)MPREV();
   $('mpst').textContent=filled.length?'He leído: '+filled.join(', ')+'.'+extra+' Revisa los campos marcados en amarillo y corrige lo que haga falta antes de calcular.':'No he encontrado datos en esa foto. Prueba con más luz, la tabla bien enfocada y sin reflejos.'}
 function openManual(row){
   let m={};try{m=JSON.parse(row.dataset.mn||'{}')}catch(e){}
@@ -464,8 +468,9 @@ function openManual(row){
   <label class="srow" style="margin-top:10px"><input type="checkbox" id="mar"> <span>Lleva «aromas» sin especificar (no «naturales»)</span></label>
   <label class="srow" style="margin-top:6px"><input type="checkbox" id="mog"> <span>Es ecológico</span></label>
   <div id="mnr" style="display:none">${fld('mni','Nº de ingredientes del queso','ni')}</div>
+  <div id="mpre" class="mpre"></div>
   <div class="acts"><button class="btn g" id="mncx">Cancelar</button><span>${row.dataset.mn?'<button class="btn r" id="mnrm">Quitar datos a mano</button> ':''}<button class="btn" id="mncalc">Calcular nota</button></span></div>`;
-  $('mt').value=m.t||'food';$('meu').value=m.eu||'kcal';$('mar').checked=!!m.ar;$('mog').checked=!!m.og;
+  $('mt').value=m.t||(({cheese:'cheese',bev:'bev'})[catKind({cat:$('cat')?$('cat').value:''})]||'food');$('meu').value=m.eu||'kcal';$('mar').checked=!!m.ar;$('mog').checked=!!m.og;
   const tg=()=>{$('mnr').style.display=$('mt').value==='cheese'?'':'none'};$('mt').onchange=tg;tg();
   $('mnl').classList.add('show');
   const ph=(inp,kind)=>{$(inp).onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
@@ -475,17 +480,26 @@ function openManual(row){
   ph('mph1','n');ph('mph2','i');ph('mph1c','n');ph('mph2c','i');
   $('mncx').onclick=()=>$('mnl').classList.remove('show');
   if(row.dataset.mn)$('mnrm').onclick=()=>{row.dataset.mn='';row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.querySelector('.osc').innerHTML='';$('mnl').classList.remove('show')};
-  $('mncalc').onclick=()=>{
+  const compute=()=>{
     const g=id=>{const t=String($(id).value).trim();return t===''?null:parseFloat(t.replace(',','.'))};
     const t=$('mt').value,e=g('me'),sz=g('msz'),sf=g('msf'),sl=g('msl');
-    if([e,sz,sf,sl].some(x=>x==null||isNaN(x))){alert('Rellena al menos energía, azúcares, grasa saturada y sal. Si no sale en la etiqueta, pon 0.');return}
+    if([e,sz,sf,sl].some(x=>x==null||isNaN(x)))return null;
     const fb=g('mfb')||0,pr=g('mpr')||0,fv=Math.min(100,Math.max(0,g('mfv')||0)),ni=g('mni')||99,eu=$('meu').value,ar=$('mar').checked,og=$('mog').checked;
     const codes=[...new Set([...String($('mad').value).toLowerCase().matchAll(/\be\s*-?\s*(\d{3,4}[a-z]?)\b/g)].map(z=>'e'+z[1]))];
     const prod={categories_tags:t==='bev'?['en:beverages']:t==='cheese'?['en:cheeses']:[],additives_tags:codes.map(c=>'en:'+c),
       nutriments:{'energy-kj_100g':eu==='kj'?e:e*4.184,'sugars_100g':sz,'saturated-fat_100g':sf,'salt_100g':sl,'fiber_100g':fb,'proteins_100g':pr,'fruits-vegetables-legumes-estimate-from-ingredients_100g':fv}};
-    const q=nsPoints(prod);if(q.np==null){alert('No he podido calcular los puntos con esos datos.');return}
+    const q=nsPoints(prod);if(q.np==null)return null;
     const a=[...codes,...(ar?['aroma']:[])];if(!a.length&&t==='cheese'&&ni<=5)a.push('_qs');
-    const ad=a.join(',');
+    return {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,ad:a.join(',')}};
+  const adHtml=(codes,ar)=>[...codes,...(ar?['aroma']:[])].map(c=>`${dot(dotK(c))}<b>${c==='aroma'?'AROMAS':c.toUpperCase()}</b> ${esc(info(c)[0])} <span class="sub">· ${DOTT[dotK(c)]}</span>`).join('<br>');
+  const preview=()=>{const c=compute();
+    if(!c){$('mpre').innerHTML='<span class="sub">Rellena energía, azúcares, grasa saturada y sal para ver la nota estimada y los aditivos detectados.</span>';return}
+    const xx={ns:'',np:c.q.np,lq:c.q.lq,ps:'m',nd:'',ad:c.ad,og:c.og?1:0};
+    $('mpre').innerHTML=`<b>Nota estimada:</b> ${bdg(xx,'')} <div class="sub">${esc(det(xx))}</div>${(c.codes.length||c.ar)?`<div class="sub" style="margin-top:8px"><b>Aditivos detectados</b></div><div>${adHtml(c.codes,c.ar)}</div>`:'<div class="sub" style="margin-top:6px">No se han detectado aditivos.</div>'}`};
+  MPREV=preview;$('mnsheet').oninput=preview;$('mnsheet').onchange=preview;preview();
+  $('mncalc').onclick=()=>{
+    const c=compute();if(!c){alert('Rellena al menos energía, azúcares, grasa saturada y sal. Si no sale en la etiqueta, pon 0.');return}
+    const {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,ad}=c;
     row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad=ad;row.dataset.og=og?1:0;
     row.dataset.np=q.np;row.dataset.lq=q.lq?1:0;row.dataset.ps='m';row.dataset.nd='Introducido a mano. '+q.nd;
     row.dataset.mn=JSON.stringify({t,e,eu,sz,sf,sl,fb,pr,fv,ad:codes.join(', '),ar,og,ni:t==='cheese'?ni:''});
@@ -599,12 +613,27 @@ const ingRowHtml=i=>{i=i||{};const q=i.q==null?'':i.q,u=i.u||(i.q!=null?'ud':'')
 const ingEditorHtml=list=>`<div class="igrid">${(list&&list.length?list:[{}]).map(ingRowHtml).join('')}</div><button class="btn g" type="button" data-addrow="1" style="margin-top:6px">+ Ingrediente</button>
   <details style="margin-top:8px"><summary class="sub">📋 Pegar una lista de ingredientes (de una web)</summary><textarea class="ipaste" placeholder="200 g harina&#10;2 huevos&#10;1/2 cebolla"></textarea><button class="btn g" type="button" data-paste="1">Añadir estas líneas</button></details>
   <datalist id="unl">${UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>`;
+function quickProduct(name,cb){
+  const fk=S.cats.find(c=>(c.kind||inferKind(c.name))==='fresh');
+  const d=mdl(`<h2>➕ Nuevo producto</h2><div class="sub">Para ingredientes frescos o básicos (salmón, huevos, harina…). Podrás completarlo después desde Productos.</div>
+  <label class="f">Nombre</label><input type="text" id="qpn" value="${esc(name)}">
+  <label class="f">Categoría</label><select id="qpc"><option value="">Sin categoría</option>${S.cats.map(c=>`<option value="${c.id}" ${fk&&fk.id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
+  <label class="f">Supermercado</label><select id="qps">${S.stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+  <div class="srow" style="flex-wrap:wrap"><div style="flex:1;min-width:120px"><label class="f">Precio (€, opcional)</label><input type="number" id="qpp" step="0.01" min="0" inputmode="decimal"></div><div style="flex:1;min-width:120px"><label class="f">Para cuántos gramos</label><input type="number" id="qpg" step="any" min="0" inputmode="decimal" placeholder="1000 si es por kilo"></div></div>
+  <div class="acts"><button class="btn g" id="qpx">Cancelar</button><button class="btn" id="qpa">Crear</button></div>`,40);
+  d.querySelector('#qpx').onclick=()=>d.remove();
+  d.querySelector('#qpa').onclick=()=>{const n=d.querySelector('#qpn').value.trim();if(!n){d.querySelector('#qpn').focus();return}
+    const sid=d.querySelector('#qps').value;if(!sid){alert('Primero añade un supermercado en Ajustes.');return}
+    const pr={id:'p'+Date.now(),name:n,photo:'',cat:d.querySelector('#qpc').value,e:{[sid]:{done:false,need:false,o:[{b:'',price:n2(d.querySelector('#qpp').value),g:n2(d.querySelector('#qpg').value)}]}}};
+    S.products.push(migrate(JSON.parse(JSON.stringify(pr))));putP(pr);d.remove();cb(pr)}}
 function bindIng(root){
   const grid=()=>root.querySelector('.igrid');
   const addRow=i=>{const t=document.createElement('div');t.innerHTML=ingRowHtml(i);const r=t.firstChild;grid().appendChild(r);return r};
   root.addEventListener('click',e=>{
     if(e.target.closest('.ix')){const r=e.target.closest('.irow');if(grid().children.length>1)r.remove();else{r.querySelectorAll('input').forEach(x=>{x.value=''});r.dataset.p='';r.querySelector('.ip').classList.remove('linked')}return}
     if(e.target.closest('[data-addrow]')){const r=addRow({});r.querySelector('.iq').focus();return}
+    const npb=e.target.closest('[data-np]');
+    if(npb){const r=npb.closest('.irow'),ip=r.querySelector('.ip');quickProduct(ip.value.trim(),pr=>{ip.value=pr.name;r.dataset.p=pr.id;r.dataset.pn=pr.name;ip.classList.add('linked');r.querySelector('.isg').innerHTML=''});return}
     const sp=e.target.closest('[data-sp]');
     if(sp){const r=sp.closest('.irow'),pr=S.products.find(x=>x.id===sp.dataset.sp);if(!pr)return;const ip=r.querySelector('.ip');ip.value=pr.name;r.dataset.p=pr.id;r.dataset.pn=pr.name;ip.classList.add('linked');r.querySelector('.isg').innerHTML='';return}
     if(e.target.closest('[data-paste]')){const ta=root.querySelector('.ipaste');const l=parseIngs(ta.value);if(!l.length)return;
@@ -614,7 +643,7 @@ function bindIng(root){
   root.addEventListener('input',e=>{const ip=e.target.closest('.ip');if(!ip)return;const r=ip.closest('.irow'),v=ip.value;
     if(r.dataset.p&&v!==r.dataset.pn){r.dataset.p='';r.dataset.pn='';ip.classList.remove('linked')}
     const qq=norm(v.trim()),sg=r.querySelector('.isg');root.querySelectorAll('.isg').forEach(x=>{if(x!==sg)x.innerHTML=''});
-    sg.innerHTML=qq?S.products.filter(pr=>norm(pr.name).includes(qq)).slice(0,6).map(pr=>`<button class="isb" type="button" data-sp="${pr.id}">🛒 ${esc(pr.name)}</button>`).join(''):''});
+    sg.innerHTML=qq?S.products.filter(pr=>norm(pr.name).includes(qq)).slice(0,6).map(pr=>`<button class="isb" type="button" data-sp="${pr.id}">🛒 ${esc(pr.name)}</button>`).join('')+(S.products.some(pr=>norm(pr.name)===qq)?'':`<button class="isb" type="button" data-np="1">➕ Crear «${esc(v.trim())}» como producto</button>`):''});
 }
 function readIng(root){return [...root.querySelectorAll('.irow')].map(r=>{const n=r.querySelector('.ip').value.trim();if(!n)return null;
   const q=parseFloat(String(r.querySelector('.iq').value).replace(',','.')),[u,f]=normUnit(r.querySelector('.iu').value);
