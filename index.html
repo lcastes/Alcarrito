@@ -103,6 +103,7 @@ input[type=text],input[type=number],select{width:100%;padding:11px;border-radius
 .acts{display:flex;gap:8px;margin-top:16px;justify-content:space-between}
 .cmp .p{display:flex;justify-content:space-between;padding:3px 0;gap:8px}
 .badge{background:var(--ac2);color:var(--ac);border-radius:8px;padding:2px 8px;font-size:13px;font-weight:600;display:inline-block;margin-top:4px}
+.nrr{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;margin-top:8px}.nrr .t{flex:1;min-width:0}.nrr b{overflow-wrap:anywhere}.nrr .up{color:var(--ac);font-weight:700;white-space:nowrap}.nrr .dn{color:var(--wa);font-weight:700;white-space:nowrap}
 </style></head><body>
 <header><h1>🛒 Mi compra <small id="st" style="font-size:12px;font-weight:400;color:var(--mu)"></small></h1><div class="tabs" id="tabs"></div>
 <div class="quick" id="quick"><input type="text" id="xn" placeholder="Añadir a la lista (plátanos…)" enterkeyhint="done"><select id="xc"></select><button class="btn" id="xa">+</button></div>
@@ -1023,18 +1024,70 @@ function openP(id){
 }
 const shrink=(f,cb)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const z=520/Math.max(im.width,im.height,520),cv=document.createElement('canvas');cv.width=im.width*z;cv.height=im.height*z;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',.7));URL.revokeObjectURL(u)};im.src=u};
 const shrinkLogo=(f,cb)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const z=160/Math.max(im.width,im.height,160),cv=document.createElement('canvas');cv.width=Math.round(im.width*z);cv.height=Math.round(im.height*z);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);cb(cv.toDataURL('image/png'));URL.revokeObjectURL(u)};im.src=u};
-async function refreshAll(btn){
-  const items=[];S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>e.o.forEach((o,i)=>{if(o.bc&&!o.mn)items.push({pid:p.id,sid,i,bc:o.bc})})));
-  if(!items.length){btn.textContent='No hay marcas con código de barras';return}
-  let ok=0;btn.disabled=true;
-  for(let k=0;k<items.length;k++){const it=items[k];btn.textContent=`Actualizando ${k+1}/${items.length}…`;
-    try{const p=S.products.find(x=>x.id===it.pid),kk=catKind(p);const d=await lookup(it.bc,{cheese:kk==='cheese',bev:kk==='bev',milk:kk==='milk',name:p?p.name:''});
-      if(d&&p&&p.e[it.sid]&&p.e[it.sid].o[it.i]){const q=JSON.parse(JSON.stringify(p));
-        Object.assign(q.e[it.sid].o[it.i],{ns:d.ns,nova:d.nova,eco:d.eco,ad:d.ad==null?null:d.ad,og:d.og,np:d.np==null?null:d.np,lq:d.lq?1:0,ps:d.ps||'',nd:d.nd||''});putP(q);ok++}
-    }catch(e){}
-    await new Promise(r=>setTimeout(r,700))}
-  btn.disabled=false;btn.textContent=`Listo: ${ok} de ${items.length} actualizadas`;
+// ===== Actualizar notas: primero eliges cuáles, luego ves qué cambiaría y confirmas =====
+let NR=null;
+const nrX=o=>({ns:o.ns||'',np:o.np==null?null:o.np,lq:o.lq?1:0,ad:o.ad==null?null:o.ad,og:o.og?1:0,ps:o.ps||''});
+const nrSc=n=>n==null?'sin nota':String(n);
+const nrName=x=>`<b>${esc(x.name)}</b>${x.brand?' · '+esc(x.brand):''}<br><span class="sub">${esc(x.store)}`;
+function nrCands(){const r=[];
+  S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>(Array.isArray(e.o)?e.o:[]).forEach((o,i)=>{
+    if(o.bc&&!o.mn)r.push({pid:p.id,sid,i,bc:o.bc,name:p.name,brand:o.b||'',store:sname(sid),old:scoreOf(nrX(o)),on:true})})));
+  return r}
+function nrRender(){const b=$('nrbox');if(!b)return;
+  if(!NR)NR={stage:'list',c:nrCands()};
+  if(NR.stage==='list'){
+    const n=NR.c.filter(x=>x.on).length;
+    if(!NR.c.length){b.innerHTML='<div class="empty">No hay marcas con código de barras para actualizar.</div>';return}
+    b.innerHTML=`<div class="sub">Elige qué marcas quieres volver a consultar en Open Food Facts. <b>No se cambia nada todavía</b>: después verás qué notas cambiarían y tú decides cuáles aplicar. Las marcas con datos escritos a mano no aparecen.</div>
+    <input type="text" id="nrq" placeholder="Buscar…" style="margin-top:10px">
+    <div class="srow"><button class="btn g" id="nra">Marcar todas</button><button class="btn g" id="nrn">Quitar todas</button></div>
+    <div id="nrl">${NR.c.map((x,k)=>`<label class="nrr" data-q="${esc(norm(x.name+' '+x.brand+' '+x.store))}"><input type="checkbox" data-nk="${k}" ${x.on?'checked':''}><span class="t">${nrName(x)} · nota actual: ${nrSc(x.old)}</span></span></label>`).join('')}</div>
+    <div class="acts"><span></span><button class="btn" id="nrgo" ${n?'':'disabled'}>Comprobar cambios (${n})</button></div>`;
+    const upd=()=>{const m=NR.c.filter(x=>x.on).length;$('nrgo').textContent=`Comprobar cambios (${m})`;$('nrgo').disabled=!m};
+    const all=v=>()=>{document.querySelectorAll('#nrl .nrr').forEach(r=>{if(r.style.display==='none')return;const c=r.querySelector('[data-nk]');c.checked=v;NR.c[+c.dataset.nk].on=v});upd()};
+    $('nrl').onchange=e=>{const c=e.target.closest('[data-nk]');if(c){NR.c[+c.dataset.nk].on=c.checked;upd()}};
+    $('nra').onclick=all(true);$('nrn').onclick=all(false);
+    $('nrq').oninput=e=>{const q=norm(e.target.value.trim());document.querySelectorAll('#nrl .nrr').forEach(r=>{r.style.display=(!q||r.dataset.q.includes(q))?'':'none'})};
+    $('nrgo').onclick=nrCheck;
+  }else if(NR.stage==='diff'){
+    const n=NR.res.filter(x=>x.on).length;
+    const rows=NR.res.map((x,k)=>{const up=x.nw!=null&&(x.it.old==null||x.nw>x.it.old);
+      return `<label class="nrr"><input type="checkbox" data-nd="${k}" ${x.on?'checked':''}><span class="t">${nrName(x.it)}</span></span><span class="${up?'up':'dn'}">${nrSc(x.it.old)} → ${nrSc(x.nw)}</span></label>`}).join('');
+    b.innerHTML=`<div class="sub">${NR.res.length?`Cambiarían <b>${NR.res.length}</b> notas. Desmarca las que no quieras tocar.`:'Ninguna nota cambiaría.'}${NR.same?` ${NR.same} se quedan igual.`:''}${NR.fail?` ${NR.fail} no se han podido consultar (no se tocan).`:''}</div><div id="nrd">${rows}</div>
+    <div class="acts"><button class="btn g" id="nrb">‹ Volver</button>${NR.res.length?`<button class="btn" id="nrap" ${n?'':'disabled'}>Aplicar ${n} cambio${n===1?'':'s'}</button>`:'<span></span>'}</div>`;
+    $('nrb').onclick=()=>{NR.stage='list';nrRender()};
+    if(NR.res.length){
+      $('nrd').onchange=e=>{const c=e.target.closest('[data-nd]');if(!c)return;NR.res[+c.dataset.nd].on=c.checked;const m=NR.res.filter(x=>x.on).length;$('nrap').textContent=`Aplicar ${m} cambio${m===1?'':'s'}`;$('nrap').disabled=!m};
+      $('nrap').onclick=nrApply}
+  }
 }
+async function nrCheck(){
+  const sel=NR.c.filter(x=>x.on);if(!sel.length)return;
+  NR.stage='run';NR.res=[];NR.fail=0;NR.same=0;NR.cancel=false;const me=NR;
+  $('nrbox').innerHTML=`<div class="sub" id="nrp">Comprobando 0/${sel.length}…</div><div class="acts"><span></span><button class="btn g" id="nrc">Cancelar</button></div>`;
+  $('nrc').onclick=()=>{me.cancel=true};
+  for(let k=0;k<sel.length;k++){
+    if(me.cancel||NR!==me||!$('nrbox'))break;
+    const it=sel[k];if($('nrp'))$('nrp').textContent=`Comprobando ${k+1}/${sel.length}…`;
+    try{const p=S.products.find(x=>x.id===it.pid),kk=catKind(p);
+      const d=await lookup(it.bc,{cheese:kk==='cheese',bev:kk==='bev',milk:kk==='milk',name:p?p.name:''});
+      if(!d)me.fail++;
+      else{const nw=scoreOf({ns:d.ns,np:d.np==null?null:d.np,lq:d.lq?1:0,ad:d.ad==null?null:d.ad,og:d.og?1:0,ps:d.ps||''});
+        if(nw!==it.old)me.res.push({it,d,nw,on:nw!=null});else me.same++}
+    }catch(e){me.fail++}
+    await new Promise(r=>setTimeout(r,700))}
+  if(NR!==me||!$('nrbox'))return;
+  me.stage=me.cancel?'list':'diff';nrRender()}
+function nrApply(){
+  const sel=NR.res.filter(x=>x.on),by={};sel.forEach(x=>(by[x.it.pid]=by[x.it.pid]||[]).push(x));let done=[];
+  Object.entries(by).forEach(([pid,l])=>{const p=S.products.find(z=>z.id===pid);if(!p)return;const q=JSON.parse(JSON.stringify(p));
+    l.forEach(x=>{const e=q.e[x.it.sid],o=e&&Array.isArray(e.o)?e.o[x.it.i]:null;
+      if(o&&o.bc===x.it.bc&&!o.mn){Object.assign(o,{ns:x.d.ns,nova:x.d.nova,eco:x.d.eco,ad:x.d.ad==null?null:x.d.ad,og:x.d.og,np:x.d.np==null?null:x.d.np,lq:x.d.lq?1:0,ps:x.d.ps||'',nd:x.d.nd||''});done.push(x)}});
+    putP(q)});
+  $('nrbox').innerHTML=`<div class="sub">✅ Hecho: ${done.length} nota${done.length===1?'':'s'} actualizada${done.length===1?'':'s'}. El resto no se ha tocado.</div>
+    ${done.map(x=>`<div class="nrr"><span class="t">${nrName(x.it)}</span></span><span>${nrSc(x.it.old)} → ${nrSc(x.nw)}</span></div>`).join('')}
+    <div class="acts"><span></span><button class="btn g" id="nrr">Volver a empezar</button></div>`;
+  $('nrr').onclick=()=>{NR=null;nrRender()}}
 const n2=v=>parseFloat(String(v).replace(',','.'))||0;
 const sh=sel=>$('sheet').querySelector(sel),shAll=sel=>[...$('sheet').querySelectorAll(sel)];
 function syncForm(){
@@ -1161,8 +1214,8 @@ function stores(sec){
         TG={token:t,chat:c};setDoc(doc(db,'config','telegram'),TG).catch(wfail);$('tgt').value='';$('tgm').textContent='Guardado.'};
       $('tgp').onclick=()=>tgSend(['✅ Prueba desde la app de la compra'],$('tgm'))};
   }else if(SEC==='notes'){
-    html=back('🔄 Notas de productos')+`<div class="sub">Vuelve a consultar Open Food Facts de todas las marcas que tengan código de barras y recalcula sus notas. Las que tengan datos escritos a mano no se tocan.</div><div style="margin-top:14px"><button class="btn" id="rfa">🔄 Actualizar todas las notas</button></div>`;
-    wire=()=>{$('rfa').onclick=()=>refreshAll($('rfa'))};
+    html=back('🔄 Notas de productos')+`<div id="nrbox"></div>`;
+    wire=()=>{NR=null;nrRender()};
   }
   $('sheet').innerHTML=html+`<div class="acts"><span></span><button class="btn g" id="cx">Cerrar</button></div>`;
   $('modal').classList.add('show');$('cx').onclick=()=>{close();render()};
