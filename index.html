@@ -141,10 +141,10 @@ function delP(id){deleteDoc(doc(db,'products',id)).catch(wfail)}
 function putX(x){setDoc(doc(db,'extras',x.id),{name:x.name,cat:x.cat||'',done:!!x.done,ql:x.ql||[]}).catch(wfail)}
 function delX(id){deleteDoc(doc(db,'extras',id)).catch(wfail)}
 function putCats(l){S.cats=l;setDoc(doc(db,'config','cats'),{list:l}).catch(wfail)}
-const KINDS={'':'Automático',normal:'Normal',cheese:'Queso',bev:'Bebida',fresh:'Fresco / materia prima'};
-function inferKind(name){const n=norm(name);if(/\bquesos?\b/.test(n))return 'cheese';if(/bebida|zumo|refresco|infusion|cerveza|\bvinos?\b|\baguas?\b/.test(n))return 'bev';if(/fresc|natural|basico|materia prima/.test(n))return 'fresh';return 'normal'}
+const KINDS={'':'Automático',normal:'Normal',cheese:'Queso',bev:'Bebida',milk:'Leche / bebida vegetal',fresh:'Fresco / materia prima'};
+function inferKind(name){const n=norm(name);if(/\bquesos?\b/.test(n))return 'cheese';if(/leche|lacteo|vegetal/.test(n))return 'milk';if(/bebida|zumo|refresco|infusion|cerveza|\bvinos?\b|\baguas?\b/.test(n))return 'bev';if(/fresc|natural|basico|materia prima/.test(n))return 'fresh';return 'normal'}
 const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));return c?(c.kind||inferKind(c.name)):'normal'};
-const kindFlags=()=>{const k=catKind({cat:$('cat')?$('cat').value:''});return {cheese:k==='cheese',bev:k==='bev'}};
+const kindFlags=()=>{const k=catKind({cat:$('cat')?$('cat').value:''});return {cheese:k==='cheese',bev:k==='bev',milk:k==='milk',name:$('name')?$('name').value:''}};
 let MPREV=null;
 function putStores(l){S.stores=l;if(!['list','cmp','sm','pr','rc','pl'].includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
   setDoc(doc(db,'config','stores'),{list:l}).catch(wfail)}
@@ -197,9 +197,9 @@ const opts=e=>Array.isArray(e.o)?e.o:((e.price>0||e.g>0)?[{b:'',price:e.price||0
 const prices=p=>{const r=[];Object.entries(p.e).forEach(([k,v])=>{if(!S.stores.some(s=>s.id===k))return;
   opts(v).forEach((o,i)=>{if(o.price>0)r.push({id:k,i,b:o.b||'',price:o.price,g:o.g||0,kg:kgOf(o.price,o.g||0),ns:o.ns||'',nova:o.nova||0,eco:o.eco||'',ad:o.ad==null?null:o.ad,og:o.og?1:0,ph:o.ph||'',np:o.np==null?null:o.np,lq:o.lq?1:0,ps:o.ps||'',nd:o.nd||''})})});return r};
 // Clasificación de aditivos: APROXIMADA y propia (no es la de Yuka). Edita estas listas si quieres.
-const HI=new Set(['e249','e250','e251','e252','e171','e123','e128','e924','e924a','e924b']);
-const MO=new Set(['e951','e950','e955','e954','e102','e104','e110','e122','e124','e129','e211','e320','e321','e150c','e150d','e220','e221','e222','e223','e224','e226','e227','e228','e338','e339','e340','e341','e450','e451','e452','e407','aroma','e621','e631','e627','e433','e432','e210','e212','e282','e952']);
-const LO=new Set(['e270','e296','e297','e260','e331','e333','e334','e301','e200','e203','e235','e410','e414','e401','e406','e460','e461','e472','e100','e101','e140','e160a','e160c','e160d','e163','e170','e150a','e422','e330','e300','e322','e202','e415','e412','e440','e471','e500','e306','e307','e308','e309']);
+const HI=new Set(['e950','e955','e249','e250','e251','e252','e171','e123','e128','e924','e924a','e924b']);
+const MO=new Set(['e951','e170','e412','e500','e954','e102','e104','e110','e122','e124','e129','e211','e320','e321','e150c','e150d','e220','e221','e222','e223','e224','e226','e227','e228','e338','e339','e340','e341','e450','e451','e452','e407','aroma','e621','e631','e627','e433','e432','e210','e212','e282','e952']);
+const LO=new Set(['e418','e270','e296','e297','e260','e331','e333','e334','e301','e200','e203','e235','e410','e414','e401','e406','e460','e461','e472','e100','e101','e140','e160a','e160c','e160d','e163','e150a','e422','e330','e300','e322','e202','e415','e440','e471','e306','e307','e308','e309']);
 const adList=x=>String(x.ad||'').split(',').filter(c=>c&&c[0]!=='_'); // los tokens que empiezan por _ son marcas internas (p. ej. _qs = queso sencillo), no aditivos
 let ADDS={},TG={};
 const kOf=c=>{const o=ADDS[c];if(o&&o.r)return o.r;return HI.has(c)?'r':MO.has(c)?'y':LO.has(c)?'g':'n'};
@@ -271,7 +271,7 @@ const ADI={
  e322:['Lecitinas','Emulgente: mezcla agua y grasa (chocolate, margarinas, panes).','Si procede de soja, se declara como alérgeno; por lo demás, nada relevante a las dosis habituales.'],
  e202:['Sorbato potásico','Conservante (quesos, bollería, bebidas).',NOP],
  e415:['Goma xantana','Espesante y estabilizante (salsas, aliños).','En cantidades altas puede dar molestias digestivas.'],
- e412:['Goma guar','Espesante (salsas, helados, lácteos).','En cantidades altas puede dar molestias digestivas.'],
+ e418:['Goma gellan','Espesante y estabilizante (bebidas vegetales, postres).',NOP],e412:['Goma guar','Espesante (salsas, helados, lácteos).','En cantidades altas puede dar molestias digestivas.'],
  e440:['Pectinas','Gelificante (mermeladas, postres).',NOP,'Es una fibra presente en las frutas.'],
  e471:['Mono y diglicéridos de ácidos grasos','Emulgente (bollería, helados, margarinas).',NOP],
  e500:['Carbonatos de sodio','Regulador de acidez y gasificante (levaduras en polvo).',NOP]};
@@ -355,10 +355,18 @@ const fvFromIng=list=>{let t=0;const walk=a=>(a||[]).forEach(i=>{if(i.ingredient
 const ADN=[['acido citrico','e330'],['citrato de sodio','e331'],['citrato sodico','e331'],['citrato de calcio','e333'],['acido lactico','e270'],['acido malico','e296'],['acido fumarico','e297'],['acido acetico','e260'],['acido tartarico','e334'],['acido fosforico','e338'],['acido ascorbico','e300'],['ascorbato de sodio','e301'],['ascorbato sodico','e301'],['vitamina c','e300'],['tocoferol','e306'],['sorbato de potasio','e202'],['sorbato potasico','e202'],['sorbato de calcio','e203'],['sorbato calcico','e203'],['acido sorbico','e200'],['benzoato de sodio','e211'],['benzoato sodico','e211'],['benzoato de potasio','e212'],['benzoato potasico','e212'],['acido benzoico','e210'],['propionato de calcio','e282'],['propionato calcico','e282'],['natamicina','e235'],['nitrito de sodio','e250'],['nitrito sodico','e250'],['nitrito de potasio','e249'],['nitrito potasico','e249'],['nitrato de sodio','e251'],['nitrato sodico','e251'],['nitrato de potasio','e252'],['nitrato potasico','e252'],['dioxido de azufre','e220'],['metabisulfito','e223'],['bisulfito','e222'],['sulfito','e221'],['lecitina','e322'],['goma xantana','e415'],['goma guar','e412'],['goma garrofin','e410'],['goma de algarrobo','e410'],['goma arabiga','e414'],['goma de acacia','e414'],['pectina','e440'],['agar','e406'],['alginato','e401'],['carragenano','e407'],['metilcelulosa','e461'],['carboximetilcelulosa','e466'],['celulosa','e460'],['almidon modificado','e1422'],['mono y digliceridos','e471'],['monoglicerido','e471'],['polisorbato 80','e433'],['polisorbato 20','e432'],['bicarbonato sodico','e500'],['bicarbonato de sodio','e500'],['difosfato','e450'],['trifosfato','e451'],['polifosfato','e452'],['glutamato monosodico','e621'],['glutamato','e621'],['inosinato','e631'],['guanilato','e627'],['sucralosa','e955'],['aspartamo','e951'],['acesulfamo','e950'],['sacarina','e954'],['ciclamato','e952'],['glicosidos de esteviol','e960'],['sorbitol','e420'],['manitol','e421'],['xilitol','e967'],['eritritol','e968'],['maltitol','e965'],['isomalt','e953'],['glicerol','e422'],['curcumina','e100'],['riboflavina','e101'],['tartrazina','e102'],['amarillo anaranjado','e110'],['amarillo de quinoleina','e104'],['acido carminico','e120'],['cochinilla','e120'],['carmin','e120'],['azorrubina','e122'],['ponceau','e124'],['rojo allura','e129'],['clorofila','e140'],['betacaroteno','e160a'],['beta-caroteno','e160a'],['caroteno','e160a'],['bixina','e160b'],['annatto','e160b'],['capsantina','e160c'],['licopeno','e160d'],['antocianina','e163'],['dioxido de titanio','e171'],['butilhidroxianisol','e320'],['butilhidroxitolueno','e321']].map(([n,c])=>[new RegExp('\\b'+n+'(es|s)?\\b'),c]);
 function nameAdds(text){const t=norm(String(text||'')),o=[];ADN.forEach(([re,c])=>{if(re.test(t)&&!o.includes(c))o.push(c)});
   if(/colorante[^,;.]{0,25}caramelo/.test(t)&&!o.some(c=>/^e150/.test(c)))o.push('e150a');return o}
+const E_RE=/\bE\s?-?\s?(\d{3,4})\s*\(?\s*(iii|ii|iv|i|[a-d])?\s*\)?(?![a-z0-9])/gi;
+function eCodes(text){const o=[];for(const m of String(text||'').matchAll(E_RE)){let sx=(m[2]||'').toLowerCase();if(/^(i{1,3}|iv)$/.test(sx))sx='';const c='e'+m[1]+sx;if(!o.includes(c))o.push(c)}return o}
+const normE=c=>String(c).replace(/^(e\d{3,4})(iii|ii|iv|i)$/,'$1');
 const SW=['e950','e951','e952','e954','e955','e957','e959','e960','e960a','e960b','e960c','e960d','e961','e962','e969'];
+const PLB='avena|arroz|soja|soya|almendras?|avellanas?|coco|anacardos?|espelta|cereales|guisantes?|nueces|nuez|pistachos?|quinoa|quinua|canamo|oat|rice|soy|almond|hazelnut|coconut|cashew|spelt|pea|nut';
+const plantName=t=>new RegExp('\\b(leche|bebida|drink|milk|boisson|lait)\\b[^,;]{0,40}\\b('+PLB+')\\b').test(t)||new RegExp('\\b('+PLB+')\\b[^,;]{0,25}\\b(drink|milk|beverage)\\b').test(t);
+const plantIng=p=>{const t=norm([p.ingredients_text_es,p.ingredients_text,p.ingredients_text_en,p.ingredients_text_fr].filter(Boolean)[0]||'');
+  return /^\W*(agua|water|eau)\b/.test(t)&&!/agua de coco|coconut water|eau de coco/.test(t)&&new RegExp('\\b('+PLB+')\\b').test(t.slice(0,120))};
 function nsPoints(p){
   const n=p.nutriments||{},tags=p.categories_tags||[],has=(...k)=>k.some(x=>tags.includes(x));
-  const bev=(has('en:beverages')&&!has('en:milks'))||!!p._bev,fat=has('en:fats','en:vegetable-fats','en:vegetable-oils','en:butters','en:margarines');
+  const plant=!!p._milk||plantName(norm((p.product_name||'')+' '+(p.generic_name||'')+' '+(p._name||'')))||plantIng(p)||tags.some(t=>/plant-based-(beverages|milk)|milk-(substitutes|alternatives)|\b(oat|almond|soy|soya|rice|hazelnut|coconut|cashew|nut|spelt|cereal|pea)-(drinks?|milks?|beverages?)/.test(t))||/\b(leche|bebida)\s+(vegetal\s+)?(de\s+)?(avena|soja|almendra|arroz|avellana|coco|anacardo|espelta|cereales|guisante|nueces)/.test(norm((p.product_name||'')+' '+(p.generic_name||'')));
+  const bev=((has('en:beverages')&&!has('en:milks'))||!!p._bev)&&!plant,fat=has('en:fats','en:vegetable-fats','en:vegetable-oils','en:butters','en:margarines');
   const kj=n['energy-kj_100g']??n['energy_100g']??(n['energy-kcal_100g']!=null?n['energy-kcal_100g']*4.184:null);
   const sug=n['sugars_100g'],sat=n['saturated-fat_100g'];const sa=n['salt_100g'],so=n['sodium_100g'];let na=(sa!=null&&!isNaN(sa)&&sa<=100)?sa/2.5:null;
   if(so!=null&&!isNaN(so)&&so<=40&&(na==null||(so>=na*0.5&&so<=na*2)))na=so; // si sodio y sal no cuadran (error de unidades en la base de datos), mando la sal
@@ -380,7 +388,7 @@ function nsPoints(p){
   const fib=n['fiber_100g']||0,pro=n['proteins_100g']||0,fi=cnt(fib,[0.9,1.9,2.8,3.7,4.7]),pr=cnt(pro,[1.6,3.2,4.8,6.4,8]);
   const prOk=bev||has('en:cheeses')||!!p._cheese||!(N>=11&&fp<5);
   const np=N-fi-fp-(prOk?pr:0),f1=v=>String(Math.round(v*10)/10).replace('.',',');
-  const nd=`Datos usados: energía ${f1(kj)} kJ (${pe}), azúcares ${f1(sug)} g (${pz}), grasa saturada ${f1(sat)} g (${pg}), sodio ${Math.round(na*1000)} mg (${pn})${sw?', edulcorantes (+4)':''} · fruta y verdura ${f1(fv)} %${lab?' ('+lab+')':''} (−${fp}), fibra ${f1(fib)} g (−${fi}), proteínas ${f1(pro)} g (${prOk?'−'+pr:'no cuentan'}) · ${bev?'bebida':'alimento'}`;
+  const nd=`Datos usados: energía ${f1(kj)} kJ (${pe}), azúcares ${f1(sug)} g (${pz}), grasa saturada ${f1(sat)} g (${pg}), sodio ${Math.round(na*1000)} mg (${pn})${sw?', edulcorantes (+4)':''} · fruta y verdura ${f1(fv)} %${lab?' ('+lab+')':''} (−${fp}), fibra ${f1(fib)} g (−${fi}), proteínas ${f1(pro)} g (${prOk?'−'+pr:'no cuentan'}) · ${bev?'bebida':plant?'bebida vegetal, analizada como alimento':'alimento'}`;
   return {np,lq,ps:'o',nd};
 }
 const ingN=p=>{const c=a=>(a||[]).reduce((t,i)=>t+((i.ingredients&&i.ingredients.length)?c(i.ingredients):1),0);const n=c(p.ingredients);return n||(typeof p.ingredients_n==='number'?p.ingredients_n:99)};
@@ -427,7 +435,7 @@ function parseIngText(text){
   const m=t.match(/ingredientes?\s*[:.]?\s*/i);if(m)t=t.slice(m.index+m[0].length);
   t=t.replace(/\s*(puede contener|contiene trazas|trazas de|informaci[oó]n nutricional|valores medios|conservar|consumir preferentemente|modo de empleo|elaborado en|envasado en).*/i,'').trim();
   const items=splitTop(t),codes=[],byName=[];
-  [...t.matchAll(/\bE\s?-?\s?(\d{3,4}[a-z]?)\b/gi)].forEach(x=>{const c='e'+x[1].toLowerCase();if(!codes.includes(c))codes.push(c)});
+  eCodes(t).forEach(c=>{if(!codes.includes(c))codes.push(c)});
   const nt=nName(t);nameAdds(t).forEach(c=>{if(!codes.includes(c)){codes.push(c);byName.push(((ADI[c]||[c.toUpperCase()])[0]).split('(')[0].trim()+' ('+c.toUpperCase()+')')}});
   Object.entries(ADI).forEach(([c,v])=>{if(c==='aroma'||codes.includes(c))return;const nm=nName(String(v[0]).split('(')[0]);if(nm.length>4&&nt.includes(nm)){codes.push(c);byName.push(String(v[0]).split('(')[0].trim()+' ('+c.toUpperCase()+')')}});
   let fv=null;
@@ -442,7 +450,7 @@ function applyOcr(kind,text){
     if(r.kcal!=null){set('me',r.kcal,'energía');$('meu').value='kcal'}else if(r.kj!=null){set('me',r.kj,'energía');$('meu').value='kj'}
     set('msz',r.sz,'azúcares');set('msf',r.sf,'grasa saturada');set('msl',r.sl,'sal');set('mfb',r.fb,'fibra');set('mpr',r.pr,'proteínas');$('mptn').textContent=text}
   else{const r=parseIngText(text);
-    if(r.codes.length){const prev=String($('mad').value).toLowerCase().match(/e\s*-?\s*\d{3,4}[a-z]?/g)||[];const all=[...new Set([...prev.map(c=>c.replace(/[\s-]/g,'')),...r.codes])];$('mad').value=all.map(c=>c.toUpperCase()).join(', ');$('mad').classList.add('ocr');filled.push('aditivos')}
+    if(r.codes.length){const all=[...new Set([...eCodes($('mad').value),...r.codes])];$('mad').value=all.map(c=>c.toUpperCase()).join(', ');$('mad').classList.add('ocr');filled.push('aditivos')}
     if(r.byName.length)extra=' Aditivos reconocidos por su nombre: '+r.byName.join(', ')+'.';
     if(r.aroma){$('mar').checked=true;filled.push('aromas')}if(r.og){$('mog').checked=true;filled.push('ecológico')}
     set('mfv',r.fv,'fruta y verdura');set('mni',r.n,'nº de ingredientes');$('mpti').textContent=text}
@@ -458,7 +466,7 @@ function openManual(row){
   <div class="sub" style="margin-top:8px"><b>Ingredientes</b></div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="mph2c" hidden></label><label class="btn g">🖼️ Elegir archivo<input type="file" accept="image/*" id="mph2" hidden></label></div>
   <div class="sub" id="mpst" style="margin-top:6px"></div>
   <details><summary class="sub">Texto leído (para comprobar)</summary><pre id="mptn" class="ocrt"></pre><pre id="mpti" class="ocrt"></pre></details>
-  <label class="f">Tipo de producto</label><select id="mt"><option value="food">Alimento</option><option value="bev">Bebida (zumos, refrescos, leches vegetales…)</option><option value="cheese">Queso</option></select>
+  <label class="f">Tipo de producto</label><select id="mt"><option value="food">Alimento (incluye leches y bebidas vegetales)</option><option value="bev">Bebida (zumos, refrescos, agua…)</option><option value="cheese">Queso</option></select>
   <div class="srow" style="flex-wrap:wrap">${fld('me','Energía','e')}<div style="width:96px"><label class="f">Unidad</label><select id="meu"><option value="kcal">kcal</option><option value="kj">kJ</option></select></div></div>
   <div class="srow" style="flex-wrap:wrap">${fld('msz','Azúcares (g)','sz')}${fld('msf','Grasa saturada (g)','sf')}</div>
   <div class="srow" style="flex-wrap:wrap">${fld('msl','Sal (g)','sl')}${fld('mfb','Fibra (g)','fb')}</div>
@@ -484,18 +492,23 @@ function openManual(row){
     const g=id=>{const t=String($(id).value).trim();return t===''?null:parseFloat(t.replace(',','.'))};
     const t=$('mt').value,e=g('me'),sz=g('msz'),sf=g('msf'),sl=g('msl');
     if([e,sz,sf,sl].some(x=>x==null||isNaN(x)))return null;
-    const fb=g('mfb')||0,pr=g('mpr')||0,fv=Math.min(100,Math.max(0,g('mfv')||0)),ni=g('mni')||99,eu=$('meu').value,ar=$('mar').checked,og=$('mog').checked;
-    const codes=[...new Set([...String($('mad').value).toLowerCase().matchAll(/\be\s*-?\s*(\d{3,4}[a-z]?)\b/g)].map(z=>'e'+z[1]))];
-    const prod={categories_tags:t==='bev'?['en:beverages']:t==='cheese'?['en:cheeses']:[],additives_tags:codes.map(c=>'en:'+c),
+    const fb=g('mfb')||0,pr=g('mpr')||0,fv=Math.min(100,Math.max(0,g('mfv')||0)),ni=g('mni')||99,eu0=$('meu').value,ar=$('mar').checked,og=$('mog').checked;
+    let eu=eu0;const warn=[];
+    if(eu0==='kcal'&&e>920){eu='kj';$('meu').value='kj';warn.push('Has puesto '+e+' kcal, que no es posible (el máximo es unas 900 por 100 g): lo he tomado como kJ. Si no es así, corrígelo.')}
+    if(eu==='kj'&&e>3900)warn.push('Una energía de '+e+' kJ por 100 g es imposible: revisa el valor y la unidad.');
+    if([sz,sf,sl,fb,pr].some(v=>v>100))warn.push('Algún valor supera los 100 g por 100 g: revisa los datos.');
+    if(sz!=null&&sf!=null&&sz>0&&sz<=100&&sf>100)warn.push('La grasa saturada no puede superar 100 g.');
+    const codes=eCodes($('mad').value);
+    const prod={_name:$('name')?$('name').value:'',categories_tags:t==='bev'?['en:beverages']:t==='cheese'?['en:cheeses']:[],additives_tags:codes.map(c=>'en:'+c),
       nutriments:{'energy-kj_100g':eu==='kj'?e:e*4.184,'sugars_100g':sz,'saturated-fat_100g':sf,'salt_100g':sl,'fiber_100g':fb,'proteins_100g':pr,'fruits-vegetables-legumes-estimate-from-ingredients_100g':fv}};
     const q=nsPoints(prod);if(q.np==null)return null;
     const a=[...codes,...(ar?['aroma']:[])];if(!a.length&&t==='cheese'&&ni<=5)a.push('_qs');
-    return {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,ad:a.join(',')}};
+    return {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,warn,ad:a.join(',')}};
   const adHtml=(codes,ar)=>[...codes,...(ar?['aroma']:[])].map(c=>`${dot(dotK(c))}<b>${c==='aroma'?'AROMAS':c.toUpperCase()}</b> ${esc(info(c)[0])} <span class="sub">· ${DOTT[dotK(c)]}</span>`).join('<br>');
   const preview=()=>{const c=compute();
     if(!c){$('mpre').innerHTML='<span class="sub">Rellena energía, azúcares, grasa saturada y sal para ver la nota estimada y los aditivos detectados.</span>';return}
     const xx={ns:'',np:c.q.np,lq:c.q.lq,ps:'m',nd:'',ad:c.ad,og:c.og?1:0};
-    $('mpre').innerHTML=`<b>Nota estimada:</b> ${bdg(xx,'')} <div class="sub">${esc(det(xx))}</div>${(c.codes.length||c.ar)?`<div class="sub" style="margin-top:8px"><b>Aditivos detectados</b></div><div>${adHtml(c.codes,c.ar)}</div>`:'<div class="sub" style="margin-top:6px">No se han detectado aditivos.</div>'}`};
+    $('mpre').innerHTML=`${c.warn.map(w=>`<div style="color:var(--wa);margin-bottom:6px">⚠️ ${esc(w)}</div>`).join('')}<b>Nota estimada:</b> ${bdg(xx,'')} <div class="sub">${esc(det(xx))}</div><div class="sub">${esc(c.q.nd)}</div>${(c.codes.length||c.ar)?`<div class="sub" style="margin-top:8px"><b>Aditivos detectados</b></div><div>${adHtml(c.codes,c.ar)}</div>`:'<div class="sub" style="margin-top:6px">No se han detectado aditivos.</div>'}`};
   MPREV=preview;$('mnsheet').oninput=preview;$('mnsheet').onchange=preview;preview();
   $('mncalc').onclick=()=>{
     const c=compute();if(!c){alert('Rellena al menos energía, azúcares, grasa saturada y sal. Si no sale en la etiqueta, pon 0.');return}
@@ -828,9 +841,9 @@ function planView(){
   return `<div class="plbar"><div class="seg seg2"><button class="btn ${PL.view==='week'?'':'g'}" data-pv="week">📅 Vista semanal</button><button class="btn ${PL.view==='month'?'':'g'}" data-pv="month">🗓️ Vista mensual</button></div><div class="seg"><button class="btn g" data-pn="-1">‹</button><button class="btn g" data-pn="0">Hoy</button><button class="btn g" data-pn="1">›</button></div></div>
   <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn" data-pg="1" style="width:100%;margin-top:12px">🛒 Agregar a la lista de la compra</button>`}
 async function lookup(code,fl){fl=fl||{};
-  const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score`);
-  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'';p._cheese=!!fl.cheese;p._bev=!!fl.bev;const q=nsPoints(p);
-  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>t.replace(/^[a-z]{2}:/,'')),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||''};
+  const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,generic_name,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score`);
+  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'';p._cheese=!!fl.cheese;p._bev=!!fl.bev;p._milk=!!fl.milk;p._name=fl.name||'';const q=nsPoints(p);
+  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>normE(t.replace(/^[a-z]{2}:/,''))),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||''};
 }
 const loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s)});
 function scanCode(){return new Promise(async resolve=>{
@@ -1015,7 +1028,7 @@ async function refreshAll(btn){
   if(!items.length){btn.textContent='No hay marcas con código de barras';return}
   let ok=0;btn.disabled=true;
   for(let k=0;k<items.length;k++){const it=items[k];btn.textContent=`Actualizando ${k+1}/${items.length}…`;
-    try{const p=S.products.find(x=>x.id===it.pid),kk=catKind(p);const d=await lookup(it.bc,{cheese:kk==='cheese',bev:kk==='bev'});
+    try{const p=S.products.find(x=>x.id===it.pid),kk=catKind(p);const d=await lookup(it.bc,{cheese:kk==='cheese',bev:kk==='bev',milk:kk==='milk',name:p?p.name:''});
       if(d&&p&&p.e[it.sid]&&p.e[it.sid].o[it.i]){const q=JSON.parse(JSON.stringify(p));
         Object.assign(q.e[it.sid].o[it.i],{ns:d.ns,nova:d.nova,eco:d.eco,ad:d.ad==null?null:d.ad,og:d.og,np:d.np==null?null:d.np,lq:d.lq?1:0,ps:d.ps||'',nd:d.nd||''});putP(q);ok++}
     }catch(e){}
@@ -1122,7 +1135,7 @@ function stores(sec){
         S.products.forEach(p=>{if(!p.e[id])return;const q=JSON.parse(JSON.stringify(p));delete q.e[id];Object.keys(q.e).length?putP(q):delP(p.id)});stores()})};
   }else if(SEC==='cats'){
     html=back('🏷️ Categorías de productos')+(S.cats.map(c=>`<div class="srow"><span>${esc(c.name)}</span><select data-ck="${c.id}" style="max-width:160px;flex:none">${Object.entries(KINDS).map(([k,l])=>`<option value="${k}" ${(c.kind||'')===k?'selected':''}>${k===''?'Auto ('+KINDS[inferKind(c.name)]+')':l}</option>`).join('')}</select><button class="btn r" data-dc="${c.id}">Quitar</button></div>`).join('')||'<div class="sub">No hay categorías.</div>')
-      +`<div class="sub" style="margin-top:8px">Tipo de análisis: <b>Queso</b> analiza los productos de esa categoría como queso; <b>Bebida</b> usa la escala de bebidas; <b>Fresco</b> es para materia prima (sin código de barras ni nota) y se puede filtrar aparte. «Auto» lo deduce del nombre.</div><label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas…"><button class="btn" id="addc">Añadir</button></div>`;
+      +`<div class="sub" style="margin-top:8px">Tipo de análisis: <b>Queso</b> analiza los productos de esa categoría como queso; <b>Bebida</b> usa la escala de bebidas (zumos, refrescos); <b>Leche / bebida vegetal</b> las analiza como alimento, como hace Yuka; <b>Fresco</b> es para materia prima (sin código de barras ni nota) y se puede filtrar aparte. «Auto» lo deduce del nombre.</div><label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas…"><button class="btn" id="addc">Añadir</button></div>`;
     wire=()=>{
       document.querySelectorAll('[data-ck]').forEach(sl=>sl.onchange=()=>{putCats(S.cats.map(c=>c.id===sl.dataset.ck?{...c,kind:sl.value}:c));stores()});
       $('addc').onclick=()=>{const n=$('nc').value.trim();if(n){putCats([...S.cats,{id:'c'+Date.now(),name:n}]);stores()}};
