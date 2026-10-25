@@ -110,14 +110,15 @@ input[type=text],input[type=number],select{width:100%;padding:11px;border-radius
 <div class="filt" id="filt"><input type="text" id="q" placeholder="Buscar producto o marca…" enterkeyhint="search" autocomplete="off"><select id="fc"></select></div></header>
 <main id="main"></main>
 <div class="sub" style="text-align:center;padding:0 12px 70px">Nota propia con el método de Yuka (60% nutrición con su tabla oficial, 30% aditivos, 10% ecológico) y datos de Open Food Facts (ODbL). La clasificación de aditivos es aproximada y propia; no es la de Yuka.</div>
-<div class="fabs"><button class="fab" id="fab">+ Añadir</button><button class="fab fab2" id="fabs" aria-label="Ajustes">⚙️ Ajustes</button></div>
+<div class="fabs"><button class="fab" id="fab">+ Añadir</button><button class="fab fab2" id="fscan">📷 Escanear</button><button class="fab fab2" id="fabs" aria-label="Ajustes">⚙️</button></div>
 <div class="modal" id="det" style="z-index:12"><div class="sheet" id="detsheet"></div></div>
+<datalist id="dpl"></datalist>
 <div id="lb"><img id="lbi" alt=""></div>
 <div class="modal" id="srch" style="z-index:35"><div class="sheet"><h2>Buscar en Open Food Facts</h2><div class="srow"><input type="text" id="srq" placeholder="Ej: varitas de merluza" enterkeyhint="search" autocomplete="off"><button class="btn" id="srgo">Buscar</button></div><div id="srl" style="margin-top:10px"></div><div class="acts"><span></span><button class="btn g" id="srx">Cerrar</button></div></div></div>
 <div class="modal" id="mnl" style="z-index:36"><div class="sheet" id="mnsheet"></div></div>
 <div class="modal" id="upm" style="z-index:34"><div class="sheet" id="upsheet"></div></div>
 <div class="modal" id="chp" style="z-index:37"><div class="sheet" id="chps"></div></div>
-<div id="scan"><video id="scv" playsinline muted></video><div class="scb"><span>Apunta al código de barras</span><button class="btn g" id="scx">Cerrar</button></div></div>
+<div id="scan"><video id="scv" playsinline muted></video><div class="scb"><span>Apunta al código de barras</span><label class="btn g" style="margin:0">📷 Foto<input type="file" accept="image/*" capture="environment" id="scf" hidden></label><button class="btn g" id="scx">Cerrar</button></div></div>
 <div id="login"><div class="lbox"><h2>🛒 Mi compra</h2><p id="lmsg"></p><button class="btn" id="lbtn">Entrar con Google</button></div></div>
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script type="module">
@@ -132,6 +133,8 @@ const firebaseConfig={apiKey:"AIzaSyCp-YWTUCidjRFLm27EIayge58YRvvZE_E",authDomai
 const DEF=[{id:'s1',name:'LIDL'},{id:'s2',name:'BM'}];
 const DEFC=[{id:'c1',name:'Comida precocinada'},{id:'c2',name:'Carne'},{id:'c3',name:'Pescado'},{id:'c4',name:'Productos de higiene'},{id:'c5',name:'Verduras'},{id:'c6',name:'Frutas'}];
 let S={stores:DEF,cats:DEFC,products:[],extras:[]},cur='list',edit=null,unsubs=[],lastErr='',Q='',FC='';
+S.pantry=[];
+const TABS=['list','dp','cmp','sm','pr','rc','pl'];
 const configured=!String(firebaseConfig.apiKey).startsWith('PEGA');
 let app,auth,db;
 if(configured){app=initializeApp(firebaseConfig);auth=getAuth(app);
@@ -147,7 +150,7 @@ function inferKind(name){const n=norm(name);if(/\bquesos?\b/.test(n))return 'che
 const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));return c?(c.kind||inferKind(c.name)):'normal'};
 const kindFlags=()=>{const k=catKind({cat:$('cat')?$('cat').value:''});return {cheese:k==='cheese',bev:k==='bev',milk:k==='milk',name:$('name')?$('name').value:''}};
 let MPREV=null;
-function putStores(l){S.stores=l;if(!['list','cmp','sm','pr','rc','pl'].includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
+function putStores(l){S.stores=l;if(!TABS.includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
   setDoc(doc(db,'config','stores'),{list:l}).catch(wfail)}
 function showLogin(msg,btn){$('lmsg').textContent=msg;$('lbtn').style.display=btn?'':'none';$('login').classList.add('show')}
 function startAuth(){
@@ -163,11 +166,12 @@ function startAuth(){
     const err=e=>{lastErr='La cuenta '+u.email+' no tiene permiso. Entra con otra cuenta de Google.';signOut(auth)};
     unsubs.push(onSnapshot(doc(db,'config','stores'),d=>{
       S.stores=(d.exists()&&d.data().list&&d.data().list.length)?d.data().list:DEF;
-      if(!['list','cmp','sm','pr','rc','pl'].includes(cur)&&!S.stores.find(x=>x.id===cur))cur=S.stores[0].id;render()},err));
+      if(!TABS.includes(cur)&&!S.stores.find(x=>x.id===cur))cur=S.stores[0].id;render()},err));
     unsubs.push(onSnapshot(doc(db,'config','cats'),d=>{
       S.cats=(d.exists()&&Array.isArray(d.data().list))?d.data().list:DEFC;render()},err));
     unsubs.push(onSnapshot(collection(db,'products'),q=>{S.products=q.docs.map(d=>migrate({id:d.id,...d.data()}));render()},err));
     unsubs.push(onSnapshot(collection(db,'additives'),q=>{ADDS={};q.docs.forEach(d=>{ADDS[d.id]=d.data()});render()},err));
+    unsubs.push(onSnapshot(collection(db,'pantry'),q=>{S.pantry=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
     unsubs.push(onSnapshot(collection(db,'extras'),q=>{S.extras=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
     unsubs.push(onSnapshot(doc(db,'config','telegram'),d=>{TG=d.exists()?d.data():{}},()=>{}));
     unsubs.push(onSnapshot(doc(db,'config','rcats'),d=>{S.rcats=(d.exists()&&d.data().list)?d.data().list:['Desayunos','Comidas','Cenas','Postres','Snacks'];render()},()=>{}));
@@ -842,9 +846,9 @@ function planView(){
   return `<div class="plbar"><div class="seg seg2"><button class="btn ${PL.view==='week'?'':'g'}" data-pv="week">📅 Vista semanal</button><button class="btn ${PL.view==='month'?'':'g'}" data-pv="month">🗓️ Vista mensual</button></div><div class="seg"><button class="btn g" data-pn="-1">‹</button><button class="btn g" data-pn="0">Hoy</button><button class="btn g" data-pn="1">›</button></div></div>
   <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn" data-pg="1" style="width:100%;margin-top:12px">🛒 Agregar a la lista de la compra</button>`}
 async function lookup(code,fl){fl=fl||{};
-  const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,generic_name,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score`);
+  const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,generic_name,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score,quantity,image_front_small_url`);
   const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'';p._cheese=!!fl.cheese;p._bev=!!fl.bev;p._milk=!!fl.milk;p._name=fl.name||'';const q=nsPoints(p);
-  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>normE(t.replace(/^[a-z]{2}:/,''))),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||''};
+  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>normE(t.replace(/^[a-z]{2}:/,''))),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||'',qty:qtyG(p.quantity),img:p.image_front_small_url||''};
 }
 const loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s)});
 function scanCode(){return new Promise(async resolve=>{
@@ -852,6 +856,8 @@ function scanCode(){return new Promise(async resolve=>{
   const finish=c=>{if(done)return;done=true;clearInterval(timer);try{reader&&reader.reset()}catch(e){}
     if(stream)stream.getTracks().forEach(t=>t.stop());v.srcObject=null;ov.classList.remove('show');resolve(c)};
   $('scx').onclick=()=>finish(null);
+  $('scf').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
+    try{const c=await decodePhoto(f);if(c)finish(c);else alert('No he podido leer el código en esa foto. Acércate para que se vea entero y enfocado, o usa la cámara en directo.')}catch(e){alert('No he podido leer esa foto.')}};
   try{
     if('BarcodeDetector' in window){
       let ok=true;try{const f=await BarcodeDetector.getSupportedFormats();ok=f.some(x=>/ean|upc/.test(x))}catch(e){}
@@ -887,13 +893,14 @@ function groupHtml(items,gc,rf){
 
 function render(){
   const inStore=S.stores.some(s=>s.id===cur);
-  $('tabs').innerHTML=`<button class="tab ${cur==='list'?'on':''}" data-t="list">🧾 Lista</button><button class="tab ${(cur==='sm'||inStore)?'on':''}" data-t="sm">🏪 Supermercados</button><button class="tab ${cur==='pr'?'on':''}" data-t="pr">📦 Productos</button><button class="tab ${cur==='cmp'?'on':''}" data-t="cmp">⚖️ Comparar</button><button class="tab ${cur==='rc'?'on':''}" data-t="rc">🍳 Recetas</button><button class="tab ${cur==='pl'?'on':''}" data-t="pl">📅 Planning</button>`;
+  $('tabs').innerHTML=`<button class="tab ${cur==='list'?'on':''}" data-t="list">🧾 Lista</button><button class="tab ${cur==='dp'?'on':''}" data-t="dp">🏠 Despensa</button><button class="tab ${(cur==='sm'||inStore)?'on':''}" data-t="sm">🏪 Supermercados</button><button class="tab ${cur==='pr'?'on':''}" data-t="pr">📦 Productos</button><button class="tab ${cur==='cmp'?'on':''}" data-t="cmp">⚖️ Comparar</button><button class="tab ${cur==='rc'?'on':''}" data-t="rc">🍳 Recetas</button><button class="tab ${cur==='pl'?'on':''}" data-t="pl">📅 Planning</button>`;
   try{const on=$('tabs').querySelector('.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'})}catch(e){}
   const xs=$('xc'),pv=xs.value;xs.innerHTML=catOpts(pv);if(xs.selectedIndex<0)xs.selectedIndex=0;
-  $('quick').style.display=cur==='list'?'flex':'none';
+  $('quick').style.display=(cur==='list'||cur==='dp')?'flex':'none';$('xn').placeholder=cur==='dp'?'Añadir a la despensa (arroz…)':'Añadir a la lista (plátanos…)';
+  if(cur==='dp'){$('xn').setAttribute('list','dpl');$('dpl').innerHTML=S.products.map(p=>'<option value="'+esc(p.name)+'">').join('')}else $('xn').removeAttribute('list');
   const fs=$('fc');fs.innerHTML='<option value="">Todas las categorías</option><option value="@fresh">🥬 Solo frescos</option><option value="@pack">📦 Solo envasados</option>'+S.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')+'<option value="-">Sin categoría</option>';
   if(![...fs.options].some(o=>o.value===FC))FC='';fs.value=FC;
-  $('filt').style.display=(inStore||cur==='pr'||cur==='cmp'||cur==='rc')?'flex':'none';$('fc').style.display=cur==='rc'?'none':'';$('q').placeholder=cur==='rc'?'Buscar receta, etiqueta o ingrediente…':'Buscar producto o marca…';$('fab').textContent=cur==='rc'?'+ Receta':'+ Añadir';
+  $('filt').style.display=(inStore||cur==='pr'||cur==='cmp'||cur==='rc'||cur==='dp')?'flex':'none';$('fc').style.display=cur==='rc'?'none':'';$('q').placeholder=cur==='rc'?'Buscar receta, etiqueta o ingrediente…':cur==='dp'?'Buscar en la despensa…':'Buscar producto o marca…';$('fab').textContent=cur==='rc'?'+ Receta':'+ Añadir';
   const m=$('main');
   if(cur==='list'){
     $('fab').style.display='';let any=false,dn=false,h='';
@@ -944,6 +951,7 @@ function render(){
       :`<div class="empty">${S.products.length?'Ningún producto coincide con la búsqueda o el filtro.':'Aún no hay productos. Pulsa «+ Añadir».'}</div>`;
     return;
   }
+  if(cur==='dp'){$('fab').style.display='none';m.innerHTML=pantryHtml();return}
   if(cur==='rc'){$('fab').style.display='';m.innerHTML=recipesHtml();return}
   if(cur==='pl'){$('fab').style.display='none';m.innerHTML=planView();return}
   $('fab').style.display='';
@@ -964,6 +972,10 @@ function render(){
 }
 $('tabs').onclick=e=>{const t=e.target.closest('[data-t]');if(!t)return;if(t.dataset.t==='cfg')return stores('');cur=t.dataset.t;render()};
 $('main').onclick=e=>{
+  const dk=e.target.closest('[data-dk]');
+  if(dk){const it=S.pantry.find(x=>x.id===dk.dataset.dk);if(!it)return;putD({...it,out:dk.checked});
+    if(dk.checked&&!onList(it.name,it.pid))askYN('¿Pasarlo a la lista de la compra?',`Se ha acabado <b>${esc(it.name)}</b>. ¿Lo añado a la lista de la compra?`,'Sí, añadir a la lista','No',()=>pantryToList(it));return}
+  const dd=e.target.closest('[data-dd]');if(dd){delD(dd.dataset.dd);return}
   const st=e.target.closest('[data-st]');
   if(st){cur=st.dataset.st;render();window.scrollTo(0,0);return}
   if(e.target.closest('[data-back]')){cur='sm';render();return}
@@ -983,7 +995,7 @@ $('main').onclick=e=>{
   if(e.target.closest('[data-pcp]')){copyWeek();return}
   if(e.target.closest('[data-pg]')){shopGen();return}
   const c=e.target.closest('[data-c]');
-  if(c){const [pid,sid,i]=c.dataset.c.split('|');const p=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));p.e[sid].o[+i].done=c.checked;putP(p);return}
+  if(c){const [pid,sid,i]=c.dataset.c.split('|');const p=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));p.e[sid].o[+i].done=c.checked;putP(p);if(c.checked)askToPantry(p.name,p.cat,pid);return}
   const n=e.target.closest('[data-n]');
   if(n){const [pid,sid,i]=n.dataset.n.split('|');const p0=S.products.find(x=>x.id===pid),o0=p0.e[sid].o[+i];
     if(!o0.need){const all=rank(prices(p0)),me=all.find(x=>x.id===sid&&x.i===+i),best=all[0];
@@ -993,7 +1005,7 @@ $('main').onclick=e=>{
   if(tgb){const old=tgb.textContent,parts=listParts();if(!parts.length){alert('La lista está vacía.');return}
     tgb.disabled=true;tgSend(parts,{set textContent(v){tgb.textContent=v}}).then(()=>setTimeout(()=>{tgb.disabled=false;tgb.textContent=old},4000));return}
   const x=e.target.closest('[data-x]');
-  if(x){const o=S.extras.find(y=>y.id===x.dataset.x);if(o)putX({...o,done:x.checked});return}
+  if(x){const o=S.extras.find(y=>y.id===x.dataset.x);if(o){putX({...o,done:x.checked});if(x.checked)askToPantry(o.name,o.cat,'')}return}
   const xd=e.target.closest('[data-xd]');
   if(xd){delX(xd.dataset.xd);return}
   if(e.target.id==='clr'){S.products.forEach(p=>{if(!Object.values(p.e).some(e=>e.o.some(o=>o.need&&o.done)))return;const q=JSON.parse(JSON.stringify(p));
@@ -1002,6 +1014,7 @@ $('main').onclick=e=>{
   const r=e.target.closest('[data-p]');if(r)openP(r.dataset.p)};
 $('fab').onclick=()=>cur==='rc'?editRecipe(null):openP(null);
 $('fabs').onclick=()=>stores('');
+$('fscan').onclick=quickScan;
 $('q').oninput=()=>{Q=$('q').value;render()};
 $('fc').onchange=()=>{FC=$('fc').value;render()};
 document.addEventListener('click',e=>{const bd=e.target.closest('.nsb[data-ns]');if(bd){e.stopPropagation();showDet(bd.dataset)}},true);
@@ -1012,9 +1025,95 @@ $('mnl').onclick=e=>{if(e.target.id==='mnl')$('mnl').classList.remove('show')};
 document.addEventListener('click',e=>{const im=e.target.closest('#main img.th,#main img.th2,#main img.th3');if(im){e.stopPropagation();$('lbi').src=im.src;$('lb').classList.add('show')}},true);
 $('lb').onclick=()=>{$('lb').classList.remove('show');$('lbi').removeAttribute('src')};
 function addX(){const n=$('xn').value.trim();if(!n){$('xn').focus();return}
+  if(cur==='dp'){const p=matchProduct(n),ex=pantryFor(n,p&&p.id);
+    if(ex){if(ex.out)putD({...ex,out:false});else alert('«'+ex.name+'» ya está en la despensa.')}
+    else putD({id:'d'+rid(),name:p?p.name:cap(n),cat:$('xc').value||(p?p.cat:''),pid:p?p.id:'',out:false});
+    $('xn').value='';$('xn').focus();return}
   putX({id:'x'+Date.now(),name:n,cat:$('xc').value,done:false});$('xn').value='';$('xn').focus()}
 $('xa').onclick=addX;
 $('xn').onkeydown=e=>{if(e.key==='Enter')addX()};
+
+// ===== Escanear y registrar un producto =====
+const cap=s=>String(s).charAt(0).toUpperCase()+String(s).slice(1);
+const rid=()=>Date.now()+Math.random().toString(36).slice(2,5);
+function qtyG(q){const t=norm(String(q||'')).replace(',','.'),m=t.match(/(\d+(?:\.\d+)?)\s*(kg|gr|g|ml|cl|l)\b/);if(!m)return 0;
+  const f={kg:1000,g:1,gr:1,l:1000,ml:1,cl:10}[m[2]],x=t.match(/(\d+)\s*x\s*\d/);return Math.round(parseFloat(m[1])*f*(x?parseInt(x[1]):1))}
+async function decodePhoto(f){const url=URL.createObjectURL(f);
+  try{
+    if('BarcodeDetector' in window){try{const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']}),r=await det.detect(await createImageBitmap(f));if(r.length)return r[0].rawValue}catch(e){}}
+    await loadZX();const h=new Map();h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E]);h.set(ZXing.DecodeHintType.TRY_HARDER,true);
+    const rd=new ZXing.BrowserMultiFormatReader(h);try{return (await rd.decodeFromImageUrl(url)).getText()}catch(e){return null}finally{try{rd.reset()}catch(e){}}
+  }finally{URL.revokeObjectURL(url)}}
+const mkOpt=(d,code,price,g)=>({b:d?d.brand:'',price:price||0,g:g||0,bc:code,ns:d?d.ns:'',nova:d?d.nova:0,eco:d?d.eco:'',ad:d&&d.ad!=null?d.ad:null,og:d?d.og:0,np:d&&d.np!=null?d.np:null,lq:d&&d.lq?1:0,ps:d?d.ps||'':'',nd:d?d.nd||'':'',mn:'',need:false,done:false,ql:[],ph:''});
+function findByBc(c){let r=null;S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>e.o.forEach((o,i)=>{if(!r&&o.bc===c)r={p,sid,i}})));return r}
+async function quickScan(){
+  const raw=await scanCode();if(!raw)return;const code=String(raw).replace(/\D/g,'');
+  if(code.length<8){alert('No he podido leer bien el código. Prueba otra vez.');return}
+  const dlg=mdl('<div class="sub">Buscando en Open Food Facts…</div>',11),box=dlg.querySelector('.sheet');
+  const found=findByBc(code);let d=null,kind='';
+  const run=async()=>{try{d=await lookup(code,{cheese:kind==='cheese',bev:kind==='bev',milk:kind==='milk',name:''})}catch(e){d=null}};
+  const draw=()=>{
+    const x=d?{ns:d.ns,np:d.np==null?null:d.np,lq:d.lq?1:0,ad:d.ad==null?null:d.ad,og:d.og?1:0,ps:d.ps||'',nd:d.nd||''}:null;
+    const sc=x?scoreOf(x):null,pt=sc!=null?parts(x):null,cl=sc!=null?scLbl(sc)[0]:'',tx=sc!=null?scLbl(sc)[1]:'';
+    const l=x?adList(x):[];const ord={r:0,y:1,n:2,g:3};l.sort((a,b)=>ord[kOf(a)]-ord[kOf(b)]);
+    const nm=d&&d.name?d.name:'';
+    box.innerHTML=`<h2>${d?'Resultado del escaneo':'No está en Open Food Facts'}</h2>
+    <div class="row" style="margin:0 0 8px">${thumb({photo:d&&d.img||''})}<div class="info"><div class="nm">${esc(nm||'Producto sin nombre')}</div><div class="sub">${d&&d.brand?esc(d.brand)+' · ':''}Código ${esc(code)}</div></div></div>
+    ${found?`<div class="sub" style="margin-bottom:8px">Ya lo tienes en la app: <b>${esc(found.p.name)}</b> (${S.stores.filter(s=>found.p.e[s.id]).map(s=>esc(s.name)).join(', ')}).</div>`:''}
+    ${sc!=null?`<div style="text-align:center;margin:8px 0 4px"><span class="nsb sc-${cl}" id="qsc" style="font-size:24px;padding:8px 20px;border-radius:14px">${tx} ${sc}/100</span></div>
+      <div class="sub" style="text-align:center;margin-bottom:8px">Nutrición ${Math.round(pt.nut*10)/10}/60 · Aditivos ${pt.ap}/30 · Ecológico ${pt.og}/10</div>
+      <div class="sub">${esc(nsTxt(x))}${pt.capped?'<br>La nota se limita a 49 por contener un aditivo de alto riesgo.':''}${pt.fl?'<br>Queso sencillo (sin aditivos y hasta 5 ingredientes): la nutrición no baja de 30/60.':''}${x.nd?'<br>'+esc(x.nd):''}</div>`
+      :(d?'<div class="sub" style="margin:8px 0">Open Food Facts no tiene datos suficientes para calcular la nota (faltan ingredientes o la tabla nutricional). Si lo agregas, puedes escribirlos a mano con «✍️ A mano».</div>':'<div class="sub" style="margin:8px 0">No he encontrado este código. Puedes agregarlo igualmente y rellenar los datos a mano.</div>')}
+    ${d?`<label class="f">Tipo de producto (cambia cómo se calcula la nota)</label><select id="qkd"><option value="">Automático</option><option value="cheese">Queso</option><option value="bev">Bebida (zumos, refrescos, agua…)</option><option value="milk">Leche / bebida vegetal</option></select>`:''}
+    ${x?`<h3 style="margin:14px 0 4px;font-size:16px">${l.length?l.length+' aditivo'+(l.length>1?'s':''):x.ad==null?'Aditivos desconocidos':'Sin aditivos'}</h3>${l.length?`<div class="sub">${['r','y','g','n'].map(k=>dot(k)+DOTT[k]).join(' &nbsp; ')}</div>`:''}
+      ${l.map(c=>{const i=info(c);return `<div class="adr" data-code="${c}" style="cursor:pointer">${dot(kOf(c))}<b>${c==='aroma'?'AROMAS':c.toUpperCase()}</b> ${esc(i[0])}<span class="sub" style="float:right">Ver ›</span></div>`}).join('')}`:''}
+    <div class="acts"><button class="btn g" id="qcl">Cerrar</button>${found?'<button class="btn" id="qop">Abrir el producto</button>':'<button class="btn" id="qad">➕ Agregar</button>'}</div>`;
+    if($('qkd'))$('qkd').value=kind;
+    $('qcl').onclick=()=>dlg.remove();
+    if($('qkd'))$('qkd').onchange=async()=>{kind=$('qkd').value;box.innerHTML='<div class="sub">Recalculando…</div>';await run();draw()};
+    box.querySelectorAll('[data-code]').forEach(el=>el.onclick=()=>{showAd(el.dataset.code,{ns:x.ns,ad:x.ad||'',og:x.og,t:nm,np:x.np==null?'':x.np,lq:x.lq,ps:x.ps,nd:x.nd});$('det').classList.add('show')});
+    if(found)$('qop').onclick=()=>{dlg.remove();openP(found.p.id)};
+    else $('qad').onclick=()=>{dlg.remove();pickStore(sid=>openScanned(d,code,sid))};
+  };
+  await run();draw();
+}
+function pickStore(fn){
+  if(S.stores.length===1){fn(S.stores[0].id);return}
+  const inS=S.stores.some(s=>s.id===cur),first=inS?[sbyid(cur),...S.stores.filter(s=>s.id!==cur)]:S.stores;
+  $('chps').innerHTML=`<h2>¿En qué supermercado lo agregas?</h2><div class="acts" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px">${first.map(s=>`<button class="btn g" data-ps="${s.id}"><span class="dt" style="background:${scol(s)}"></span> ${esc(s.name)}</button>`).join('')}<button class="btn r" id="psx">Cancelar</button></div>`;
+  $('chps').querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{$('chp').classList.remove('show');fn(b.dataset.ps)});
+  $('psx').onclick=()=>$('chp').classList.remove('show');$('chp').classList.add('show')}
+function openScanned(d,code,sid){
+  edit={id:'p'+Date.now(),name:d&&d.name?d.name:'',photo:d&&d.img?d.img:'',cat:'',e:{[sid]:{done:false,need:false,o:[mkOpt(d,code,0,d&&d.qty||0)]}},isNew:true};
+  drawForm();$('modal').classList.add('show')}
+
+// ===== Despensa =====
+function putD(x){setDoc(doc(db,'pantry',x.id),{name:x.name,cat:x.cat||'',pid:x.pid||'',out:!!x.out}).catch(wfail)}
+function delD(id){deleteDoc(doc(db,'pantry',id)).catch(wfail)}
+const askYN=(title,body,yes,no,fn)=>{
+  $('chps').innerHTML=`<h2>${esc(title)}</h2><div class="sub">${body}</div><div class="acts" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:14px"><button class="btn" id="ayy">${esc(yes)}</button><button class="btn g" id="ayn">${esc(no)}</button></div>`;
+  $('ayy').onclick=()=>{$('chp').classList.remove('show');fn()};$('ayn').onclick=()=>$('chp').classList.remove('show');$('chp').classList.add('show')};
+const pantryFor=(name,pid)=>S.pantry.find(x=>(pid&&x.pid===pid)||nName(x.name)===nName(name));
+const prodFor=(name,pid)=>(pid&&S.products.find(x=>x.id===pid))||matchProduct(name);
+function onList(name,pid){const p=prodFor(name,pid);
+  if(p&&Object.values(p.e).some(e=>e.o.some(o=>o.need&&!o.done)))return true;
+  return S.extras.some(x=>nName(x.name)===nName(name)&&!x.done)}
+function pantryToList(it){const p=prodFor(it.name,it.pid);
+  if(p){const b=bestOpt(p);if(b.sid&&p.e[b.sid]&&p.e[b.sid].o[b.i]){setNeed(p.id,b.sid,b.i,true);return}}
+  const cu=S.extras.find(x=>nName(x.name)===nName(it.name));
+  if(cu)putX({...cu,done:false});else putX({id:'x'+rid(),name:cap(it.name),cat:it.cat||'',done:false,ql:[]})}
+function listToPantry(name,cat,pid){const it=pantryFor(name,pid);
+  if(it){if(it.out)putD({...it,out:false});return}
+  putD({id:'d'+rid(),name:cap(name),cat:cat||'',pid:pid||'',out:false})}
+function askToPantry(name,cat,pid){const it=pantryFor(name,pid);if(it&&!it.out)return;
+  askYN('¿Pasarlo a la despensa?',`Has tachado <b>${esc(name)}</b>. ¿Lo apunto en la despensa como que ya lo tienes en casa?`,'Sí, a la despensa','No',()=>listToPantry(name,cat,pid))}
+const pkeep=x=>{const q=norm(Q.trim());if(q&&!norm(x.name).includes(q))return false;if(!FC)return true;
+  if(FC==='@fresh')return catKind(x)==='fresh';if(FC==='@pack')return catKind(x)!=='fresh';if(FC==='-')return !S.cats.some(c=>c.id===x.cat);return x.cat===FC};
+function pantryHtml(){
+  const out=S.pantry.filter(x=>x.out).length,l=S.pantry.filter(pkeep).sort((a,b)=>(a.out?1:0)-(b.out?1:0)||norm(a.name).localeCompare(norm(b.name)));
+  if(!S.pantry.length)return '<div class="empty">La despensa está vacía.<br>Escribe arriba lo que tienes en casa.</div>';
+  return `<div class="sub" style="margin:0 2px 8px">${S.pantry.length-out} en casa · ${out} gastado${out===1?'':'s'}. Tacha lo que se acabe y te pregunto si lo apunto en la lista.</div>`+(l.length?groupHtml(l,x=>x.cat,x=>{const p=x.pid&&S.products.find(z=>z.id===x.pid);
+    return `<div class="row ${x.out?'done':''}"><input type="checkbox" data-dk="${x.id}" ${x.out?'checked':''}>${p?thumb(p):'<div class="th">🏠</div>'}<div class="info"><div class="nm">${esc(x.name)}</div>${x.out?'<div class="sub">Gastado</div>':''}</div><button class="cart" data-dd="${x.id}" aria-label="Quitar">✕</button></div>`}):'<div class="empty">Ninguno coincide con la búsqueda o el filtro.</div>')}
 
 function openP(id){
   const p=id?S.products.find(x=>x.id===id):{id:'p'+Date.now(),name:'',photo:'',cat:'',e:S.stores.some(s=>s.id===cur)?{[cur]:{o:[],done:false,need:false}}:{}};
@@ -1225,7 +1324,7 @@ function stores(sec){
 function close(){$('modal').classList.remove('show');$('sheet').classList.remove('fresh')}
 $('modal').onclick=e=>{if(e.target.id==='modal')close()};
 // Deslizar el dedo para cambiar de pestaña: izquierda = siguiente, derecha = anterior
-(()=>{let t0=null;const ORD=['list','sm','pr','cmp','rc','pl'];
+(()=>{let t0=null;const ORD=['list','dp','sm','pr','cmp','rc','pl'];
   document.addEventListener('touchstart',e=>{
     if(e.touches.length!==1||document.querySelector('.modal.show,#lb.show,#scan.show,#login.show')||e.target.closest('input,textarea,select,.tabs,details')){t0=null;return}
     const t=e.touches[0];if(t.clientX<24||t.clientX>window.innerWidth-24){t0=null;return}
