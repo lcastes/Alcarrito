@@ -195,6 +195,7 @@ function startAuth(){
     unsubs.push(onSnapshot(collection(db,'additives'),q=>{ADDS={};q.docs.forEach(d=>{ADDS[d.id]=d.data()});render()},err));
     unsubs.push(onSnapshot(collection(db,'pantry'),q=>{S.pantry=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
     unsubs.push(onSnapshot(collection(db,'extras'),q=>{S.extras=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
+    unsubs.push(onSnapshot(doc(db,'config','diet'),d=>{S.diet=(d.exists()&&['vegan','vegetarian','plant','omni'].includes(d.data().mode))?d.data().mode:'plant';render()},()=>{}));
     unsubs.push(onSnapshot(doc(db,'config','telegram'),d=>{TG=d.exists()?d.data():{}},()=>{}));
     unsubs.push(onSnapshot(doc(db,'config','rcats'),d=>{S.rcats=(d.exists()&&d.data().list)?d.data().list:['Desayunos','Comidas','Cenas','Postres','Snacks'];render()},()=>{}));
     unsubs.push(onSnapshot(collection(db,'recipes'),q=>{S.recipes=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
@@ -607,8 +608,10 @@ function openPrices(sid){
   $('upm').classList.add('show');
 }
 // ===== RECETAS Y PLANNING =====
-S.recipes=[];S.plan={};S.rcats=['Desayunos','Comidas','Cenas','Postres','Snacks'];
+S.recipes=[];S.plan={};S.diet='plant';S.rcats=['Desayunos','Comidas','Cenas','Postres','Snacks'];
 let RV={mode:'grid',cat:'',tag:''};
+const DIETS={vegan:['🌱','Vegano','Sin ningún producto animal (ni lácteos ni huevo).'],vegetarian:['🥚','Vegetariano','Sin carne ni pescado; lácteos y huevo sí.'],plant:['🥗','Vegetal flexible','Priorizar lo vegetal (≥ 70 % de comidas y cenas) con algo de carne o pescado.'],omni:['🐟','Normal, con pescado','Dieta con carne, dando prioridad al pescado y moderando carne roja y embutidos.']};
+function putDiet(m){S.diet=m;setDoc(doc(db,'config','diet'),{mode:m}).catch(wfail)}
 function putRcats(l){S.rcats=l;setDoc(doc(db,'config','rcats'),{list:l}).catch(wfail)}
 let PL={view:'week',anchor:new Date(),sel:null};
 const DN=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -865,6 +868,135 @@ function planRows(k){const pl=S.plan[k]||{};
 function slotPick(k){chpPush(()=>{
   $('chps').innerHTML=`<h2>${labelDay(k)}</h2><div class="sub">¿Qué comida quieres añadir?</div><div class="acts" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:12px">${SLS.map(sl=>`<button class="btn g" data-sl="${sl}" style="color:${SLC[sl]};border-color:${SLC[sl]}">${SLI[sl]} ${SLN[sl]}</button>`).join('')}<button class="btn r" id="slx">Cancelar</button></div>`;
   $('chps').querySelectorAll('[data-sl]').forEach(b=>b.onclick=()=>{chpClose();pickEntry(k,b.dataset.sl)});$('slx').onclick=chpClose;$('chp').classList.add('show')},true)}
+// ===== Análisis nutricional del menú (estimación por grupos de alimentos + nutrientes) =====
+const GRP={ver:['Verdura',1],fru:['Fruta',1],leg:['Legumbres',1],cer:['Cereales',1],tub:['Tubérculos',1],fs:['Frutos secos y semillas',1],ace:['Aceites y grasas',1],prv:['Proteína vegetal (tofu, tempeh…)',1],bvg:['Bebida vegetal',1],
+  lac:['Lácteos',0],hue:['Huevos',0],paz:['Pescado azul',0],pbl:['Pescado blanco y marisco',0],cro:['Carne roja',0],cbl:['Carne blanca',0],emb:['Embutidos y procesados',0],dul:['Dulces y bollería',0],otr:['Otros',1]};
+// [regex, grupo, kcal, prot, hidr, grasa, fibra por 100 g, g por unidad]
+const FT=[
+ [/judia verde|guisante(s)? (fresco|congelado)|maiz dulce/,'ver',35,2.5,5,0.3,3,100],
+ [/tofu|tempeh|seitan|soja texturizada|proteina (de )?soja|proteina texturizada|burger vegetal|hamburguesa vegetal|salchicha vegetal/,'prv',140,15,3,7,2,100],
+ [/bebida (de )?(avena|soja|almendra|arroz|coco|avellana|vegetal)|leche (de )?(avena|soja|almendra|arroz|coco|avellana)|horchata/,'bvg',40,1.5,5,1.5,0.5,250],
+ [/jamon|chorizo|salchicha|bacon|beicon|panceta|mortadela|fiambre|salami|longaniza|morcilla|nugget|embutido|pate|sobrasada|lomo embuchado|pizza|croqueta|empanad|precocin|lasana|hamburguesa/,'emb',250,13,10,18,0.5,100],
+ [/atun|salmon|sardina|caballa|anchoa|boqueron|trucha|arenque|bonito|jurel/,'paz',190,22,0,11,0,100],
+ [/merluza|bacalao|lubina|dorada|gallo|rape|pescadilla|lenguado|panga|basa|pescado|gamba|langostino|calamar|sepia|pulpo|mejillon|almeja|marisco|surimi|cangrejo|pota|sepia/,'pbl',90,19,0,1.5,0,100],
+ [/pollo|pavo|conejo|pechuga|muslo/,'cbl',150,22,0,6,0,150],
+ [/ternera|vacuno|cerdo|cordero|buey|chuleta|solomillo|lomo|costilla|carne|filete|cochinillo|jabali|hamburg/,'cro',230,20,0,16,0,150],
+ [/huevo|clara de|tortilla francesa|revuelto/,'hue',145,12.5,1,10,0,60],
+ [/aceite|mantequilla|margarina|manteca|nata/,'ace',800,0.5,0,90,0,12],
+ [/queso|requeson|cuajada/,'lac',300,22,1,23,0,30],
+ [/yogur|yogurt|kefir|natillas/,'lac',60,4,5,3,0,125],
+ [/leche/,'lac',47,3.3,4.8,1.6,0,250],
+ [/almendra|nuez|nueces|avellana|anacardo|pistacho|cacahuete|pipa|semilla|chia|lino|sesamo|tahini|crema de cacahuete|mantequilla de|fruto(s)? seco/,'fs',600,20,10,52,8,30],
+ [/garbanzo|lenteja|judia|alubia|frijol|haba|edamame|humus|hummus|soja en grano|cocido|potaje|fabada|legumbre/,'leg',125,8,18,2,6,100],
+ [/patata|boniato|batata|yuca|puré de patata|pure de patata/,'tub',80,2,17,0.1,2,150],
+ [/arroz|pasta|macarron|espagueti|fideo|tallarin|cuscus|quinoa|bulgur|avena|copos|harina|polenta|centeno|trigo|espelta|porridge|gachas|noodle|ramen|sushi|tortita|cereal|muesli|granola|gnocchi|pan\b|tostada|panecillo|bagel|wrap|pita|tortilla de trigo|bocadillo|sandwich|bocata|tosta/,'cer',350,11,72,1.5,3,60],
+ [/zumo|refresco|batido/,'dul',45,0.5,10,0,0,200],
+ [/azucar|miel|mermelada|chocolate|galleta|bolleria|pastel|bizcocho|donut|helado|caramelo|sirope|nutella|cacao|mantecado|croissant|napolitana|dulce|turron|postre|flan|gominola|chuche|cola cao|colacao/,'dul',390,4,75,10,2,30],
+ [/platano|manzana|naranja|mandarina|pera\b|fresa|uva|melon|sandia|kiwi|melocoton|nectarina|albaricoque|ciruela|cereza|pina\b|mango|papaya|aguacate|limon|arandano|frambuesa|mora\b|higo|datil|pasas|granada|caqui|fruta|coco|macedonia/,'fru',55,0.8,12,0.3,2,130],
+ [/lechuga|tomate|pepino|cebolla|zanahoria|pimiento|calabac|berenjena|espinaca|acelga|brocoli|coliflor|\bcol\b|coles|repollo|lombarda|champi|seta|esparrago|alcachofa|puerro|apio|calabaza|rucula|canonigo|endivia|ensalada|verdura|hortaliza|nabo|rabano|remolacha|guisante|gazpacho|salmorejo|crema de|pisto|menestra|ajo\b|sopa|caldo de verdura|salteado|wok|verduras|espinacas|brócoli/,'ver',32,2,5,0.3,2.5,120]];
+const UNG={g:1,kg:1000,ml:1,l:1000,cda:12,cdta:4,taza:200,diente:5,lata:120,pizca:0.5};
+const PORC={ver:150,fru:130,leg:150,cer:80,tub:150,fs:25,ace:10,prv:100,bvg:200,lac:125,hue:60,paz:120,pbl:130,cro:120,cbl:130,emb:50,dul:30};
+function classify(txt){const t=norm(txt||'');return FT.find(f=>f[0].test(t))||null}
+function entItems(e){ // devuelve {title,items:[{g,gr,kcal,pro,hc,fat,fib,est}],quant}
+  let title='',ing=null,sv=1;
+  if(e.r){const rc=S.recipes.find(x=>x.id===e.r);if(!rc)return null;title=rc.title;ing=rc.ing||[];sv=Math.max(1,e.s||rc.servings||1)}
+  else{title=e.t||'';ing=(e.ing||[]).length?e.ing:null;sv=Math.max(1,e.s||1)}
+  const items=[];let quant=true;
+  if(ing&&ing.length){ing.forEach(x=>{const f=classify(x.n)||classify(title+' '+x.n);if(!f)return;let gr=null;
+      if(x.q!=null&&x.q>0){const u=x.u||'';gr=u==='ud'||u===''?x.q*f[7]:x.q*(UNG[u]||1);gr=gr/sv}
+      const est=gr==null;if(est){gr=PORC[f[1]]*(['ace','fs','dul'].includes(f[1])?1:0.5)/(['ace','fs','dul'].includes(f[1])?1:0.5);gr=PORC[f[1]];quant=false}
+      const m=/cocid|hervid/.test(norm(x.n))&&['cer','leg'].includes(f[1])?(f[1]==='cer'?0.37:1):1;
+      items.push({g:f[1],gr,kcal:f[2]*gr/100*m,pro:f[3]*gr/100*m,hc:f[4]*gr/100*m,fat:f[5]*gr/100*m,fib:f[6]*gr/100*m,est})})}
+  // título: añade grupos que no aparecen en los ingredientes (o todo si no hay ingredientes)
+  const t=norm(title),have=new Set(items.map(i=>i.g));
+  if(!ing||!ing.length){quant=false;
+    const seen=new Set();FT.forEach(f=>{if(f[0].test(t)&&!seen.has(f[1])){seen.add(f[1]);const gr=PORC[f[1]];items.push({g:f[1],gr,kcal:f[2]*gr/100,pro:f[3]*gr/100,hc:f[4]*gr/100,fat:f[5]*gr/100,fib:f[6]*gr/100,est:true})}})}
+  return {title,items,quant:quant&&items.length>0}}
+const PLANTG=new Set(['ver','fru','leg','cer','tub','fs','ace','prv','bvg','otr']),VEGET=new Set(['lac','hue']);
+function mealKind(it){const gs=new Set(it.items.map(i=>i.g));if([...gs].some(g=>!PLANTG.has(g)&&!VEGET.has(g)&&g!=='dul'))return 'animal';return [...gs].some(g=>VEGET.has(g))?'veg':'plant'}
+function analyzeDay(k){const dd=S.plan[k]||{},sl={},tot={kcal:0,pro:0,hc:0,fat:0,fib:0,ver:0,fru:0},gr={};let n=0,quant=true,any=false;
+  SLS.forEach(s=>{const es=(dd[s]||[]).map(entItems).filter(Boolean);sl[s]=es;if(es.length){n++;any=true}
+    es.forEach(m=>{if(!m.quant)quant=false;m.items.forEach(i=>{['kcal','pro','hc','fat','fib'].forEach(x=>tot[x]+=i[x]);if(i.g==='ver')tot.ver+=i.gr;if(i.g==='fru')tot.fru+=i.gr;gr[i.g]=(gr[i.g]||0)+1})})});
+  return {k,any,n,sl,tot,gr,quant}}
+const PROTG=new Set(['leg','prv','paz','pbl','cro','cbl','hue','lac','emb']);
+function analyzeRange(keys){
+  const days=keys.map(analyzeDay),used=days.filter(d=>d.any),N=used.length,sc=N/7,good=[],bad=[];
+  const cnt=g=>used.reduce((a,d)=>a+(d.gr[g]||0),0),dsc=g=>used.filter(d=>d.gr[g]).length;
+  let main=0,plant=0,animal=0,mains=[];
+  used.forEach(d=>['c','d'].forEach(s=>d.sl[s].forEach(m=>{main++;const kd=mealKind(m);if(kd!=='animal')plant++;else{animal++;mains.push(d.k+'|'+s+'|'+m.title)}})));
+  const pPct=main?Math.round(plant/main*100):0;let pts=100;
+  const chk=(ok,w,okT,badT,sug)=>{if(ok)good.push(okT);else{bad.push({t:badT,s:sug});pts-=w}};
+  if(N<2)return {N,days,pts:0,good,bad,main,plant,pPct,few:1};
+  const DM=S.diet||'plant',mealsAll=[];used.forEach(d=>SLS.forEach(sl=>d.sl[sl].forEach(m=>mealsAll.push({k:d.k,s:sl,m,kd:mealKind(m)}))));
+  const lst=a=>a.slice(0,3).map(x=>`${labelDay(x.k)} (${SLN[x.s].toLowerCase()}: ${x.m.title})`).join('; ');
+  if(DM==='vegan'){const bd=mealsAll.filter(x=>x.kd!=='plant');
+    chk(!bd.length,25,'Menú 100 % vegetal: sin productos animales.',`${bd.length} comidas con productos animales (${lst(bd)}${bd.length>3?'…':''}).`,'Cambia por versiones veganas: legumbres, tofu, tempeh, bebida vegetal, frutos secos.')}
+  else if(DM==='vegetarian'){const bd=mealsAll.filter(x=>x.kd==='animal');
+    chk(!bd.length,25,'Menú vegetariano: sin carne ni pescado.',`${bd.length} comidas con carne o pescado (${lst(bd)}${bd.length>3?'…':''}).`,'Cambia por legumbres, huevo, queso, tofu o verduras con cereal.')}
+  else if(DM==='plant'){
+  // prioridad vegetal
+  chk(pPct>=70,18,`Menú mayoritariamente vegetal: ${plant} de ${main} comidas y cenas sin carne ni pescado (${pPct} %).`,
+      `Solo ${plant} de ${main} comidas y cenas (${pPct} %) son vegetales; se recomienda al menos un 70 %.`,
+      animal?`Cambia por una versión vegetal: ${mains.slice(0,3).map(x=>{const [kk,s,t]=x.split('|');return `${labelDay(kk)} (${SLN[s].toLowerCase()}: ${t})`}).join('; ')}. Ideas: legumbres, tofu, tempeh o verduras con cereal integral.`:'');
+  }
+  else{const pz=cnt('paz')+cnt('pbl'),pzT=Math.ceil(3*sc),azT=Math.ceil(1*sc),cb=cnt('cbl');
+    chk(pz>=pzT,16,`Pescado suficiente (${pz} ${pz===1?'vez':'veces'}).`,`Pescado: ${pz} ${pz===1?'vez':'veces'}. Se recomiendan 3 a la semana (en ${N} días: ${pzT}).`,'Añade merluza, bacalao, gambas o marisco, y pescado azul (salmón, sardinas, caballa).');
+    chk(cnt('paz')>=azT,8,`Incluye pescado azul (${cnt('paz')}).`,`Sin pescado azul. Conviene al menos 1 vez a la semana por su omega-3.`,'Salmón, sardinas, caballa, atún en conserva al natural o trucha.');
+    chk(cb<=Math.round(4*sc),6,`Carne blanca moderada (${cb}).`,`Carne blanca: ${cb} veces. Lo ideal son 3-4 a la semana como máximo.`,'Alterna con pescado, huevo y legumbres.')}
+  const cr=cnt('cro'),em=cnt('emb'),du=cnt('dul');
+  chk(cr<=Math.max(1,Math.round(2*sc)),8,`Carne roja controlada (${cr} ${cr===1?'vez':'veces'}).`,`Carne roja: ${cr} veces. Lo recomendable es 1-2 veces a la semana como máximo.`,'Sustitúyela por legumbres, pescado, huevo o proteína vegetal.');
+  chk(em<=Math.max(1,Math.round(1*sc)),9,`Pocos embutidos y procesados (${em}).`,`Embutidos y procesados: ${em} veces. Conviene que sean ocasionales (como mucho 1 a la semana).`,'Cámbialos por versiones caseras: tortilla, hummus, pollo o pavo a la plancha, tofu.');
+  chk(du<=Math.max(2,Math.round(2*sc)),5,`Dulces y bollería moderados (${du}).`,`Dulces y bollería: ${du} veces. Mejor reservarlos para ocasiones puntuales.`,'Sustitúyelos por fruta, yogur natural o frutos secos.');
+  const lg=cnt('leg')+cnt('prv')*0.5,lgN=DM==='omni'?3:4,lgT=Math.ceil(lgN*sc);
+  chk(lg>=lgT,DM==='omni'?8:12,`Legumbres suficientes (${cnt('leg')} ${cnt('leg')===1?'vez':'veces'}${cnt('prv')?` + ${cnt('prv')} de proteína vegetal`:''}).`,`Legumbres: ${cnt('leg')} ${cnt('leg')===1?'vez':'veces'}. Lo ideal es ${lgN} o más a la semana (en ${N} días: ${lgT}).`,'Añade lentejas, garbanzos, alubias, hummus o tofu en comidas y cenas.');
+  const fsT=Math.ceil(3*sc);chk(cnt('fs')>=fsT,6,`Frutos secos y semillas presentes (${cnt('fs')}).`,`Frutos secos y semillas: ${cnt('fs')}. Un puñado casi a diario (mínimo ${fsT} en ${N} días) aporta grasas saludables, omega-3 y minerales.`,'Añade nueces, almendras, semillas de chía o lino al desayuno o a las ensaladas.');
+  const vf=used.map(d=>d.tot.ver+d.tot.fru),lowV=used.filter((d,i)=>vf[i]<400),lowVer=used.filter(d=>d.tot.ver<200);
+  chk(lowV.length===0,16,`Verdura y fruta suficientes todos los días (≥ 400 g).`,`Verdura y fruta por debajo de 400 g en ${lowV.length} de ${N} días: ${lowV.slice(0,4).map(d=>labelDay(d.k)).join(', ')}${lowV.length>4?'…':''}.`,'Añade ensalada o verdura en comida y cena, y una o dos piezas de fruta al día.');
+  chk(lowVer.length<=Math.floor(N/4),6,`Verdura suficiente (≥ 200 g al día).`,`Poca verdura (< 200 g) en ${lowVer.length} días: ${lowVer.slice(0,4).map(d=>labelDay(d.k)).join(', ')}.`,'Intenta incluir una ración de verdura en cada comida y cena.');
+  const noP=[];used.forEach(d=>['c','d'].forEach(s=>{if(d.sl[s].length&&!d.sl[s].some(m=>m.items.some(i=>PROTG.has(i.g)||i.g==='fs')))noP.push(labelDay(d.k)+' ('+SLN[s].toLowerCase()+')')}));
+  chk(noP.length===0,8,`Fuente de proteína en todas las comidas y cenas.`,`Sin fuente de proteína clara en: ${noP.slice(0,4).join(', ')}${noP.length>4?'…':''}.`,'Añade legumbres, tofu, huevo, queso, pescado o frutos secos.');
+  const fz=used.filter(d=>d.quant),fq=fz.length?fz.reduce((a,d)=>a+d.tot.fib,0)/fz.length:null;
+  if(fq!=null)chk(fq>=25,7,`Fibra adecuada (≈ ${Math.round(fq)} g al día).`,`Fibra baja (≈ ${Math.round(fq)} g al día; se recomiendan 25 g o más).`,'Más legumbres, verdura, fruta, frutos secos y cereales integrales.');
+  const aml=cnt('paz')+cnt('pbl')+cnt('cbl')+cnt('cro')+cnt('emb')+cnt('lac')+cnt('hue');
+  const note=[];if(DM==='vegan'||(aml===0&&N>=3))note.push('Con una alimentación 100 % vegetal es imprescindible suplementar vitamina B12 y cuidar hierro, yodo, calcio, zinc y omega-3 (consúltalo con tu médico o dietista).');
+  if(DM!=='vegan'&&DM!=='omni'&&cnt('paz')===0&&cnt('pbl')===0&&aml>0&&N>=5)note.push('No hay pescado esta semana: aporta omega-3 (DHA). Si no lo comes, incluye nueces, chía o lino, o consulta un suplemento de algas.');
+  return {N,days,pts:Math.max(0,Math.min(100,Math.round(pts))),good,bad,main,plant,pPct,note,pz:cnt('paz')+cnt('pbl'),DM}}
+function nutUI(def){
+  let mode=def||'week';
+  const d=mdl('',35);const sh=d.querySelector('.sheet');
+  const sc=p=>p>=80?['#1e8f4e','Muy bueno']:p>=60?['#6aa81f','Bueno']:p>=40?['#e2861b','Mejorable']:['#d33a2c','Poco equilibrado'];
+  const draw=()=>{
+    const a0=PL.view==='month'&&PL.sel?pd(PL.sel):PL.anchor;let keys,title;
+    if(mode==='day'){keys=[dk(a0)];title=labelDay(dk(a0))}
+    else{const m0=monday(a0);keys=[...Array(7)].map((_,i)=>dk(addD(m0,i)));title='Semana del '+labelDay(keys[0])+' al '+labelDay(keys[6])}
+    let body;
+    if(mode==='day'){const x=analyzeDay(keys[0]);
+      if(!x.any)body='<div class="empty">No hay nada planificado ese día.</div>';
+      else{const t=x.tot,vf=t.ver+t.fru,rows=[];
+        rows.push(['Verdura y fruta',Math.round(vf)+' g',vf>=400?1:0,'recomendado ≥ 400 g']);
+        rows.push(['Verdura',Math.round(t.ver)+' g',t.ver>=200?1:0,'recomendado ≥ 200 g']);
+        rows.push(['Proteínas',Math.round(t.pro)+' g',t.pro>=45?1:0,'orientativo ≥ 45-50 g']);
+        rows.push(['Fibra',Math.round(t.fib)+' g',!x.quant?-1:t.fib>=25?1:0,'recomendado ≥ 25 g']);
+        rows.push(['Energía',Math.round(t.kcal)+(x.quant?'':' (aprox.)')+' kcal',!x.quant?-1:t.kcal>=1400&&t.kcal<=3000?1:0,'depende de tu edad y actividad']);
+        rows.push(['Hidratos / grasas',Math.round(t.hc)+' g / '+Math.round(t.fat)+' g',-1,'']);
+        const miss=[];['c','d'].forEach(s=>{if(x.sl[s].length&&!x.sl[s].some(m=>m.items.some(i=>PROTG.has(i.g)||i.g==='fs')))miss.push(SLN[s].toLowerCase())});
+        const pm=SLS.map(s=>x.sl[s].map(m=>`<div class="sub" style="color:${SLC[s]}">${SLN[s]}: <b>${esc(m.title)}</b> — ${mealKind(m)==='plant'?'🌱 vegetal':mealKind(m)==='veg'?'🥚 vegetariano':'🍖 con carne/pescado'}${m.quant?'':' · <i>estimado</i>'}</div>`).join('')).join('');
+        body=`<div style="margin:8px 0">${pm}</div>${rows.map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid var(--bd)"><span>${r[2]===1?'✅':r[2]===0?'⚠️':'•'} ${r[0]}<div class="sub">${r[3]}</div></span><b>${r[1]}</b></div>`).join('')}
+        ${miss.length?`<div class="lowmsg" style="margin-top:8px">⚠️ Sin fuente de proteína clara en: ${miss.join(' y ')}.</div>`:''}
+        ${x.quant?'':'<div class="sub" style="margin-top:8px">Hay comidas sin cantidades en los ingredientes: sus valores se han estimado con una ración tipo. Para más precisión, añade ingredientes con cantidad a la receta.</div>'}`}}
+    else{const r=analyzeRange(keys);
+      if(r.few)body=`<div class="empty">Planifica al menos 2 días de la semana para poder analizarla (ahora hay ${r.N}).</div>`;
+      else{const [col,lab]=sc(r.pts);
+        body=`<div style="display:flex;align-items:center;gap:12px;margin:10px 0"><div style="min-width:74px;height:74px;border-radius:50%;background:${col};color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:24px">${r.pts}<span style="font-size:10px;font-weight:600">/100</span></div><div><b style="font-size:18px">${lab}</b><div class="sub">${r.N} días analizados · ${DIETS[r.DM][0]} ${DIETS[r.DM][1]}${r.DM==='omni'?' · 🐟 '+r.pz+' de pescado':' · 🌱 '+r.pPct+' % de comidas y cenas vegetales'}</div></div></div>
+        ${r.bad.length?`<h3 class="gh">⚠️ A mejorar</h3>${r.bad.map(b=>`<div class="adr"><b>${esc(b.t)}</b>${b.s?`<div class="sub">💡 ${esc(b.s)}</div>`:''}</div>`).join('')}`:''}
+        ${r.good.length?`<h3 class="gh">✅ Bien</h3>${r.good.map(g=>`<div class="adr">${esc(g)}</div>`).join('')}`:''}
+        ${(r.note||[]).length?`<h3 class="gh">ℹ️ A tener en cuenta</h3>${r.note.map(n=>`<div class="adr sub">${esc(n)}</div>`).join('')}`:''}
+        <h3 class="gh">Por días</h3>${r.days.filter(x=>x.any).map(x=>{const vf=x.tot.ver+x.tot.fru;return `<div style="display:flex;justify-content:space-between;gap:6px;padding:6px 0;border-top:1px solid var(--bd);font-size:14px"><span>${labelDay(x.k)}</span><span class="sub">${Math.round(x.tot.kcal)} kcal · P ${Math.round(x.tot.pro)} g · fibra ${Math.round(x.tot.fib)} g · ver+fruta ${Math.round(vf)} g${x.quant?'':' · est.'}</span></div>`}).join('')}`}}
+    sh.innerHTML=`<h2>🥗 Análisis del menú</h2><div class="seg seg2" style="margin:6px 0"><button class="btn ${mode==='day'?'':'g'}" data-nm="day">Día</button><button class="btn ${mode==='week'?'':'g'}" data-nm="week">Semana</button></div><div class="sub">${title}</div>${body}
+    <div class="sub" style="margin-top:12px">Es una estimación orientativa basada en valores medios por tipo de alimento y en las cantidades de tus recetas (por persona). No sustituye el consejo de un dietista-nutricionista.</div><div class="acts"><button class="btn g" id="nux">Cerrar</button></div>`;
+    sh.querySelectorAll('[data-nm]').forEach(b=>b.onclick=()=>{mode=b.dataset.nm;draw()});sh.querySelector('#nux').onclick=()=>d.remove()};
+  draw()}
+
 function planView(){
   const a=PL.anchor,today=dk(new Date());let label,body;
   const nav=PL.view==='day'?'Día':PL.view==='week'?'Semana':'Mes';
@@ -882,7 +1014,7 @@ function planView(){
       `<div class="sub" style="display:flex;gap:14px;margin:8px 2px;flex-wrap:wrap">${SLS.map(s=>`<span><i class="ld" style="background:${SLC[s]}"></i>${SLN[s]}</span>`).join('')}</div>`+
       (PL.sel?`<div class="pdh2 ${PL.sel===today?'today':''}" style="margin-top:6px"><span>${labelDay(PL.sel)}</span><span><button class="pplus" data-pdv="${PL.sel}" style="font-size:13px;width:auto;padding:0 10px">Abrir día</button></span></div>${planRows(PL.sel)||'<div class="prow0">Sin nada planificado este día</div>'}<div class="pbar3">${SLS.map(sl=>`<button class="btn g" data-pa="${PL.sel}|${sl}" style="color:${SLC[sl]};border-color:${SLC[sl]}">+ ${SLN[sl]}</button>`).join('')}</div>`:'<div class="sub" style="margin:10px 2px">Toca un día para ver qué se come.</div>')}
   return `<div class="plbar"><div class="seg seg2"><button class="btn ${PL.view==='day'?'':'g'}" data-pv="day">📆 Día</button><button class="btn ${PL.view==='week'?'':'g'}" data-pv="week">🗓️ Semana</button><button class="btn ${PL.view==='month'?'':'g'}" data-pv="month">📅 Mes</button></div><div class="seg"><button class="btn g" data-pn="-1">‹</button><button class="btn g" data-pn="0">Hoy</button><button class="btn g" data-pn="1">›</button></div></div>
-  <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn" data-pg="1" style="width:100%;margin-top:12px">🛒 Agregar a la lista de la compra</button>`}
+  <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn g" data-nu="1" style="width:100%;margin-top:12px">🥗 Analizar menú (nutrición)</button><button class="btn" data-pg="1" style="width:100%;margin-top:8px">🛒 Agregar a la lista de la compra</button>`}
 async function lookup(code,fl){fl=fl||{};
   const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,generic_name,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score,quantity,image_front_small_url`);
   const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'';p._cheese=!!fl.cheese;p._bev=!!fl.bev;p._milk=!!fl.milk;p._name=fl.name||'';const q=nsPoints(p);
@@ -1035,6 +1167,7 @@ $('main').onclick=e=>{
   const peb=e.target.closest('[data-pe]');if(peb){const [k,sl,j]=peb.dataset.pe.split('|');editEntry(k,sl,+j);return}
   const pcb=e.target.closest('[data-pc]');if(pcb){PL.sel=pcb.dataset.pc;render();return}
   if(e.target.closest('[data-pcp]')){copyWeek();return}
+  if(e.target.closest('[data-nu]')){nutUI(PL.view==='day'?'day':'week');return}
   if(e.target.closest('[data-pg]')){shopGen();return}
   const c=e.target.closest('[data-c]');
   if(c){const [pid,sid,i]=c.dataset.c.split('|');const p=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));p.e[sid].o[+i].done=c.checked;putP(p);if(c.checked)askToPantry(p.name,p.cat,pid);return}
@@ -1142,7 +1275,7 @@ const askYN=(title,body,yes,no,fn,front)=>chpPush(()=>{
   $('ayy').onclick=()=>{chpClose();fn()};$('ayn').onclick=chpClose;$('chp').classList.add('show')},front);
 const pantryFor=(name,pid)=>S.pantry.find(x=>(pid&&x.pid===pid)||nName(x.name)===nName(name));
 const prodFor=(name,pid)=>(pid&&S.products.find(x=>x.id===pid))||matchProduct(name);
-const isLow=x=>!x.out&&x.q0>0&&x.q!=null&&Math.round(x.q*1000)<Math.round(x.q0*800);
+const isLow=x=>!x.out&&x.q0>0&&x.q!=null&&Math.round(x.q*1000)<Math.round(x.q0*150);
 const n2s=v=>String(Math.round(v*100)/100).replace('.',',');
 function onList(name,pid){const p=prodFor(name,pid);
   if(p&&Object.values(p.e).some(e=>e.o.some(o=>o.need&&!o.done)))return true;
@@ -1193,7 +1326,7 @@ function editPantry(id){const it=S.pantry.find(x=>x.id===id);if(!it)return;
   const g=s=>d.querySelector(s),num=s=>parseFloat(String(g(s).value).replace(',','.'))||0;
   const step=()=>{const u=g('#peu').value;return u==='ud'?1:(u==='kg'||u==='l')?0.1:100};
   const pc=()=>{const a=num('#pe0'),has=g('#peq').value!=='',b=num('#peq');
-    g('#pepc').innerHTML=a>0&&has?`${Math.round(b/a*100)} % de lo inicial${Math.round(b*1000)<Math.round(a*800)?' · <b style="color:var(--wa)">por debajo del 80 %: avisará en rojo</b>':''}`:'Pon la cantidad inicial y la actual: te avisa en rojo cuando baje del 80 %.'};
+    g('#pepc').innerHTML=a>0&&has?`${Math.round(b/a*100)} % de lo inicial${Math.round(b*1000)<Math.round(a*150)?' · <b style="color:var(--wa)">por debajo del 15 %: avisará en rojo</b>':''}`:'Pon la cantidad inicial y la actual: te avisa en rojo cuando baje del 15 %.'};
   g('#pem').onclick=()=>{g('#peq').value=Math.max(0,Math.round((num('#peq')-step())*1000)/1000);pc()};
   g('#pep').onclick=()=>{g('#peq').value=Math.round((num('#peq')+step())*1000)/1000;pc()};
   g('#per').onclick=()=>{if(num('#pe0')>0){g('#peq').value=g('#pe0').value;pc()}};
@@ -1206,7 +1339,7 @@ function editPantry(id){const it=S.pantry.find(x=>x.id===id);if(!it)return;
 function pantryHtml(){
   const out=S.pantry.filter(x=>x.out).length,low=S.pantry.filter(isLow),l=S.pantry.filter(pkeep).sort((a,b)=>(a.out?1:0)-(b.out?1:0)||norm(a.name).localeCompare(norm(b.name)));
   if(!S.pantry.length)return '<div class="empty">La despensa está vacía.<br>Escribe arriba lo que tienes en casa (y, si quieres, la cantidad).</div>';
-  return (low.length?`<div class="lowbar">⚠️ ${low.length===1?'1 producto está':low.length+' productos están'} por debajo del 80 %: ${low.slice(0,6).map(x=>esc(x.name)).join(', ')}${low.length>6?'…':''}</div>`:'')+
+  return (low.length?`<div class="lowbar">⚠️ ${low.length===1?'1 producto está':low.length+' productos están'} por debajo del 15 %: ${low.slice(0,6).map(x=>esc(x.name)).join(', ')}${low.length>6?'…':''}</div>`:'')+
   `<div class="sub" style="margin:0 2px 8px">${S.pantry.length-out} en casa · ${out} gastado${out===1?'':'s'}. Tacha lo que se acabe y te pregunto si lo apunto en la lista.</div>`+(l.length?groupHtml(l,x=>x.cat,x=>{const p=x.pid&&S.products.find(z=>z.id===x.pid),lw=isLow(x),hasq=x.q0>0&&x.q!=null,pc=hasq?Math.round(x.q/x.q0*100):0;
     return `<div class="row ${x.out?'done':''} ${lw?'low':''}"><input type="checkbox" data-dk="${x.id}" ${x.out?'checked':''}>${p?thumb(p):'<div class="th">🏠</div>'}<div class="info"><div class="nm">${esc(x.name)}</div>
       <button class="qchip ${hasq?'on':''}" data-de="${x.id}">${hasq?`${n2s(x.q)} / ${n2s(x.q0)} ${esc(x.u||'')}`:'＋ cantidad'}</button>
@@ -1370,7 +1503,7 @@ function stores(sec){
   let html='',wire=()=>{};
   if(!SEC){
     const tile=(k,ic,t,sub)=>`<button class="stile" data-set="${k}"><span class="sico">${ic}</span><b class="sn">${t}</b><span class="sub">${sub}</span></button>`;
-    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Categorías',S.cats.length+' de productos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
+    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Categorías',S.cats.length+' de productos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('diet',DIETS[S.diet][0],'Tipo de menú',DIETS[S.diet][1])}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
     wire=()=>document.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const k=b.dataset.set;if(k==='out'){if(confirm('¿Cerrar sesión?')){close();signOut(auth)}return}stores(k)});
   }else if(SEC==='stores'){
     html=back('🏪 Supermercados')+S.stores.map(s=>`<div class="sedit"><div class="srow"><input type="text" value="${esc(s.name)}" data-sn="${s.id}"><input type="color" value="${scol(s)}" data-sc="${s.id}"><button class="btn r" data-d="${s.id}">Quitar</button></div><div class="srow"><label class="btn g" style="flex:none">🖼️ ${s.logo?'Cambiar logo':'Añadir logo'}<input type="file" accept="image/*" hidden data-sl="${s.id}"></label>${s.logo?`<img class="slogo" src="${s.logo}" alt=""><button class="btn g" data-rl="${s.id}">Quitar logo</button>`:''}</div></div>`).join('')
@@ -1394,6 +1527,9 @@ function stores(sec){
         const id=b.dataset.dc;putCats(S.cats.filter(c=>c.id!==id));
         S.products.forEach(p=>{if(p.cat===id)putP({...p,cat:''})});
         S.extras.forEach(x=>{if(x.cat===id)putX({...x,cat:''})});stores()})};
+  }else if(SEC==='diet'){
+    html=back('🥗 Tipo de menú')+`<div class="sub" style="margin:6px 0">Se usa en «Analizar menú» (Planning) para valorar si la semana se ajusta a lo que quieres comer.</div>`+Object.entries(DIETS).map(([k,v])=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:8px;border:1px solid ${S.diet===k?'var(--ac)':'var(--bd)'};background:${S.diet===k?'var(--ac2)':'var(--card)'};border-radius:12px;cursor:pointer"><input type="radio" name="dtm" value="${k}" ${S.diet===k?'checked':''}><span><b>${v[0]} ${v[1]}</b><div class="sub">${v[2]}</div></span></label>`).join('');
+    wire=()=>document.querySelectorAll('input[name="dtm"]').forEach(r=>r.onchange=()=>{putDiet(r.value);stores()});
   }else if(SEC==='rcats'){
     html=back('🍳 Categorías de recetas')+`<div class="chips" style="margin-top:6px;flex-wrap:wrap">${S.rcats.map(c=>`<span class="chip">${esc(c)} <button class="x" data-rcd="${esc(c)}" type="button">✕</button></span>`).join('')||'<span class="sub">No hay categorías.</span>'}</div>
       <label class="f">Añadir categoría</label><div class="srow"><input type="text" id="rcn" placeholder="Postres, Vegano, Aperitivos…"><button class="btn" id="rcb">Añadir</button></div>`;
