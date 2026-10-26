@@ -64,6 +64,8 @@ input[type=date]{width:100%;padding:11px;border-radius:10px;border:1px solid var
 .isg{display:flex;flex-direction:column;gap:2px;margin-top:2px}.isb{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font:inherit;cursor:pointer}.irow .ix{background:none;border:0;color:var(--wa);font-size:18px;padding:8px 4px;cursor:pointer}
 .ocr{box-shadow:0 0 0 2px #e0b400!important}.ocrt{white-space:pre-wrap;font-size:12px;color:var(--mu);max-height:140px;overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;margin:6px 0}
 .pbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.pbtns .btn{flex:1;min-width:130px;text-align:center}
+.dt-o{background:#e2861b}.sheet.hogar .orow .sq{display:none}
+.nubox{display:none;border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:4px 12px 12px;margin-top:10px}.sheet.fresh .nubox{display:block}.nugrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .sheet.fresh .orow .oc,.sheet.fresh .orow .sb,.sheet.fresh .orow .sq,.sheet.fresh .orow .sm2,.sheet.fresh .orow .osc{display:none}
 .mpre{margin-top:12px;padding:10px;border:1px dashed var(--bd);border-radius:12px}.mpre .nsb{pointer-events:none}
 .sc-ex{background:#1e8f4e}.sc-bu{background:#6aa81f}.sc-me{background:#e2861b}.sc-ma{background:#d33a2c}
@@ -166,14 +168,17 @@ let app,auth,db;
 if(configured){app=initializeApp(firebaseConfig);auth=getAuth(app);
   db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});}
 const wfail=e=>alert('No se pudo guardar: '+((e&&e.code==='permission-denied')?'tu cuenta no tiene permiso.':'inténtalo de nuevo.'));
-function putP(p){setDoc(doc(db,'products',p.id),{name:p.name,photo:p.photo||'',cat:p.cat||'',e:p.e}).catch(wfail)}
+function putP(p){setDoc(doc(db,'products',p.id),{name:p.name,photo:p.photo||'',cat:p.cat||'',e:p.e,nu:p.nu||null}).catch(wfail)}
 function delP(id){deleteDoc(doc(db,'products',id)).catch(wfail)}
 function putX(x){setDoc(doc(db,'extras',x.id),{name:x.name,cat:x.cat||'',done:!!x.done,ql:x.ql||[]}).catch(wfail)}
 function delX(id){deleteDoc(doc(db,'extras',id)).catch(wfail)}
-function putCats(l){S.cats=l;setDoc(doc(db,'config','cats'),{list:l}).catch(wfail)}
+const GRPN0={fr:'FRESCOS',en:'ENVASADOS',ho:'HOGAR'};
+const gnOut=()=>{const o={};GRP.slice(0,3).forEach(g=>o[g.id]=g.name);return o};
+function applyGn(gn){GRP.slice(0,3).forEach(g=>{const v=gn&&typeof gn[g.id]==='string'?gn[g.id].trim():'';g.name=v||GRPN0[g.id]})}
+function putCats(l){S.cats=l;setDoc(doc(db,'config','cats'),{list:l,gn:gnOut()}).catch(wfail)}
 const KINDS={'':'Automático',normal:'Normal',cheese:'Queso',bev:'Bebida',milk:'Leche / bebida vegetal',fresh:'Fresco / materia prima'};
 function inferKind(name){const n=norm(name);if(/\bquesos?\b/.test(n))return 'cheese';if(/leche|lacteo|vegetal/.test(n))return 'milk';if(/bebida|zumo|refresco|infusion|cerveza|\bvinos?\b|\baguas?\b/.test(n))return 'bev';if(/fresc|natural|basico|materia prima/.test(n))return 'fresh';return 'normal'}
-const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));if(!c)return 'normal';if(c.kind)return c.kind;const g=catGrp(c.id);return (g==='fr'||g==='ho')?'fresh':inferKind(c.name)};
+const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));if(!c)return 'normal';if(c.kind)return c.kind;const g=catGrp(c.id);return g==='fr'?'fresh':g==='ho'?'hogar':inferKind(c.name)};
 const kindFlags=()=>{const k=catKind({cat:$('cat')?$('cat').value:''});return {cheese:k==='cheese',bev:k==='bev',milk:k==='milk',name:$('name')?$('name').value:''}};
 let MPREV=null;
 function putStores(l){S.stores=l;if(!TABS.includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
@@ -194,7 +199,7 @@ function startAuth(){
       S.stores=(d.exists()&&d.data().list&&d.data().list.length)?d.data().list:DEF;
       if(!TABS.includes(cur)&&!S.stores.find(x=>x.id===cur))cur=S.stores[0].id;render()},err));
     unsubs.push(onSnapshot(doc(db,'config','cats'),d=>{
-      S.cats=(d.exists()&&Array.isArray(d.data().list))?d.data().list:DEFC;render()},err));
+      S.cats=(d.exists()&&Array.isArray(d.data().list))?d.data().list:DEFC;applyGn(d.exists()?d.data().gn:null);render()},err));
     unsubs.push(onSnapshot(collection(db,'products'),q=>{S.products=q.docs.map(d=>migrate({id:d.id,...d.data()}));render()},err));
     unsubs.push(onSnapshot(collection(db,'additives'),q=>{ADDS={};q.docs.forEach(d=>{ADDS[d.id]=d.data()});render()},err));
     unsubs.push(onSnapshot(collection(db,'pantry'),q=>{S.pantry=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
@@ -227,7 +232,7 @@ function migrate(p){
   return p}
 const opts=e=>Array.isArray(e.o)?e.o:((e.price>0||e.g>0)?[{b:'',price:e.price||0,g:e.g||0}]:[]);
 const prices=p=>{const r=[];Object.entries(p.e).forEach(([k,v])=>{if(!S.stores.some(s=>s.id===k))return;
-  opts(v).forEach((o,i)=>{if(o.price>0)r.push({id:k,i,b:o.b||'',price:o.price,g:o.g||0,kg:kgOf(o.price,o.g||0),ns:o.ns||'',nova:o.nova||0,eco:o.eco||'',ad:o.ad==null?null:o.ad,og:o.og?1:0,ph:o.ph||'',np:o.np==null?null:o.np,lq:o.lq?1:0,ps:o.ps||'',nd:o.nd||''})})});return r};
+  opts(v).forEach((o,i)=>{if(o.price>0)r.push({id:k,i,b:o.b||'',price:o.price,g:o.g||0,kg:kgOf(o.price,o.g||0),ns:o.ns||'',nova:o.nova||0,eco:o.eco||'',ad:o.ad==null?null:o.ad,og:o.og?1:0,ph:o.ph||'',np:o.np==null?null:o.np,lq:o.lq?1:0,ps:o.ps||'',nd:o.nd||'',ci:o.ci||''})})});return r};
 // Clasificación de aditivos: APROXIMADA y propia (no es la de Yuka). Edita estas listas si quieres.
 const HI=new Set(['e950','e955','e249','e250','e251','e252','e171','e123','e128','e924','e924a','e924b']);
 const MO=new Set(['e951','e170','e412','e500','e954','e102','e104','e110','e122','e124','e129','e211','e320','e321','e150c','e150d','e220','e221','e222','e223','e224','e226','e227','e228','e338','e339','e340','e341','e450','e451','e452','e407','aroma','e621','e631','e627','e433','e432','e210','e212','e282','e952']);
@@ -245,9 +250,9 @@ const nsTxt=x=>x.np!=null?'Nutri-Score '+letterOf(x.np,x.lq).toUpperCase()+' · 
 const parts=x=>{const pp=x.np!=null?Math.round(x.np):repPts(x.ns,x.lq),qs=String(x.ad||'').split(',').includes('_qs'),raw=tbl(pp,x.lq),nut=(qs?Math.max(raw,50):raw)*0.6,fl=qs&&raw<50;let ap=30,hi=false;
   adList(x).forEach(c=>{const k=kOf(c);if(k==='r'){hi=true;ap=0}else if(k==='y')ap=Math.max(0,ap-6);else if(k==='n')ap=Math.max(0,ap-2)});
   const og=x.og?10:0;let t=nut+ap+og;const capped=hi&&t>49;if(hi)t=Math.min(t,49);return {nut,ap,og,capped,fl,t:Math.round(t)}};
-const scoreOf=x=>((x.np==null&&!x.ns)||x.ad==null)?null:parts(x).t;
+const scoreOf=x=>x.ci?cosScore(x.ci):(((x.np==null&&!x.ns)||x.ad==null)?null:parts(x).t);
 const scLbl=n=>n>=75?['ex','Excelente']:n>=50?['bu','Bueno']:n>=25?['me','Mediocre']:['ma','Malo'];
-const bdg=(x,t='')=>{const n=scoreOf(x);if(n===null)return'';const [c,tx]=scLbl(n);return `<span class="nsb sc-${c}" data-ns="${x.ns||''}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-ad="${esc(x.ad||'')}" data-og="${x.og?1:0}" data-t="${esc(t)}" style="cursor:pointer">${tx} ${n}/100 ⓘ</span>`};
+const bdg=(x,t='')=>{const n=scoreOf(x);if(n===null)return'';const [c,tx]=scLbl(n);return `<span class="nsb sc-${c}" data-ns="${x.ns||''}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-ad="${esc(x.ad||'')}" data-og="${x.og?1:0}" data-ci="${esc(x.ci||'')}" data-t="${esc(t)}" style="cursor:pointer">${tx} ${n}/100 ⓘ</span>`};
 const det=x=>{const l=adList(x),hi=l.filter(c=>kOf(c)==='r'),mo=l.filter(c=>kOf(c)==='y'),U=a=>a.map(c=>c.toUpperCase()).join(', ');
   return [nsTxt(x),x.ad==null?'':(l.length?l.length+' aditivo'+(l.length>1?'s':'')+(hi.length?' (alto riesgo: '+U(hi)+')':mo.length?' (riesgo limitado: '+U(mo)+')':''):'Sin aditivos'),x.og?'Ecológico':''].filter(Boolean).join(' · ')};
 const NIT='Puede formar nitrosaminas, compuestos potencialmente cancerígenos; la IARC clasifica la carne procesada como cancerígena.';
@@ -313,6 +318,7 @@ const dot=k=>`<span class="dt dt-${k}"></span>`;
 // [nombre, para qué sirve, lo malo, lo positivo]; lo que escribas tú (Editar) tiene prioridad
 const info=c=>{const b=ADI[c]||[],o=ADDS[c]||{};return [o.n||b[0]||c.toUpperCase(),o.u||b[1]||'',o.c||b[2]||'',o.p||b[3]||'']};
 function showDet(ds){
+  if(ds.ci){showCos(ds);return}
   const d0={ns:ds.ns,ad:ds.ad||'',og:ds.og||'0',t:ds.t||'',np:ds.np||'',lq:ds.lq||'0',ps:ds.ps||'',nd:ds.nd||''},x={ns:d0.ns,ad:d0.ad,og:+d0.og||0,np:d0.np===''?null:+d0.np,lq:+d0.lq||0,ps:d0.ps,nd:d0.nd},pt=parts(x),l=adList(x);
   const ord={r:0,y:1,n:2,g:3};l.sort((a,b)=>ord[dotK(a)]-ord[dotK(b)]);
   const [cl,tx]=scLbl(pt.t);
@@ -901,16 +907,22 @@ const FT=[
 const UNG={g:1,kg:1000,ml:1,l:1000,cda:12,cdta:4,taza:200,diente:5,lata:120,pizca:0.5};
 const PORC={ver:150,fru:130,leg:150,cer:80,tub:150,fs:25,ace:10,prv:100,bvg:200,lac:125,hue:60,paz:120,pbl:130,cro:120,cbl:130,emb:50,dul:30};
 function classify(txt){const t=norm(txt||'');return FT.find(f=>f[0].test(t))||null}
+function nuFor(x){const ok=z=>z.nu&&z.nu.kcal!=null;let p=x.p?S.products.find(z=>z.id===x.p):null;if(p&&!ok(p))p=null;
+  if(!p){const k=nName(x.n||'');if(k.length>2){const ex=S.products.filter(z=>ok(z)&&nName(z.name)===k);p=ex.length===1?ex[0]:null;
+    if(!p&&!ex.length){const inc=S.products.filter(z=>{if(!ok(z))return false;const pn=nName(z.name);return pn.length>3&&(pn.includes(k)||k.includes(pn))});p=inc.length===1?inc[0]:null}}}
+  return p}
 function entItems(e){ // devuelve {title,items:[{g,gr,kcal,pro,hc,fat,fib,est}],quant}
   let title='',ing=null,sv=1;
   if(e.r){const rc=S.recipes.find(x=>x.id===e.r);if(!rc)return null;title=rc.title;ing=rc.ing||[];sv=Math.max(1,e.s||rc.servings||1)}
   else{title=e.t||'';ing=(e.ing||[]).length?e.ing:null;sv=Math.max(1,e.s||1)}
   const items=[];let quant=true;
-  if(ing&&ing.length){ing.forEach(x=>{const f=classify(x.n)||classify(title+' '+x.n);if(!f)return;let gr=null;
-      if(x.q!=null&&x.q>0){const u=x.u||'';gr=u==='ud'||u===''?x.q*f[7]:x.q*(UNG[u]||1);gr=gr/sv}
-      const est=gr==null;if(est){gr=PORC[f[1]]*(['ace','fs','dul'].includes(f[1])?1:0.5)/(['ace','fs','dul'].includes(f[1])?1:0.5);gr=PORC[f[1]];quant=false}
-      const m=/cocid|hervid/.test(norm(x.n))&&['cer','leg'].includes(f[1])?(f[1]==='cer'?0.37:1):1;
-      items.push({g:f[1],gr,kcal:f[2]*gr/100*m,pro:f[3]*gr/100*m,hc:f[4]*gr/100*m,fat:f[5]*gr/100*m,fib:f[6]*gr/100*m,est})})}
+  if(ing&&ing.length){ing.forEach(x=>{const pn=nuFor(x),f=classify(x.n)||classify(title+' '+x.n);if(!f&&!pn)return;
+      const nu=pn?pn.nu:null,g=nu&&nu.ng&&NGRP[nu.ng]?nu.ng:(f?f[1]:'otr'),
+        per=nu?[nu.kcal||0,nu.pro||0,nu.hc||0,nu.fat||0,nu.fib||0]:[f[2],f[3],f[4],f[5],f[6]],ud=nu&&nu.ug>0?nu.ug:(f?f[7]:100);let gr=null;
+      if(x.q!=null&&x.q>0){const u=x.u||'';gr=u==='ud'||u===''?x.q*ud:x.q*(UNG[u]||1);gr=gr/sv}
+      const est=gr==null;if(est){gr=PORC[g]||100;quant=false}
+      const m=!nu&&/cocid|hervid/.test(norm(x.n))&&['cer','leg'].includes(g)?(g==='cer'?0.37:1):1;
+      items.push({g,gr,kcal:per[0]*gr/100*m,pro:per[1]*gr/100*m,hc:per[2]*gr/100*m,fat:per[3]*gr/100*m,fib:per[4]*gr/100*m,est,real:!!nu})})}
   // título: añade grupos que no aparecen en los ingredientes (o todo si no hay ingredientes)
   const t=norm(title),have=new Set(items.map(i=>i.g));
   if(!ing||!ing.length){quant=false;
@@ -997,7 +1009,7 @@ function nutUI(def){
         ${(r.note||[]).length?`<h3 class="gh">ℹ️ A tener en cuenta</h3>${r.note.map(n=>`<div class="adr sub">${esc(n)}</div>`).join('')}`:''}
         <h3 class="gh">Por días</h3>${r.days.filter(x=>x.any).map(x=>{const vf=x.tot.ver+x.tot.fru;return `<div style="display:flex;justify-content:space-between;gap:6px;padding:6px 0;border-top:1px solid var(--bd);font-size:14px"><span>${labelDay(x.k)}</span><span class="sub">${Math.round(x.tot.kcal)} kcal · P ${Math.round(x.tot.pro)} g · fibra ${Math.round(x.tot.fib)} g · ver+fruta ${Math.round(vf)} g${x.quant?'':' · est.'}</span></div>`}).join('')}`}}
     sh.innerHTML=`<h2>🥗 Análisis del menú</h2><div class="seg seg2" style="margin:6px 0"><button class="btn ${mode==='day'?'':'g'}" data-nm="day">Día</button><button class="btn ${mode==='week'?'':'g'}" data-nm="week">Semana</button></div><div class="sub">${title}</div>${body}
-    <div class="sub" style="margin-top:12px">Es una estimación orientativa basada en valores medios por tipo de alimento y en las cantidades de tus recetas (por persona). No sustituye el consejo de un dietista-nutricionista.</div><div class="acts"><button class="btn g" id="nux">Cerrar</button></div>`;
+    <div class="sub" style="margin-top:12px">Es una estimación orientativa: usa los valores nutricionales de tus productos frescos cuando los has rellenado y, para el resto, valores medios por tipo de alimento, con las cantidades de tus recetas (por persona). No sustituye el consejo de un dietista-nutricionista.</div><div class="acts"><button class="btn g" id="nux">Cerrar</button></div>`;
     sh.querySelectorAll('[data-nm]').forEach(b=>b.onclick=()=>{mode=b.dataset.nm;draw()});sh.querySelector('#nux').onclick=()=>d.remove()};
   draw()}
 
@@ -1019,6 +1031,140 @@ function planView(){
       (PL.sel?`<div class="pdh2 ${PL.sel===today?'today':''}" style="margin-top:6px"><span>${labelDay(PL.sel)}</span><span><button class="pplus" data-pdv="${PL.sel}" style="font-size:13px;width:auto;padding:0 10px">Abrir día</button></span></div>${planRows(PL.sel)||'<div class="prow0">Sin nada planificado este día</div>'}<div class="pbar3">${SLS.map(sl=>`<button class="btn g" data-pa="${PL.sel}|${sl}" style="color:${SLC[sl]};border-color:${SLC[sl]}">+ ${SLN[sl]}</button>`).join('')}</div>`:'<div class="sub" style="margin:10px 2px">Toca un día para ver qué se come.</div>')}
   return `<div class="plbar"><div class="seg seg2"><button class="btn ${PL.view==='day'?'':'g'}" data-pv="day">📆 Día</button><button class="btn ${PL.view==='week'?'':'g'}" data-pv="week">🗓️ Semana</button><button class="btn ${PL.view==='month'?'':'g'}" data-pv="month">📅 Mes</button></div><div class="seg"><button class="btn g" data-pn="-1">‹</button><button class="btn g" data-pn="0">Hoy</button><button class="btn g" data-pn="1">›</button></div></div>
   <h3 class="gh" style="text-transform:capitalize">${label}</h3>${body}<button class="btn g" data-nu="1" style="width:100%;margin-top:12px">🥗 Analizar menú (nutrición)</button><button class="btn" data-pg="1" style="width:100%;margin-top:8px">🛒 Agregar a la lista de la compra</button>`}
+// ===== Cosmética e higiene (estilo INCI Beauty): análisis de la lista de ingredientes (INCI) =====
+// Clasificación PROPIA y orientativa de ingredientes: g = sin riesgo, y = riesgo bajo, o = moderado, r = alto, desconocido = sin clasificar.
+const COSR=[
+ [/methylisothiazolinone|methylchloroisothiazolinone|metilisotiazolinona|metilcloroisotiazolinona|\bmit\b|\bmci\b|chloromethylisothiazolinone/,'r','Conservante muy alergénico (dermatitis de contacto). La UE lo prohíbe en productos sin aclarado.'],
+ [/triclosan|triclocarban/,'r','Antibacteriano sospechoso de alterar el sistema hormonal y de generar resistencias.'],
+ [/\bformaldehyde\b|formaldehido|paraformaldehyde/,'r','Libera formaldehído: irritante y clasificado como cancerígeno.'],
+ [/propylparaben|butylparaben|isopropylparaben|isobutylparaben|benzylparaben|pentylparaben|propilparaben|butilparaben/,'r','Parabeno de cadena larga: sospechoso de alterar el sistema hormonal.'],
+ [/benzophenone-?[12]\b|benzophenone-?(4|5|6|8)\b/,'r','Filtro UV sospechoso de alterar el sistema hormonal.'],
+ [/4-?methylbenzylidene camphor|\b4-?mbc\b/,'r','Filtro UV con actividad hormonal; prohibido en la UE desde 2025.'],
+ [/butylated hydroxyanisole|\bbha\b/,'r','Antioxidante sospechoso de alterar el sistema hormonal (posible cancerígeno según la IARC).'],
+ [/butylphenyl methylpropional|\blilial\b/,'r','Fragancia prohibida en la UE (tóxica para la reproducción).'],
+ [/hydroquinone|hidroquinona/,'r','Despigmentante restringido en cosmética: irritante y potencialmente tóxico.'],
+ [/phenylenediamine|toluene-?2,?5-?diamine|\bppd\b/,'r','Tinte capilar con alto potencial alergénico.'],
+ [/dibutyl phthalate|dibutilftalato|\bdbp\b|diethylhexyl phthalate|\bdehp\b/,'r','Ftalato: alterador endocrino.'],
+ [/cyclotetrasiloxane|\bd4\b/,'r','Silicona D4: alterador endocrino y persistente en el medio ambiente.'],
+ [/\btoluene\b|tolueno/,'r','Disolvente tóxico para la reproducción.'],
+ [/lead acetate|acetato de plomo/,'r','Compuesto de plomo: tóxico.'],
+ [/dmdm hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea|bronopol|2-bromo-2-nitropropane|hydroxymethylglycinate/,'o','Conservante liberador de formaldehído (alergénico e irritante).'],
+ [/oxybenzone|benzophenone-?3\b|oxibenzona/,'o','Filtro UV con posible efecto hormonal, dañino para los arrecifes.'],
+ [/\bparfum\b|fragrance|fragancia|perfume/,'o','Mezcla de fragancias sin detallar: primera causa de alergias cosméticas.'],
+ [/\blimonene\b|\blinalool\b|citronellol|geraniol|\bcoumarin\b|\beugenol\b|isoeugenol|hexyl cinnamal|benzyl salicylate|benzyl benzoate|benzyl cinnamate|\bcitral\b|farnesol|cinnamal|cinnamyl alcohol|amyl cinnamal|isomethyl ionone|hydroxycitronellal|hydroxyisohexyl 3-cyclohexene carboxaldehyde|\blyral\b|evernia/,'o','Alérgeno de fragancia de declaración obligatoria en la UE.'],
+ [/sodium lauryl sulfate|sodium laurylsulfate|laurilsulfato|\bsls\b/,'o','Tensioactivo irritante para piel y mucosas.'],
+ [/mineral oil|paraffinum liquidum|petrolatum|vaseline|\bparaffin\b|ozokerite|microcrystalline wax|vaselina/,'o','Derivado del petróleo: oclusivo, con posible contaminación con hidrocarburos aromáticos.'],
+ [/\bpolyethylene\b(?! glycol)|polypropylene|\bnylon-?\d*|polymethyl methacrylate|\bpmma\b|polytetrafluoroethylene|\bptfe\b|polyurethane|polystyrene|acrylates copolymer(?! crosspolymer)? ?beads/,'o','Microplástico sintético: contamina el agua y no se biodegrada.'],
+ [/benzalkonium|benzalconio|benzethonium/,'o','Antiséptico irritante y tóxico para el medio acuático.'],
+ [/octocrylene|octocrileno|homosalate|homosalato|ethylhexyl methoxycinnamate|octinoxate|octinoxato|cyclopentasiloxane|\bd5\b|cyclohexasiloxane|\bd6\b/,'o','Filtro UV o silicona cíclica: posible alterador endocrino o bioacumulable.'],
+ [/\bresorcinol\b|resorcina/,'o','Sensibilizante y posible alterador tiroideo.'],
+ [/diethanolamine|\bdea\b|cocamide dea|lauramide dea|cocamide mea|\bmea\b|ethanolamine/,'o','Etanolamina: puede formar nitrosaminas (cancerígenas) en el producto.'],
+ [/chlorhexidine|clorhexidina/,'o','Antiséptico potente: puede alterar la flora oral y dar alergia.'],
+ [/sodium hypochlorite|hipoclorito/,'o','Lejía: corrosiva e irritante para piel y vías respiratorias.'],
+ [/\bpeg-?\d+|polyethylene glycol|\bppg-?\d+|peg\/ppg/,'y','Derivado etoxilado: puede contener trazas de impurezas (1,4-dioxano).'],
+ [/phenoxyethanol|fenoxietanol/,'y','Conservante irritante a altas dosis; limitado al 1 % en la UE.'],
+ [/ethylparaben|methylparaben|metilparaben|etilparaben/,'y','Parabeno de cadena corta: de bajo riesgo, pero con debate hormonal.'],
+ [/laureth sulfate|ammonium lauryl sulfate|\bsles\b/,'y','Tensioactivo que puede resecar e irritar; derivado etoxilado.'],
+ [/dimethicone|dimeticona|siloxane|silicone|amodimethicone|cyclomethicone|trimethicone|dimethiconol/,'y','Silicona: no biodegradable; forma película en piel y cabello.'],
+ [/propylene glycol|propilenglicol/,'y','Humectante que puede irritar o sensibilizar la piel.'],
+ [/cetyl alcohol|cetearyl alcohol|stearyl alcohol|behenyl alcohol|alcohol cetilico|alcohol estearilico|myristyl alcohol|lauryl alcohol|alcohol de cera/,'g','Alcohol graso: suaviza e hidrata la piel.'],
+ [/benzyl alcohol|alcohol bencilico/,'y','Conservante y alérgeno de declaración obligatoria.'],
+ [/^alcohol( denat\.?)?$|alcohol denat|denatured alcohol|ethanol|isopropyl alcohol|sd alcohol|\balcohol\b/,'y','Alcohol: reseca e irrita en pieles sensibles.'],
+ [/\bbht\b|butylated hydroxytoluene/,'y','Antioxidante con posible acumulación y efecto hormonal leve.'],
+ [/\btalc\b|talco/,'y','Mineral que puede contener trazas de amianto si no está purificado.'],
+ [/triethanolamine|trietanolamina|\btea\b/,'y','Regulador de pH: puede formar nitrosaminas con otros ingredientes.'],
+ [/cocamidopropyl|coco-betaine/,'y','Tensioactivo suave pero con riesgo de alergia de contacto.'],
+ [/titanium dioxide|ci ?77891|dioxido de titanio/,'y','Pigmento o filtro mineral; la forma nano o inhalada es motivo de precaución.'],
+ [/retinyl palmitate|retinol\b|retinyl/,'y','Vitamina A: precaución en embarazo y con exposición solar.'],
+ [/avobenzone|butyl methoxydibenzoylmethane|ethylhexyl salicylate|ethylhexyl triazone|bemotrizinol|bis-ethylhexyloxyphenol|diethylamino hydroxybenzoyl hexyl benzoate|\buvinul\b/,'y','Filtro solar químico: se absorbe en parte por la piel.'],
+ [/aluminum|aluminium|aluminio/,'y','Sal de aluminio (antitranspirantes): debate sobre su acumulación.'],
+ [/salicylic acid|acido salicilico/,'y','Exfoliante: irritante a dosis altas y no recomendado en embarazo.'],
+ [/butane|isobutane|propane|propelente|\bhfc\b|dimethyl ether/,'y','Gas propelente de aerosol: inflamable y contaminante.'],
+ [/cetrimonium|behentrimonium chloride|stearalkonium|quaternium-(?!15)\d+|distearyldimonium|dicetyldimonium/,'y','Tensioactivo catiónico: puede irritar y es tóxico para el medio acuático.'],
+ [/\bedta\b|disodium edta|tetrasodium edta/,'y','Quelante persistente: no se degrada bien en el agua.'],
+ [/alkylbenzene|dodecylbenzene|\blabsa\b/,'y','Tensioactivo aniónico irritante, poco biodegradable.'],
+ [/phosphonate|polyphosphate|triphosphate|fosfonato|fosfato/,'y','Fosfato/fosfonato: contribuye a la eutrofización del agua.'],
+ [/optical brightener|stilbene|brillantador/,'y','Blanqueante óptico: persistente en el agua.'],
+ [/protease|amylase|lipase|subtilisin|cellulase|mannanase|\benzyme/,'y','Enzima: posible alérgeno respiratorio.'],
+ [/sodium hydroxide|hidroxido sodico|potassium hydroxide|hidroxido potasico/,'y','Corrosivo en estado puro; se neutraliza en las pequeñas cantidades del producto.'],
+ [/\bammonia\b|amoniaco|ammonium hydroxide/,'y','Irritante de ojos y vías respiratorias.'],
+ [/methyl salicylate|salicilato de metilo/,'y','Puede irritar y no se recomienda en niños.'],
+ [/\baroma\b|\bflavor\b|\bflavour\b|saborizante/,'y','Aroma/sabor sin detallar su composición.'],
+ [/ci ?\d{5}|colorant|colorante/,'y','Colorante: aporta color pero ningún beneficio al producto.'],
+ [/sodium fluoride|fluoruro|monofluorophosphate|stannous fluoride|amine fluoride|olaflur/,'g','Flúor: protege frente a las caries.'],
+ [/^(aqua|water|agua|eau)$|^aqua\b|\baqua\/water|\(water\)|^water\b/,'g','Agua: disolvente base.'],
+ [/glycerin|glicerina|glycerol/,'g','Humectante suave.'],
+ [/aloe barbadensis|aloe vera/,'g','Calmante e hidratante natural.'],
+ [/tocopher|vitamin e|vitamina e/,'g','Vitamina E: antioxidante.'],
+ [/panthenol|pantenol/,'g','Provitamina B5: hidratante y reparadora.'],
+ [/hyaluron/,'g','Hidratante.'],
+ [/niacinamide|niacinamida/,'g','Vitamina B3: mejora la barrera de la piel.'],
+ [/allantoin|alantoina|squalane|escualano|bisabolol|ceramide/,'g','Ingrediente suavizante y reparador.'],
+ [/citric acid|acido citrico|lactic acid|acido lactico|sodium citrate/,'g','Regulador de pH suave.'],
+ [/xanthan|guar|cellulose|celulosa|carrageenan|pectin|sclerotium/,'g','Espesante de origen natural.'],
+ [/sodium chloride|cloruro de sodio|sorbitol|xylitol|xilitol|mannitol|maltitol|stevia/,'g','Ingrediente sin riesgo conocido.'],
+ [/hydrated silica|silica|calcium carbonate|carbonato calcico|\bzinc\b|zinc oxide|mica|kaolin|caolin|bentonite|calcium|magnesium/,'g','Mineral inocuo (abrasivo o pigmento suave).'],
+ [/stearic acid|glyceryl (stearate|caprylate|oleate|laurate|cocoate)|lecithin|lecitina|cera alba|beeswax|carnauba|candelilla|jojoba|simmondsia|butyrospermum|shea|cocos nucifera|coconut|helianthus|olea europaea|prunus|argania|ricinus|caprylic|capric|coco-glucoside|decyl glucoside|lauryl glucoside|caprylyl\/capryl glucoside|sodium cocoyl|glycine|bicarbonate|sodium bicarbonate|bicarbonato|sodium carbonate|sodium cocoate|sodium palmate|sodium olivate|sodium laurate/,'g','Ingrediente suave de origen natural.'],
+ [/benzoate|benzoato|sorbate|sorbato|caprylyl glycol|chlorphenesin|ethylhexylglycerin|butylene glycol|pentylene glycol|propanediol/,'g','Conservante o humectante de bajo riesgo.'],
+ [/extract|extracto|\bleaf\b|\bflower\b|\bseed\b|\broot\b|\boil\b|\baceite\b|\bbutter\b|manteca|\bfruit\b/,'g','Ingrediente de origen vegetal.']
+];
+const COSN={g:'Sin riesgo',y:'Riesgo bajo',o:'Riesgo moderado',r:'Riesgo alto',u:'Sin clasificar'};
+function cosParse(t){
+  t=String(t||'').replace(/\r/g,'\n').replace(/^\s*(ingredients?|ingr[eé]dients?|ingredientes|composici[oó]n|composition|inci)\s*[:\-]?\s*/i,'');
+  const out=[];let dep=0,cur='';
+  for(const ch of t){if(ch==='('||ch==='[')dep++;else if(ch===')'||ch===']')dep=Math.max(0,dep-1);
+    if(dep===0&&(ch===','||ch===';'||ch==='\n'||ch==='·'||ch==='•')){if(cur.trim())out.push(cur.trim());cur=''}else cur+=ch}
+  if(cur.trim())out.push(cur.trim());
+  return out.map(x=>x.replace(/[*†]+/g,'').replace(/\.$/,'').trim()).filter(x=>x&&x.length>1&&x.length<80);
+}
+function cosClass(name){
+  const raw=norm(name).replace(/\d+([.,]\d+)?\s*%/g,'').replace(/\s+/g,' ').trim();
+  const base=raw.replace(/\(.*?\)/g,' ').replace(/\s+/g,' ').trim()||raw;
+  // el nombre alternativo entre paréntesis ("Aqua (Water)", "Parfum (Fragrance)") también cuenta
+  for(const f of COSR){if(f[0].test(base)||f[0].test(raw))return {k:f[1],why:f[2]}}
+  return {k:'u',why:'Sin clasificar en la app: no hay una valoración de riesgo para este ingrediente.'}}
+function cosAnalyze(text){
+  const items=cosParse(text).map(n=>({n,...cosClass(n)}));
+  if(items.length<2)return null;
+  const c={g:0,y:0,o:0,r:0,u:0};items.forEach(i=>c[i.k]++);
+  let pen=Math.min(c.r*22,70)+Math.min(c.o*8,40)+Math.min(c.y*2.5,20);
+  let t=Math.max(0,Math.round(100-pen));const capped=c.r>0&&t>49;if(c.r)t=Math.min(t,49);
+  return {t,c,items,capped,n:items.length}}
+const cosScore=text=>{const a=cosAnalyze(text);return a?a.t:null};
+const cdot=k=>`<i class="dt dt-${k==='u'?'n':k}"></i>`;
+function cosBlock(text,open){const a=cosAnalyze(text);if(!a)return '<div class="sub">No hay una lista de ingredientes suficiente para calcular la nota.</div>';
+  const ord={r:0,o:1,y:2,u:3,g:4},l=[...a.items].sort((x,y)=>ord[x.k]-ord[y.k]);
+  return `<div class="sub" style="margin:10px 0">${['r','o','y','g','u'].map(k=>`${cdot(k)}${a.c[k]} ${COSN[k].toLowerCase()}`).join(' &nbsp; ')}${a.capped?'<br>La nota se limita a 49 por contener un ingrediente de riesgo alto.':''}</div>
+  ${l.map(i=>`<div class="adr" style="${i.k==='g'||i.k==='u'?'':'font-weight:500'}">${cdot(i.k)}<b>${esc(i.n)}</b> <span class="sub">· ${COSN[i.k]}</span><div class="sub">${esc(i.why)}</div></div>`).join('')}`}
+function showCos(ds){
+  const a=cosAnalyze(ds.ci||''),[cl,tx]=a?scLbl(a.t):['me','—'];
+  $('detsheet').innerHTML=`<h2>${esc(ds.t||'Producto')}</h2>
+  ${a?`<div><span class="nsb sc-${cl}" style="font-size:15px;padding:3px 10px">${tx} ${a.t}/100</span></div><div class="sub" style="margin-top:6px">${a.n} ingredientes analizados</div>`:''}
+  ${cosBlock(ds.ci||'')}
+  <details style="margin-top:12px"><summary>Cómo se calcula</summary><div class="sub" style="margin-top:6px">Se parte de 100 puntos y se resta según el riesgo de cada ingrediente de la lista (alto, moderado o bajo). Si hay alguno de riesgo alto, la nota no pasa de 49. Los ingredientes que la app no conoce no restan. Es una clasificación propia y orientativa, basada en lo que indican organismos como el SCCS europeo y la ECHA; <b>no es la de INCI Beauty</b> ni sustituye el consejo de un dermatólogo.</div></details>
+  <div class="acts"><span></span><button class="btn" id="detx">Cerrar</button></div>`;
+  $('det').classList.add('show');$('detx').onclick=()=>$('det').classList.remove('show')}
+async function lookupCos(code){
+  const r=await fetch(`https://world.openbeautyfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,quantity,image_front_small_url`);
+  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product;
+  const ci=(p.ingredients_text_es||p.ingredients_text||p.ingredients_text_en||p.ingredients_text_fr||'').trim();
+  return {cos:true,name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ci,qty:qtyG(p.quantity),img:p.image_front_small_url||''}}
+function openCosManual(row){
+  const d=mdl(`<h2>✍️ Ingredientes (INCI)</h2><div class="sub">Pega la lista de ingredientes del envase (empieza por «Aqua…», «Water…» o «Ingredients:»), o haz una foto de la etiqueta para leerla.</div>
+  <textarea id="cmt" placeholder="Aqua, Glycerin, Sodium Laureth Sulfate, Parfum…" style="min-height:120px;margin-top:8px">${esc(row.dataset.ci||'')}</textarea>
+  <div class="pbtns" style="margin-top:6px"><label class="btn g">📷 Foto de la lista<input type="file" accept="image/*" capture="environment" id="cmf" hidden></label></div><div class="sub" id="cmp"></div>
+  <div id="cmv" style="margin-top:8px"></div>
+  <div class="acts"><button class="btn g" id="cmx">Cancelar</button><span>${row.dataset.ci?'<button class="btn r" id="cmr">Quitar</button> ':''}<button class="btn" id="cmok">Guardar</button></span></div>`,36);
+  const pv=()=>{const a=cosAnalyze($('cmt').value);$('cmv').innerHTML=a?`<b>Nota estimada:</b> ${bdg({ci:$('cmt').value},'')}<div class="sub">${a.n} ingredientes · ${a.c.r} de riesgo alto · ${a.c.o} moderado · ${a.c.y} bajo</div>`:'<div class="sub">Escribe al menos dos ingredientes para ver la nota.</div>'};
+  $('cmt').oninput=pv;pv();
+  $('cmf').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;$('cmp').textContent='Leyendo la foto… (la primera vez tarda un poco)';
+    try{const t=await ocrImage(f,p=>{$('cmp').textContent='Leyendo la foto… '+p+' %'});const m=t.replace(/\n+/g,' ').replace(/^.*?(ingredients?|ingredientes|composici[oó]n|inci)\s*[:\-]?\s*/i,'');
+      $('cmt').value=m.trim();$('cmp').textContent='Revisa lo que ha leído y corrige lo que haga falta.';pv()}catch(e){$('cmp').textContent='No he podido leer la foto. Escribe la lista a mano.'}};
+  $('cmx').onclick=()=>d.remove();
+  if($('cmr'))$('cmr').onclick=()=>{row.dataset.ci='';row.querySelector('.osc').innerHTML='';d.remove()};
+  $('cmok').onclick=()=>{const t=$('cmt').value.trim();row.dataset.ci=t;row.dataset.ns='';row.dataset.np='';row.dataset.ad='?';row.dataset.nd='';row.dataset.mn='';
+    row.querySelector('.osc').innerHTML=t?(bdg({ci:t},($('name').value||''))||'<span class="sub">Faltan ingredientes</span>'):'';d.remove()}}
+
 async function lookup(code,fl){fl=fl||{};
   const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriscore_grade,nova_group,ecoscore_grade,additives_tags,labels_tags,ingredients,generic_name,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,nutriments,categories_tags,nutriscore_score,quantity,image_front_small_url`);
   const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'';p._cheese=!!fl.cheese;p._bev=!!fl.bev;p._milk=!!fl.milk;p._name=fl.name||'';const q=nsPoints(p);
@@ -1233,15 +1379,24 @@ async function decodePhoto(f){const url=URL.createObjectURL(f);
     await loadZX();const h=new Map();h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E]);h.set(ZXing.DecodeHintType.TRY_HARDER,true);
     const rd=new ZXing.BrowserMultiFormatReader(h);try{return (await rd.decodeFromImageUrl(url)).getText()}catch(e){return null}finally{try{rd.reset()}catch(e){}}
   }finally{URL.revokeObjectURL(url)}}
-const mkOpt=(d,code,price,g)=>({b:d?d.brand:'',price:price||0,g:g||0,bc:code,ns:d?d.ns:'',nova:d?d.nova:0,eco:d?d.eco:'',ad:d&&d.ad!=null?d.ad:null,og:d?d.og:0,np:d&&d.np!=null?d.np:null,lq:d&&d.lq?1:0,ps:d?d.ps||'':'',nd:d?d.nd||'':'',mn:'',need:false,done:false,ql:[],ph:''});
+const mkOpt=(d,code,price,g)=>({b:d?d.brand:'',price:price||0,g:g||0,bc:code,ns:d?d.ns:'',nova:d?d.nova:0,eco:d?d.eco:'',ad:d&&d.ad!=null?d.ad:null,og:d?d.og:0,np:d&&d.np!=null?d.np:null,lq:d&&d.lq?1:0,ps:d?d.ps||'':'',nd:d?d.nd||'':'',ci:d&&d.ci?d.ci:'',mn:'',need:false,done:false,ql:[],ph:''});
 function findByBc(c){let r=null;S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>e.o.forEach((o,i)=>{if(!r&&o.bc===c)r={p,sid,i}})));return r}
 async function quickScan(){
   const raw=await scanCode();if(!raw)return;const code=String(raw).replace(/\D/g,'');
   if(code.length<8){alert('No he podido leer bien el código. Prueba otra vez.');return}
-  const dlg=mdl('<div class="sub">Buscando en Open Food Facts…</div>',11),box=dlg.querySelector('.sheet');
+  const dlg=mdl('<div class="sub">Buscando en Open Food Facts y Open Beauty Facts…</div>',11),box=dlg.querySelector('.sheet');
   const found=findByBc(code);let d=null,kind='';
-  const run=async()=>{try{d=await lookup(code,{cheese:kind==='cheese',bev:kind==='bev',milk:kind==='milk',name:''})}catch(e){d=null}};
+  const run=async()=>{try{d=await lookup(code,{cheese:kind==='cheese',bev:kind==='bev',milk:kind==='milk',name:''})}catch(e){d=null}
+    if(!d){try{d=await lookupCos(code)}catch(e){d=null}}};
   const draw=()=>{
+    if(d&&d.cos){const sc=d.ci?cosScore(d.ci):null,cl=sc!=null?scLbl(sc)[0]:'',tx=sc!=null?scLbl(sc)[1]:'';
+      box.innerHTML=`<h2>Resultado del escaneo</h2>
+      <div class="row" style="margin:0 0 8px">${thumb({photo:d.img||''})}<div class="info"><div class="nm">${esc(d.name||'Producto sin nombre')}</div><div class="sub">${d.brand?esc(d.brand)+' · ':''}Código ${esc(code)} · 🧴 Cosmética (Open Beauty Facts)</div></div></div>
+      ${found?`<div class="sub" style="margin-bottom:8px">Ya lo tienes en la app: <b>${esc(found.p.name)}</b>.</div>`:''}
+      ${sc!=null?`<div style="text-align:center;margin:8px 0 4px"><span class="nsb sc-${cl}" style="font-size:24px;padding:8px 20px;border-radius:14px">${tx} ${sc}/100</span></div>${cosBlock(d.ci)}`:'<div class="sub" style="margin:8px 0">Open Beauty Facts no tiene la lista de ingredientes de este producto. Puedes agregarlo y pegarla o leerla de una foto con «✍️ Ingredientes».</div>'}
+      <div class="sub" style="margin-top:10px">Clasificación propia y orientativa, no es la de INCI Beauty.</div>
+      <div class="acts"><button class="btn g" id="qcl">Cerrar</button>${found?'<button class="btn" id="qop">Abrir el producto</button>':'<button class="btn" id="qad">➕ Agregar</button>'}</div>`;
+      $('qcl').onclick=()=>dlg.remove();if(found)$('qop').onclick=()=>{dlg.remove();openP(found.p.id)};else $('qad').onclick=()=>{dlg.remove();pickStore(sid=>openScanned(d,code,sid))};return}
     const x=d?{ns:d.ns,np:d.np==null?null:d.np,lq:d.lq?1:0,ad:d.ad==null?null:d.ad,og:d.og?1:0,ps:d.ps||'',nd:d.nd||''}:null;
     const sc=x?scoreOf(x):null,pt=sc!=null?parts(x):null,cl=sc!=null?scLbl(sc)[0]:'',tx=sc!=null?scLbl(sc)[1]:'';
     const l=x?adList(x):[];const ord={r:0,y:1,n:2,g:3};l.sort((a,b)=>ord[kOf(a)]-ord[kOf(b)]);
@@ -1273,7 +1428,7 @@ function pickStore(fn){
   $('chps').querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{$('chp').classList.remove('show');fn(b.dataset.ps)});
   $('psx').onclick=()=>$('chp').classList.remove('show');$('chp').classList.add('show')}
 function openScanned(d,code,sid){
-  edit={id:'p'+Date.now(),name:d&&d.name?d.name:'',photo:d&&d.img?d.img:'',cat:'',e:{[sid]:{done:false,need:false,o:[mkOpt(d,code,0,d&&d.qty||0)]}},isNew:true};
+  edit={id:'p'+Date.now(),name:d&&d.name?d.name:'',photo:d&&d.img?d.img:'',cat:(d&&d.cos?((S.cats.find(c=>catGrp(c.id)==='ho')||{}).id||''):''),e:{[sid]:{done:false,need:false,o:[mkOpt(d,code,0,d&&d.qty||0)]}},isNew:true};
   drawForm();$('modal').classList.add('show')}
 
 // ===== Despensa =====
@@ -1376,7 +1531,7 @@ const nrSc=n=>n==null?'sin nota':String(n);
 const nrName=x=>`<b>${esc(x.name)}</b>${x.brand?' · '+esc(x.brand):''}<br><span class="sub">${esc(x.store)}`;
 function nrCands(){const r=[];
   S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>(Array.isArray(e.o)?e.o:[]).forEach((o,i)=>{
-    if(o.bc&&!o.mn)r.push({pid:p.id,sid,i,bc:o.bc,name:p.name,brand:o.b||'',store:sname(sid),old:scoreOf(nrX(o)),on:true})})));
+    if(o.bc&&!o.mn&&!o.ci)r.push({pid:p.id,sid,i,bc:o.bc,name:p.name,brand:o.b||'',store:sname(sid),old:scoreOf(nrX(o)),on:true})})));
   return r}
 function nrRender(){const b=$('nrbox');if(!b)return;
   if(!NR)NR={stage:'list',c:nrCands()};
@@ -1427,7 +1582,7 @@ function nrApply(){
   const sel=NR.res.filter(x=>x.on),by={};sel.forEach(x=>(by[x.it.pid]=by[x.it.pid]||[]).push(x));let done=[];
   Object.entries(by).forEach(([pid,l])=>{const p=S.products.find(z=>z.id===pid);if(!p)return;const q=JSON.parse(JSON.stringify(p));
     l.forEach(x=>{const e=q.e[x.it.sid],o=e&&Array.isArray(e.o)?e.o[x.it.i]:null;
-      if(o&&o.bc===x.it.bc&&!o.mn){Object.assign(o,{ns:x.d.ns,nova:x.d.nova,eco:x.d.eco,ad:x.d.ad==null?null:x.d.ad,og:x.d.og,np:x.d.np==null?null:x.d.np,lq:x.d.lq?1:0,ps:x.d.ps||'',nd:x.d.nd||''});done.push(x)}});
+      if(o&&o.bc===x.it.bc&&!o.mn&&!o.ci){Object.assign(o,{ns:x.d.ns,nova:x.d.nova,eco:x.d.eco,ad:x.d.ad==null?null:x.d.ad,og:x.d.og,np:x.d.np==null?null:x.d.np,lq:x.d.lq?1:0,ps:x.d.ps||'',nd:x.d.nd||''});done.push(x)}});
     putP(q)});
   $('nrbox').innerHTML=`<div class="sub">✅ Hecho: ${done.length} nota${done.length===1?'':'s'} actualizada${done.length===1?'':'s'}. El resto no se ha tocado.</div>
     ${done.map(x=>`<div class="nrr"><span class="t">${nrName(x.it)}</span></span><span>${nrSc(x.it.old)} → ${nrSc(x.nw)}</span></div>`).join('')}
@@ -1435,19 +1590,23 @@ function nrApply(){
   $('nrr').onclick=()=>{NR=null;nrRender()}}
 const n2=v=>parseFloat(String(v).replace(',','.'))||0;
 const sh=sel=>$('sheet').querySelector(sel),shAll=sel=>[...$('sheet').querySelectorAll(sel)];
+const NUF=[['kcal','Energía (kcal)'],['fat','Grasas (g)'],['sat','· saturadas (g)'],['hc','Hidratos (g)'],['sug','· azúcares (g)'],['fib','Fibra (g)'],['pro','Proteínas (g)'],['salt','Sal (g)']];
+function readNu(){if(!$('nu_kcal'))return edit.nu||null;const g=k=>{const v=$('nu_'+k).value.trim();return v===''?null:Math.max(0,n2(v))};
+  const o={};NUF.forEach(([k])=>o[k]=g(k));o.ug=g('ug');o.ng=$('nu_ng').value;
+  return (NUF.some(([k])=>o[k]!=null)||o.ug!=null||o.ng)?o:null}
 function syncForm(){
-  edit.name=$('name').value;edit.cat=$('cat').value;
+  edit.name=$('name').value;edit.cat=$('cat').value;edit.nu=readNu();
   S.stores.forEach(s=>{
     if(!edit.e[s.id])return;
     const rows=shAll(`.orow[data-sid="${s.id}"]`);if(!rows.length)return;
-    edit.e[s.id].o=rows.map(r=>({b:r.querySelector('.ob').value.trim(),price:n2(r.querySelector('.op').value),g:n2(r.querySelector('.og').value),bc:r.querySelector('.oc').value.trim(),ns:r.dataset.ns||'',nova:+r.dataset.nova||0,eco:r.dataset.eco||'',ad:(r.dataset.ad===undefined||r.dataset.ad==='?')?null:r.dataset.ad,og:+r.dataset.og||0,np:(r.dataset.np===undefined||r.dataset.np==='')?null:+r.dataset.np,lq:+r.dataset.lq||0,ps:r.dataset.ps||'',nd:r.dataset.nd||'',mn:r.dataset.mn||'',need:r.dataset.need==='1',done:r.dataset.done==='1',ql:(()=>{try{return JSON.parse(r.dataset.ql||'[]')}catch(e){return[]}})(),ph:r.dataset.ph||''}))});
+    edit.e[s.id].o=rows.map(r=>({b:r.querySelector('.ob').value.trim(),price:n2(r.querySelector('.op').value),g:n2(r.querySelector('.og').value),bc:r.querySelector('.oc').value.trim(),ns:r.dataset.ns||'',nova:+r.dataset.nova||0,eco:r.dataset.eco||'',ad:(r.dataset.ad===undefined||r.dataset.ad==='?')?null:r.dataset.ad,og:+r.dataset.og||0,np:(r.dataset.np===undefined||r.dataset.np==='')?null:+r.dataset.np,lq:+r.dataset.lq||0,ps:r.dataset.ps||'',nd:r.dataset.nd||'',mn:r.dataset.mn||'',ci:r.dataset.ci||'',need:r.dataset.need==='1',done:r.dataset.done==='1',ql:(()=>{try{return JSON.parse(r.dataset.ql||'[]')}catch(e){return[]}})(),ph:r.dataset.ph||''}))});
 }
 function mergeInto(pid){
   syncForm();const t=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));
   Object.values(t.e).forEach(v=>{if(!Array.isArray(v.o)){v.o=opts(v);delete v.price;delete v.g}});
   Object.entries(edit.e).forEach(([k,v])=>{const d=v.o.filter(x=>x.b||x.price>0||x.g>0||x.bc||x.ph||x.need||x.mn);
     if(!t.e[k])t.e[k]={done:false,need:false,o:d};else t.e[k].o=[...t.e[k].o,...d]});
-  if(!t.photo&&edit.photo)t.photo=edit.photo;
+  if(!t.photo&&edit.photo)t.photo=edit.photo;if(!t.nu&&edit.nu)t.nu=edit.nu;
   t.isNew=false;edit=t;drawForm();
 }
 function drawForm(){
@@ -1457,10 +1616,15 @@ function drawForm(){
   <div class="photo"><div id="pv">${thumb(edit)}</div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="file2" hidden></label><label class="btn g">🖼️ Archivos<input type="file" accept="image/*" id="file" hidden></label></div></div>
   <label class="f">Nombre del producto</label><input type="text" id="name" value="${esc(edit.name)}" placeholder="Varitas de merluza"><div class="addst" id="sug" style="margin-top:6px"></div>
   <label class="f">Categoría</label><select id="cat">${catOpts(edit.cat||'')}</select>
+  <div class="nubox"><label class="f"><b>🥗 Valores nutricionales por 100 g</b> (son los mismos en todos los supermercados)</label>
+    <div class="nugrid">${NUF.map(([k,l])=>`<div><label class="f">${l}</label><input type="number" id="nu_${k}" inputmode="decimal" step="any" min="0" value="${edit.nu&&edit.nu[k]!=null?edit.nu[k]:''}"></div>`).join('')}
+    <div><label class="f">Peso de 1 unidad (g)</label><input type="number" id="nu_ug" inputmode="decimal" step="any" min="0" placeholder="Ej.: 120" value="${edit.nu&&edit.nu.ug!=null?edit.nu.ug:''}"></div>
+    <div><label class="f">Grupo (análisis del menú)</label><select id="nu_ng"><option value="">Automático</option>${Object.entries(NGRP).map(([k,v])=>`<option value="${k}" ${edit.nu&&edit.nu.ng===k?'selected':''}>${v[0]}</option>`).join('')}</select></div></div>
+    <div class="sub" style="margin-top:6px">Si dejas las kcal vacías se calculan con proteínas, hidratos y grasas. El peso de la unidad sirve para recetas con «2 plátanos».</div></div>
   ${inS.length?'<label class="f">Marca (opcional), precio y gramos en cada tienda. Con «+ Otra marca» metes varias y se comparan todas.</label>':''}
   ${inS.map(s=>{const e=edit.e[s.id],o=(e.o&&e.o.length)?e.o:[{b:'',price:0,g:0}];
     return `<div class="sbox"><div class="srow"><span><b>${esc(s.name)}</b></span><button class="btn g" data-ao="${s.id}">+ Otra marca</button><button class="btn r" data-rs="${s.id}">Quitar</button></div>
-    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ql="${esc(JSON.stringify(x.ql||[]))}" data-ph="${x.ph||''}"><label class="oph" title="Elegir de archivos"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'🖼️'}</span><input type="file" accept="image/*" class="ofile" hidden></label><label class="oph" title="Hacer foto">📷<input type="file" accept="image/*" capture="environment" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
+    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-ci="${esc(x.ci||'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ql="${esc(JSON.stringify(x.ql||[]))}" data-ph="${x.ph||''}"><label class="oph" title="Elegir de archivos"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'🖼️'}</span><input type="file" accept="image/*" class="ofile" hidden></label><label class="oph" title="Hacer foto">📷<input type="file" accept="image/*" capture="environment" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
   ${outS.length?`<label class="f">${inS.length?'¿Se vende en otra tienda? Añádela:':'¿Dónde se vende? Elige la tienda:'}</label><div class="addst">${outS.map(s=>`<button class="btn g" data-as="${s.id}">+ ${esc(s.name)}</button>`).join('')}</div>`:''}
   <div class="acts">${id?'<button class="btn r" id="del">Eliminar</button>':'<span></span>'}<span><button class="btn g" id="cx">Cancelar</button> <button class="btn" id="ok">Guardar</button></span></div>`;
   const gph=ev=>{const f=ev.target.files[0];if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
@@ -1469,11 +1633,18 @@ function drawForm(){
   const upd=r=>{const k=kgOf(n2(r.querySelector('.op').value),n2(r.querySelector('.og').value));r.querySelector('.kgv').textContent=k>0?'= '+eurkg(k):''};
   shAll('.orow').forEach(r=>{upd(r);r.querySelectorAll('input').forEach(i=>i.oninput=()=>upd(r))});
   const apply=async(row,raw)=>{const st=row.querySelector('.osc'),code=String(raw||'').replace(/\D/g,'');row.querySelector('.oc').value=code;
-    const clr=()=>{if(row.dataset.mn)return;row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd=''};
+    const clr=()=>{if(row.dataset.mn||row.dataset.ci)return;row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd=''};
     if(code.length<8){clr();st.innerHTML='';return}
     st.textContent='Buscando en Open Food Facts…';
-    try{const d=await lookup(code,kindFlags());
-      if(!d){clr();st.textContent='No encontrado en Open Food Facts';return}
+    try{const ho=catKind({cat:$('cat').value})==='hogar';let d=null;
+      if(ho){try{d=await lookupCos(code)}catch(e){}if(!d)d=await lookup(code,kindFlags())}
+      else{d=await lookup(code,kindFlags());if(!d){try{d=await lookupCos(code)}catch(e){}}}
+      if(!d){clr();st.textContent='No encontrado en Open Food Facts ni en Open Beauty Facts';return}
+      if(d.cos){row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.dataset.mn='';row.dataset.ci=d.ci||'';
+        const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
+        st.innerHTML=(d.ci?bdg({ci:d.ci},tt):'<span class="sub">Sin lista de ingredientes en Open Beauty Facts: pulsa «✍️ Ingredientes» para pegarla o leerla de una foto.</span>')+(d.name?' <span>'+esc(d.name)+'</span>':'');
+        if(!$('name').value.trim()&&d.name)$('name').value=d.name;return}
+      row.dataset.ci='';
       row.dataset.ns=d.ns;row.dataset.nova=d.nova;row.dataset.eco=d.eco;row.dataset.ad=d.ad==null?'?':d.ad;row.dataset.og=d.og;row.dataset.np=d.np==null?'':d.np;row.dataset.lq=d.lq?1:0;row.dataset.ps=d.ps||'';row.dataset.nd=d.nd||'';row.dataset.mn='';
       const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
       st.innerHTML=(bdg(d,tt)?bdg(d,tt)+' '+det(d):((d.ns||d.np!=null)?'Faltan los ingredientes en Open Food Facts (sin nota). Pulsa «✍️ A mano» para leerlos de una foto':'Sin datos nutricionales en Open Food Facts (sin nota). Pulsa «✍️ A mano» para leerlos de una foto'))+(d.name?' <span>'+esc(d.name)+'</span>':'')
@@ -1481,11 +1652,11 @@ function drawForm(){
   shAll('.orow').forEach(row=>{row.querySelector('.oc').onchange=e=>apply(row,e.target.value);
     row.querySelector('.sb').onclick=async()=>{const c=await scanCode();if(c)apply(row,c)};
     row.querySelector('.sq').onclick=()=>openSearch(row,apply);
-    row.querySelector('.sm2').onclick=()=>openManual(row)});
-  shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if((row.dataset.ad==='?'||!row.dataset.nd)&&c.length>=8)apply(row,c)});
+    row.querySelector('.sm2').onclick=()=>catKind({cat:$('cat').value})==='hogar'?openCosManual(row):openManual(row)});
+  shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if((row.dataset.ad==='?'||!row.dataset.nd)&&!row.dataset.ci&&c.length>=8)apply(row,c)});
   shAll('.orow').forEach(row=>{row.querySelectorAll('.ofile').forEach(fi=>{fi.onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{row.dataset.ph=u;row.querySelector('.opi').innerHTML=`<img src="${u}" alt="">`})}})});
-  const applyKindUI=()=>{$('sheet').classList[catKind({cat:$('cat').value})==='fresh'?'add':'remove']('fresh')};
-  $('cat').onchange=()=>{applyKindUI();shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if(c.length>=8&&!row.dataset.mn)apply(row,c)})};applyKindUI();
+  const applyKindUI=()=>{const k=catKind({cat:$('cat').value});$('sheet').classList[k==='fresh'?'add':'remove']('fresh');$('sheet').classList[k==='hogar'?'add':'remove']('hogar');shAll('.orow .sm2').forEach(b=>b.textContent=k==='hogar'?'✍️ Ingredientes':'✍️ A mano')};
+  $('cat').onchange=()=>{applyKindUI();shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if(c.length>=8&&!row.dataset.mn&&!row.dataset.ci)apply(row,c)})};applyKindUI();
   shAll('[data-as]').forEach(b=>b.onclick=()=>{syncForm();edit.e[b.dataset.as]={done:false,need:false,o:[{b:'',price:0,g:0}]};drawForm()});
   shAll('[data-rs]').forEach(b=>b.onclick=()=>{syncForm();delete edit.e[b.dataset.rs];drawForm()});
   shAll('[data-ao]').forEach(b=>b.onclick=()=>{syncForm();const e=edit.e[b.dataset.ao];
@@ -1506,7 +1677,12 @@ function drawForm(){
     syncForm();const n=edit.name.trim();if(!n){$('name').focus();return}
     const e={};Object.entries(edit.e).forEach(([k,v])=>{e[k]={done:!!v.done,need:!!v.need,o:v.o.filter(x=>x.b||x.price>0||x.g>0||x.bc||x.ph||x.need||x.mn)}});
     if(!Object.keys(e).length){alert('Añade al menos una tienda donde se venda');return}
-    putP({id:edit.id,name:n,photo:edit.photo,cat:edit.cat,e});close()};
+    let nu=edit.nu||null;
+    if(nu&&catKind({cat:edit.cat})==='fresh'){
+      if(nu.kcal==null&&[nu.pro,nu.hc,nu.fat].some(v=>v!=null))nu.kcal=Math.round(4*(nu.pro||0)+4*(nu.hc||0)+9*(nu.fat||0));
+      if(nu.kcal>900){alert('Las kcal por 100 g no pueden pasar de unas 900. Revísalo.');return}
+    }else nu=null;
+    putP({id:edit.id,name:n,photo:edit.photo,cat:edit.cat,e,nu});close()};
   $('sheet').scrollTop=top;
 }
 let SEC='';
@@ -1532,13 +1708,20 @@ function stores(sec){
         const id=b.dataset.d;putStores(S.stores.filter(x=>x.id!==id));
         S.products.forEach(p=>{if(!p.e[id])return;const q=JSON.parse(JSON.stringify(p));delete q.e[id];Object.keys(q.e).length?putP(q):delP(p.id)});stores()})};
   }else if(SEC==='cats'){
-    const row=c=>`<div class="srow"><span style="flex:1;min-width:0">${esc(c.name)}</span><select data-cg="${c.id}" style="max-width:118px;flex:none">${GRP.slice(0,3).map(g=>`<option value="${g.id}" ${catGrp(c.id)===g.id?'selected':''}>${g.ic} ${g.name}</option>`).join('')}</select><button class="btn r" data-dc="${c.id}">Quitar</button></div>`;
-    html=back('🏷️ Grupos y categorías')+'<div class="sub" style="margin:4px 0 8px">Todo producto pertenece a una categoría y toda categoría a uno de los tres grupos. En Supermercados, Productos y Comparar eliges primero el grupo y dentro ves sus categorías. Puedes mover una categoría de grupo con el selector.</div>'
-      +GRP.slice(0,3).map(g=>{const cs=S.cats.filter(c=>catGrp(c.id)===g.id);return `<h3 class="gh" style="color:${g.col}">${g.ic} ${g.name} <span class="sub">${cs.length}</span></h3>`+(cs.map(row).join('')||'<div class="sub">Sin categorías en este grupo.</div>')}).join('')
+    const row=c=>`<div class="srow"><input type="text" data-cn="${c.id}" value="${esc(c.name)}" style="flex:1;min-width:0"><select data-cg="${c.id}" style="max-width:118px;flex:none">${GRP.slice(0,3).map(g=>`<option value="${g.id}" ${catGrp(c.id)===g.id?'selected':''}>${g.ic} ${g.name}</option>`).join('')}</select><button class="btn r" data-dc="${c.id}">Quitar</button></div>`;
+    html=back('🏷️ Grupos y categorías')+'<div class="sub" style="margin:4px 0 8px">Todo producto pertenece a una categoría y toda categoría a uno de los tres grupos. En Supermercados, Productos y Comparar eliges primero el grupo y dentro ves sus categorías. Puedes mover una categoría de grupo con el selector y corregir el texto de cualquier grupo o categoría tocando su nombre.</div>'
+      +GRP.slice(0,3).map(g=>{const cs=S.cats.filter(c=>catGrp(c.id)===g.id);return `<div class="srow" style="margin-top:18px"><span style="font-size:22px;flex:none">${g.ic}</span><input type="text" data-gn="${g.id}" value="${esc(g.name)}" style="flex:1;min-width:0;font-weight:700;color:${g.col}"><span class="sub" style="flex:none">${cs.length}</span></div>`+(cs.map(row).join('')||'<div class="sub">Sin categorías en este grupo.</div>')}).join('')
       +`<label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas, limpieza…"><select id="ncg" style="max-width:130px;flex:none">${GRP.slice(0,3).map(g=>`<option value="${g.id}">${g.ic} ${g.name}</option>`).join('')}</select><button class="btn" id="addc">Añadir</button></div>
-      <div class="sub" style="margin-top:10px">Los productos de <b>Frescos</b> y <b>Hogar</b> se guardan sin código de barras ni nota nutricional. Los <b>Envasados</b> sí la calculan.</div>`;
+      <div class="srow" style="margin-top:10px"><button class="btn g" id="cosc" style="flex:1">🧴 Añadir categorías de cosmética e higiene</button></div><div class="sub">Crea en Hogar: Afeitado, Bienestar, Cuidado corporal, Higiene corporal, Dental, Cabello, Rostro, Maquillaje, Solar, Bebé y Limpieza del hogar (solo las que falten).</div>
+      <div class="sub" style="margin-top:10px">Los productos de <b>Frescos</b> se guardan sin código de barras ni nota. <b>Envasados</b> calcula la nota nutricional (Yuka) y <b>Hogar</b> analiza los ingredientes de cosmética e higiene (estilo INCI Beauty).</div>`;
     wire=()=>{
+      document.querySelectorAll('[data-cn]').forEach(i=>i.onchange=()=>{const n=i.value.trim(),id=i.dataset.cn;if(!n){i.value=cname(id);return}
+        putCats(S.cats.map(c=>c.id===id?{...c,name:n,grp:catGrp(c.id),...((!c.kind&&catGrp(c.id)==='en'&&inferKind(c.name)!=='normal')?{kind:inferKind(c.name)}:{})}:{...c,grp:catGrp(c.id)}));stores()});
+      document.querySelectorAll('[data-gn]').forEach(i=>i.onchange=()=>{const g=GRP.find(x=>x.id===i.dataset.gn),n=i.value.trim();if(!g)return;g.name=n||GRPN0[g.id];
+        putCats(S.cats.map(c=>({...c,grp:catGrp(c.id)})));stores()});
       document.querySelectorAll('[data-cg]').forEach(sl=>sl.onchange=()=>{putCats(S.cats.map(c=>c.id===sl.dataset.cg?{...c,grp:sl.value}:{...c,grp:catGrp(c.id)}));stores()});
+      $('cosc').onclick=()=>{const want=['Afeitado','Bienestar','Cuidado corporal','Higiene corporal','Dental','Cabello','Rostro','Maquillaje','Solar','Bebé','Limpieza del hogar'],have=S.cats.map(c=>norm(c.name)),add=want.filter(n=>!have.includes(norm(n)));
+        putCats([...S.cats.map(c=>({...c,grp:catGrp(c.id)})),...add.map((n,i)=>({id:'c'+Date.now()+i,name:n,grp:'ho'}))]);stores()};
       $('addc').onclick=()=>{const n=$('nc').value.trim();if(n){putCats([...S.cats.map(c=>({...c,grp:catGrp(c.id)})),{id:'c'+Date.now(),name:n,grp:$('ncg').value}]);stores()}};
       document.querySelectorAll('[data-dc]').forEach(b=>b.onclick=()=>{if(!confirm('¿Quitar esta categoría? Sus productos pasarán a «Sin categoría».'))return;
         const id=b.dataset.dc;putCats(S.cats.filter(c=>c.id!==id));
@@ -1548,9 +1731,14 @@ function stores(sec){
     html=back('🥗 Tipo de menú')+`<div class="sub" style="margin:6px 0">Se usa en «Analizar menú» (Planning) para valorar si la semana se ajusta a lo que quieres comer.</div>`+Object.entries(DIETS).map(([k,v])=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:8px;border:1px solid ${S.diet===k?'var(--ac)':'var(--bd)'};background:${S.diet===k?'var(--ac2)':'var(--card)'};border-radius:12px;cursor:pointer"><input type="radio" name="dtm" value="${k}" ${S.diet===k?'checked':''}><span><b>${v[0]} ${v[1]}</b><div class="sub">${v[2]}</div></span></label>`).join('');
     wire=()=>document.querySelectorAll('input[name="dtm"]').forEach(r=>r.onchange=()=>{putDiet(r.value);stores()});
   }else if(SEC==='rcats'){
-    html=back('🍳 Categorías de recetas')+`<div class="chips" style="margin-top:6px;flex-wrap:wrap">${S.rcats.map(c=>`<span class="chip">${esc(c)} <button class="x" data-rcd="${esc(c)}" type="button">✕</button></span>`).join('')||'<span class="sub">No hay categorías.</span>'}</div>
+    html=back('🍳 Categorías de recetas')+`<div class="sub" style="margin:6px 0 8px">Toca el nombre de una categoría para corregirlo. Las recetas que la tienen se actualizan solas.</div>${S.rcats.map((c,i)=>`<div class="srow"><input type="text" data-rcn="${i}" value="${esc(c)}" style="flex:1;min-width:0"><button class="btn r" data-rcd="${esc(c)}" type="button">Quitar</button></div>`).join('')||'<span class="sub">No hay categorías.</span>'}
       <label class="f">Añadir categoría</label><div class="srow"><input type="text" id="rcn" placeholder="Postres, Vegano, Aperitivos…"><button class="btn" id="rcb">Añadir</button></div>`;
     wire=()=>{
+      document.querySelectorAll('[data-rcn]').forEach(i=>i.onchange=()=>{const k=+i.dataset.rcn,old=S.rcats[k],n=i.value.trim();
+        if(!n||n===old){i.value=old;return}
+        if(S.rcats.some((c,j)=>j!==k&&norm(c)===norm(n))){alert('Ya existe una categoría con ese nombre.');i.value=old;return}
+        putRcats(S.rcats.map((c,j)=>j===k?n:c));
+        (S.recipes||[]).forEach(r=>{if(r.cat===old)putRecipe({...r,cat:n})});stores()});
       document.querySelectorAll('[data-rcd]').forEach(b=>b.onclick=()=>{putRcats(S.rcats.filter(c=>c!==b.dataset.rcd));stores()});
       $('rcb').onclick=()=>{const n=$('rcn').value.trim();if(n&&!S.rcats.includes(n)){putRcats([...S.rcats,n]);stores()}}};
   }else if(SEC==='tg'){
