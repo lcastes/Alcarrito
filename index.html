@@ -153,8 +153,12 @@ const firebaseConfig={apiKey:"AIzaSyCp-YWTUCidjRFLm27EIayge58YRvvZE_E",authDomai
 // =====================================================================
 
 const DEF=[{id:'s1',name:'LIDL'},{id:'s2',name:'BM'}];
-const DEFC=[{id:'c1',name:'Comida precocinada'},{id:'c2',name:'Carne'},{id:'c3',name:'Pescado'},{id:'c4',name:'Productos de higiene'},{id:'c5',name:'Verduras'},{id:'c6',name:'Frutas'}];
-let S={stores:DEF,cats:DEFC,products:[],extras:[]},cur='list',edit=null,unsubs=[],lastErr='',Q='',FC='';
+const DEFC=[{id:'c1',name:'Comida precocinada',grp:'en'},{id:'c2',name:'Carne',grp:'fr'},{id:'c3',name:'Pescado',grp:'fr'},{id:'c4',name:'Productos de higiene',grp:'ho'},{id:'c5',name:'Verduras',grp:'fr'},{id:'c6',name:'Frutas',grp:'fr'}];
+const GRP=[{id:'fr',name:'FRESCOS',ic:'🥬',col:'#1e8f4e'},{id:'en',name:'ENVASADOS',ic:'📦',col:'#2b6cb0'},{id:'ho',name:'HOGAR',ic:'🧴',col:'#805ad5'},{id:'none',name:'SIN CATEGORÍA',ic:'❔',col:'#8a8a82'}];
+const GN=id=>{const g=GRP.find(x=>x.id===id)||GRP[3];return g.ic+' '+g.name};
+function inferGrp(c){const n=norm(c.name);if(c.kind==='fresh'||/fresc|carne|pescad|marisc|fruta|verdur|hortaliz|huevo|panader|charcut|embutid|fiambre/.test(n))return 'fr';if(/limpie|higien|hogar|deterg|papel|cosm|aseo|drogu|mascota|perfum|champu|jabon|lavavaj|suaviz|desodor|dental|panal|menaje|bebes?\b/.test(n))return 'ho';return 'en'}
+const catGrp=id=>{const c=S.cats.find(x=>x.id===id);return c?((c.grp&&['fr','en','ho'].includes(c.grp))?c.grp:inferGrp(c)):'none'};
+let S={stores:DEF,cats:DEFC,products:[],extras:[]},cur='list',edit=null,unsubs=[],lastErr='',Q='',FC='',GSEL='',lastCur='';
 S.pantry=[];
 const TABS=['list','dp','cmp','sm','pr','rc','pl'];
 const configured=!String(firebaseConfig.apiKey).startsWith('PEGA');
@@ -169,7 +173,7 @@ function delX(id){deleteDoc(doc(db,'extras',id)).catch(wfail)}
 function putCats(l){S.cats=l;setDoc(doc(db,'config','cats'),{list:l}).catch(wfail)}
 const KINDS={'':'Automático',normal:'Normal',cheese:'Queso',bev:'Bebida',milk:'Leche / bebida vegetal',fresh:'Fresco / materia prima'};
 function inferKind(name){const n=norm(name);if(/\bquesos?\b/.test(n))return 'cheese';if(/leche|lacteo|vegetal/.test(n))return 'milk';if(/bebida|zumo|refresco|infusion|cerveza|\bvinos?\b|\baguas?\b/.test(n))return 'bev';if(/fresc|natural|basico|materia prima/.test(n))return 'fresh';return 'normal'}
-const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));return c?(c.kind||inferKind(c.name)):'normal'};
+const catKind=p=>{const c=S.cats.find(x=>x.id===(p&&p.cat));if(!c)return 'normal';if(c.kind)return c.kind;const g=catGrp(c.id);return (g==='fr'||g==='ho')?'fresh':inferKind(c.name)};
 const kindFlags=()=>{const k=catKind({cat:$('cat')?$('cat').value:''});return {cheese:k==='cheese',bev:k==='bev',milk:k==='milk',name:$('name')?$('name').value:''}};
 let MPREV=null;
 function putStores(l){S.stores=l;if(!TABS.includes(cur)&&!l.find(s=>s.id===cur))cur=l[0].id;
@@ -657,10 +661,10 @@ const ingEditorHtml=list=>`<div class="igrid">${(list&&list.length?list:[{}]).ma
   <details style="margin-top:8px"><summary class="sub">📋 Pegar una lista de ingredientes (de una web)</summary><textarea class="ipaste" placeholder="200 g harina&#10;2 huevos&#10;1/2 cebolla"></textarea><button class="btn g" type="button" data-paste="1">Añadir estas líneas</button></details>
   <datalist id="unl">${UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>`;
 function quickProduct(name,cb){
-  const fk=S.cats.find(c=>(c.kind||inferKind(c.name))==='fresh');
+  const fk=S.cats.find(c=>catGrp(c.id)==='fr');
   const d=mdl(`<h2>➕ Nuevo producto</h2><div class="sub">Para ingredientes frescos o básicos (salmón, huevos, harina…). Podrás completarlo después desde Productos.</div>
   <label class="f">Nombre</label><input type="text" id="qpn" value="${esc(name)}">
-  <label class="f">Categoría</label><select id="qpc"><option value="">Sin categoría</option>${S.cats.map(c=>`<option value="${c.id}" ${fk&&fk.id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
+  <label class="f">Categoría</label><select id="qpc">${catOpts(fk?fk.id:'')}</select>
   <label class="f">Supermercado</label><select id="qps">${S.stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
   <div class="srow" style="flex-wrap:wrap"><div style="flex:1;min-width:120px"><label class="f">Precio (€, opcional)</label><input type="number" id="qpp" step="0.01" min="0" inputmode="decimal"></div><div style="flex:1;min-width:120px"><label class="f">Para cuántos gramos</label><input type="number" id="qpg" step="any" min="0" inputmode="decimal" placeholder="1000 si es por kilo"></div></div>
   <div class="acts"><button class="btn g" id="qpx">Cancelar</button><button class="btn" id="qpa">Crear</button></div>`,40);
@@ -869,7 +873,7 @@ function slotPick(k){chpPush(()=>{
   $('chps').innerHTML=`<h2>${labelDay(k)}</h2><div class="sub">¿Qué comida quieres añadir?</div><div class="acts" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:12px">${SLS.map(sl=>`<button class="btn g" data-sl="${sl}" style="color:${SLC[sl]};border-color:${SLC[sl]}">${SLI[sl]} ${SLN[sl]}</button>`).join('')}<button class="btn r" id="slx">Cancelar</button></div>`;
   $('chps').querySelectorAll('[data-sl]').forEach(b=>b.onclick=()=>{chpClose();pickEntry(k,b.dataset.sl)});$('slx').onclick=chpClose;$('chp').classList.add('show')},true)}
 // ===== Análisis nutricional del menú (estimación por grupos de alimentos + nutrientes) =====
-const GRP={ver:['Verdura',1],fru:['Fruta',1],leg:['Legumbres',1],cer:['Cereales',1],tub:['Tubérculos',1],fs:['Frutos secos y semillas',1],ace:['Aceites y grasas',1],prv:['Proteína vegetal (tofu, tempeh…)',1],bvg:['Bebida vegetal',1],
+const NGRP={ver:['Verdura',1],fru:['Fruta',1],leg:['Legumbres',1],cer:['Cereales',1],tub:['Tubérculos',1],fs:['Frutos secos y semillas',1],ace:['Aceites y grasas',1],prv:['Proteína vegetal (tofu, tempeh…)',1],bvg:['Bebida vegetal',1],
   lac:['Lácteos',0],hue:['Huevos',0],paz:['Pescado azul',0],pbl:['Pescado blanco y marisco',0],cro:['Carne roja',0],cbl:['Carne blanca',0],emb:['Embutidos y procesados',0],dul:['Dulces y bollería',0],otr:['Otros',1]};
 // [regex, grupo, kcal, prot, hidr, grasa, fibra por 100 g, g por unidad]
 const FT=[
@@ -1047,30 +1051,36 @@ const bestO=(p,sid)=>rank(prices(p).filter(x=>x.id===sid))[0];
 const lbl=x=>esc(sname(x.id))+(x.b?' · '+esc(x.b):'');
 const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const brands=p=>Object.values(p.e).flatMap(v=>opts(v).map(o=>o.b||''));
-const keep=p=>(!FC||(FC==='@fresh'?catKind(p)==='fresh':FC==='@pack'?catKind(p)!=='fresh':FC==='-'?!S.cats.some(c=>c.id===p.cat):p.cat===FC))&&(!Q.trim()||[p.name,...brands(p)].some(t=>norm(t).includes(norm(Q.trim()))));
+const keep=p=>(!FC||(FC==='-'?!S.cats.some(c=>c.id===p.cat):p.cat===FC))&&(Q.trim()||!GSEL||catGrp(p.cat)===GSEL)&&(!Q.trim()||[p.name,...brands(p)].some(t=>norm(t).includes(norm(Q.trim()))));
 const useKg=l=>l.length>1&&l.every(x=>x.kg>0);
 const rank=l=>{const k=useKg(l);return [...l].sort((a,b)=>k?a.kg-b.kg:a.price-b.price)};
 const priceTxt=e=>e.price>0?eur(e.price)+(e.g>0?' ('+e.g+' g) · '+eurkg(kgOf(e.price,e.g)):''):'Sin precio';
 const boTxt=(p,sid)=>{const l=rank(prices(p).filter(x=>x.id===sid)),b=l[0];return b?(b.b?esc(b.b)+' · ':'')+priceTxt(b)+(l.length>1?' · mejor de '+l.length+' marcas':'')+' '+bdg(b,p.name+(b.b?' · '+b.b:'')):''};
 const thumb=p=>p.photo?`<img class="th" src="${p.photo}" alt="">`:`<div class="th">🥫</div>`;
-const catOpts=sel=>'<option value="">Sin categoría</option>'+S.cats.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('');
+const catOpts=sel=>'<option value="">Sin categoría</option>'+GRP.slice(0,3).map(g=>{const cs=S.cats.filter(c=>catGrp(c.id)===g.id);return cs.length?`<optgroup label="${g.ic} ${g.name}">`+cs.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('')+'</optgroup>':''}).join('');
 function groupHtml(items,gc,rf){
-  const ids=S.cats.map(c=>c.id);
+  const ids=GRP.slice(0,3).flatMap(g=>S.cats.filter(c=>catGrp(c.id)===g.id).map(c=>c.id));
   const key=x=>ids.includes(gc(x))?gc(x):'';
   return [...ids,''].map(id=>{const l=items.filter(x=>key(x)===id);
-    return l.length?(ids.length?`<div class="ch">${esc(id?cname(id):'Sin categoría')}</div>`:'')+l.map(rf).join(''):''}).join('');
+    return l.length?(ids.length?`<div class="ch">${id?(GSEL?'':(GRP.find(g=>g.id===catGrp(id)).ic)+' ')+esc(cname(id)):'Sin categoría'}</div>`:'')+l.map(rf).join(''):''}).join('');
 }
+const gateHtml=(l,pc)=>{const n={fr:0,en:0,ho:0,none:0},cs={fr:new Set(),en:new Set(),ho:new Set()};l.forEach(x=>{const c=pc(x),g=catGrp(c);n[g]++;if(cs[g])cs[g].add(c)});
+  return '<div class="sub" style="margin:2px 2px 10px">Elige un grupo para ver sus categorías. Si escribes en el buscador se muestran todos los grupos.</div><div class="sgrid">'+GRP.filter(g=>g.id!=='none'||n.none).map(g=>`<button class="stile" data-gs="${g.id}" style="border-left:6px solid ${g.col}"><span class="sico" style="font-size:34px">${g.ic}</span><b class="sn" style="font-size:18px">${g.name}</b><span class="sub">${n[g.id]} producto${n[g.id]===1?'':'s'}${cs[g.id]?' · '+cs[g.id].size+' categoría'+(cs[g.id].size===1?'':'s'):''}</span></button>`).join('')+'</div>'};
+const grpBar=()=>(GSEL&&!Q.trim())?`<div class="sbar"><button class="btn g" data-gs="">‹ Grupos</button><b>${GN(GSEL)}</b></div>`:'';
+const needGate=()=>!GSEL&&!Q.trim();
 
 function render(){
+  if(cur!==lastCur){lastCur=cur;GSEL='';FC=''}
   const inStore=S.stores.some(s=>s.id===cur),lowN=S.pantry.filter(isLow).length;
   $('tabs').innerHTML=`<button class="tab ${cur==='list'?'on':''}" data-t="list">🧾 Lista</button><button class="tab ${cur==='dp'?'on':''}" data-t="dp">🏠 Despensa${lowN?`<span class="tbadge">${lowN}</span>`:''}</button><button class="tab ${(cur==='sm'||inStore)?'on':''}" data-t="sm">🏪 Supermercados</button><button class="tab ${cur==='pr'?'on':''}" data-t="pr">📦 Productos</button><button class="tab ${cur==='cmp'?'on':''}" data-t="cmp">⚖️ Comparar</button><button class="tab ${cur==='rc'?'on':''}" data-t="rc">🍳 Recetas</button><button class="tab ${cur==='pl'?'on':''}" data-t="pl">📅 Planning</button>`;
   try{const on=$('tabs').querySelector('.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'})}catch(e){}
   const xs=$('xc'),pv=xs.value;xs.innerHTML=catOpts(pv);if(xs.selectedIndex<0)xs.selectedIndex=0;
   $('quick').style.display=(cur==='list'||cur==='dp')?'flex':'none';$('xq').style.display=$('xu').style.display=cur==='dp'?'':'none';$('xn').placeholder=cur==='dp'?'Añadir a la despensa (arroz…)':'Añadir a la lista (plátanos…)';
   if(cur==='dp'){$('xn').setAttribute('list','dpl');$('dpl').innerHTML=S.products.map(p=>'<option value="'+esc(p.name)+'">').join('')}else $('xn').removeAttribute('list');
-  const fs=$('fc');fs.innerHTML='<option value="">Todas las categorías</option><option value="@fresh">🥬 Solo frescos</option><option value="@pack">📦 Solo envasados</option>'+S.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')+'<option value="-">Sin categoría</option>';
+  const fs=$('fc'),gl=(cur==='pr'||cur==='cmp'||inStore);
+  fs.innerHTML='<option value="">Todas las categorías</option>'+(gl?S.cats.filter(c=>catGrp(c.id)===GSEL).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''):GRP.slice(0,3).map(g=>{const cs=S.cats.filter(c=>catGrp(c.id)===g.id);return `<optgroup label="${g.ic} ${g.name}"><option value="@g:${g.id}">Todos: ${g.name.toLowerCase()}</option>${cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</optgroup>`}).join('')+'<option value="-">Sin categoría</option>');
   if(![...fs.options].some(o=>o.value===FC))FC='';fs.value=FC;
-  $('filt').style.display=(inStore||cur==='pr'||cur==='cmp'||cur==='rc'||cur==='dp')?'flex':'none';$('fc').style.display=cur==='rc'?'none':'';$('q').placeholder=cur==='rc'?'Buscar receta, etiqueta o ingrediente…':cur==='dp'?'Buscar en la despensa…':'Buscar producto o marca…';$('fab').textContent=cur==='rc'?'+ Receta':'+ Añadir';
+  $('filt').style.display=(inStore||cur==='pr'||cur==='cmp'||cur==='rc'||cur==='dp')?'flex':'none';$('fc').style.display=(cur==='rc'||(gl&&(!GSEL||GSEL==='none')))?'none':'';$('q').placeholder=cur==='rc'?'Buscar receta, etiqueta o ingrediente…':cur==='dp'?'Buscar en la despensa…':'Buscar producto o marca…';$('fab').textContent=cur==='rc'?'+ Receta':'+ Añadir';
   const m=$('main');
   if(cur==='list'){
     $('fab').style.display='';let any=false,dn=false,h='';
@@ -1089,7 +1099,8 @@ function render(){
   }
   if(cur==='cmp'){
     const l=S.products.filter(keep).map(p=>({p,pr:rank(prices(p))})).filter(x=>x.pr.length>=2);
-    m.innerHTML=l.length?groupHtml(l,x=>x.p.cat,({p,pr})=>{
+    if(l.length&&needGate()){m.innerHTML=gateHtml(l,x=>x.p.cat);$('fab').style.display='none';return}
+    m.innerHTML=l.length?grpBar()+groupHtml(l,x=>x.p.cat,({p,pr})=>{
       const k=useKg(pr),a=pr[0],z=pr[pr.length-1],sv=k?z.kg-a.kg:z.price-a.price;
       return `<div class="row cmp" data-p="${p.id}">${pr.some(y=>y.ph)?'':thumb(p)}<div class="info"><div class="nm">${esc(p.name)}</div>
       ${pr.map((x,i)=>`<div class="p ${i?'':'best'}"><span>${pr.some(y=>y.ph)&&(x.ph||p.photo)?`<img class="th3" src="${x.ph||p.photo}" alt="">`:''}${lbl(x)} ${bdg(x,p.name+(x.b?' · '+x.b:''))}</span><span>${eur(x.price)}${x.kg>0?' · '+eurkg(x.kg):''}</span></div>`).join('')}
@@ -1111,7 +1122,8 @@ function render(){
   if(cur==='pr'){
     $('fab').style.display='';
     const l=S.products.filter(keep);
-    m.innerHTML=l.length?groupHtml(l,p=>p.cat,p=>{
+    if(l.length&&needGate()){m.innerHTML=gateHtml(l,p=>p.cat);return}
+    m.innerHTML=l.length?grpBar()+groupHtml(l,p=>p.cat,p=>{
       const lines=[];S.stores.forEach(s=>{const e=p.e[s.id];if(!e)return;const o=opts(e);if(!o.length)lines.push({s,o:null});else o.forEach((x,i)=>lines.push({s,o:x,i}))});
       const anyPh=lines.length>1&&lines.some(z=>z.o&&z.o.ph);
       const img=z=>{const u=anyPh?((z.o&&z.o.ph)||p.photo):'';return u?`<img class="th2" src="${u}" alt="">`:''};
@@ -1126,7 +1138,8 @@ function render(){
   if(cur==='pl'){$('fab').style.display='none';m.innerHTML=planView();return}
   $('fab').style.display='';
   const l=S.products.filter(p=>p.e[cur]&&keep(p));
-  m.innerHTML=l.length?groupHtml(l,p=>p.cat,p=>{
+  if(l.length&&needGate()){m.innerHTML=gateHtml(l,p=>p.cat);return}
+  m.innerHTML=l.length?grpBar()+groupHtml(l,p=>p.cat,p=>{
     const e=p.e[cur],all=rank(prices(p)),mine=all.filter(x=>x.id===cur);let h2='';
     if(mine.length&&all.length>1){
       const k=useKg(all),val=x=>k?x.kg:x.price,me=mine[0],b=all[0];
@@ -1192,6 +1205,7 @@ $('fabs').onclick=()=>stores('');
 $('fscan').onclick=quickScan;
 $('q').oninput=()=>{Q=$('q').value;render()};
 $('fc').onchange=()=>{FC=$('fc').value;render()};
+document.addEventListener('click',e=>{const g=e.target.closest('[data-gs]');if(!g)return;GSEL=g.dataset.gs;FC='';render();window.scrollTo(0,0)});
 document.addEventListener('click',e=>{const bd=e.target.closest('.nsb[data-ns]');if(bd){e.stopPropagation();e.preventDefault();showDet(bd.dataset)}},true);
 $('det').onclick=e=>{if(e.target.id==='det')$('det').classList.remove('show')};
 $('upm').onclick=e=>{if(e.target.id==='upm')$('upm').classList.remove('show')};
@@ -1313,7 +1327,7 @@ function listToPantry(name,cat,pid){const it=pantryFor(name,pid);
 function askToPantry(name,cat,pid){const it=pantryFor(name,pid);if(it&&!it.out&&!isLow(it))return;
   askYN('¿Pasarlo a la despensa?',`Has tachado <b>${esc(name)}</b>. ¿Lo apunto en la despensa como que ya lo tienes en casa${it&&it.q0>0?' (con la cantidad completa)':''}?`,'Sí, a la despensa','No',()=>listToPantry(name,cat,pid))}
 const pkeep=x=>{const q=norm(Q.trim());if(q&&!norm(x.name).includes(q))return false;if(!FC)return true;
-  if(FC==='@fresh')return catKind(x)==='fresh';if(FC==='@pack')return catKind(x)!=='fresh';if(FC==='-')return !S.cats.some(c=>c.id===x.cat);return x.cat===FC};
+  if(FC.startsWith('@g:'))return catGrp(x.cat)===FC.slice(3);if(FC==='-')return !S.cats.some(c=>c.id===x.cat);return x.cat===FC};
 function editPantry(id){const it=S.pantry.find(x=>x.id===id);if(!it)return;
   const d=mdl(`<h2>${esc(it.name)}</h2>
   <label class="f">Nombre</label><input type="text" id="pen" value="${esc(it.name)}">
@@ -1503,7 +1517,7 @@ function stores(sec){
   let html='',wire=()=>{};
   if(!SEC){
     const tile=(k,ic,t,sub)=>`<button class="stile" data-set="${k}"><span class="sico">${ic}</span><b class="sn">${t}</b><span class="sub">${sub}</span></button>`;
-    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Categorías',S.cats.length+' de productos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('diet',DIETS[S.diet][0],'Tipo de menú',DIETS[S.diet][1])}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
+    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Grupos y categorías',S.cats.length+' categorías · 3 grupos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('diet',DIETS[S.diet][0],'Tipo de menú',DIETS[S.diet][1])}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
     wire=()=>document.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const k=b.dataset.set;if(k==='out'){if(confirm('¿Cerrar sesión?')){close();signOut(auth)}return}stores(k)});
   }else if(SEC==='stores'){
     html=back('🏪 Supermercados')+S.stores.map(s=>`<div class="sedit"><div class="srow"><input type="text" value="${esc(s.name)}" data-sn="${s.id}"><input type="color" value="${scol(s)}" data-sc="${s.id}"><button class="btn r" data-d="${s.id}">Quitar</button></div><div class="srow"><label class="btn g" style="flex:none">🖼️ ${s.logo?'Cambiar logo':'Añadir logo'}<input type="file" accept="image/*" hidden data-sl="${s.id}"></label>${s.logo?`<img class="slogo" src="${s.logo}" alt=""><button class="btn g" data-rl="${s.id}">Quitar logo</button>`:''}</div></div>`).join('')
@@ -1518,11 +1532,14 @@ function stores(sec){
         const id=b.dataset.d;putStores(S.stores.filter(x=>x.id!==id));
         S.products.forEach(p=>{if(!p.e[id])return;const q=JSON.parse(JSON.stringify(p));delete q.e[id];Object.keys(q.e).length?putP(q):delP(p.id)});stores()})};
   }else if(SEC==='cats'){
-    html=back('🏷️ Categorías de productos')+(S.cats.map(c=>`<div class="srow"><span>${esc(c.name)}</span><select data-ck="${c.id}" style="max-width:160px;flex:none">${Object.entries(KINDS).map(([k,l])=>`<option value="${k}" ${(c.kind||'')===k?'selected':''}>${k===''?'Auto ('+KINDS[inferKind(c.name)]+')':l}</option>`).join('')}</select><button class="btn r" data-dc="${c.id}">Quitar</button></div>`).join('')||'<div class="sub">No hay categorías.</div>')
-      +`<div class="sub" style="margin-top:8px">Tipo de análisis: <b>Queso</b> analiza los productos de esa categoría como queso; <b>Bebida</b> usa la escala de bebidas (zumos, refrescos); <b>Leche / bebida vegetal</b> las analiza como alimento, como hace Yuka; <b>Fresco</b> es para materia prima (sin código de barras ni nota) y se puede filtrar aparte. «Auto» lo deduce del nombre.</div><label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas…"><button class="btn" id="addc">Añadir</button></div>`;
+    const row=c=>`<div class="srow"><span style="flex:1;min-width:0">${esc(c.name)}</span><select data-cg="${c.id}" style="max-width:118px;flex:none">${GRP.slice(0,3).map(g=>`<option value="${g.id}" ${catGrp(c.id)===g.id?'selected':''}>${g.ic} ${g.name}</option>`).join('')}</select><button class="btn r" data-dc="${c.id}">Quitar</button></div>`;
+    html=back('🏷️ Grupos y categorías')+'<div class="sub" style="margin:4px 0 8px">Todo producto pertenece a una categoría y toda categoría a uno de los tres grupos. En Supermercados, Productos y Comparar eliges primero el grupo y dentro ves sus categorías. Puedes mover una categoría de grupo con el selector.</div>'
+      +GRP.slice(0,3).map(g=>{const cs=S.cats.filter(c=>catGrp(c.id)===g.id);return `<h3 class="gh" style="color:${g.col}">${g.ic} ${g.name} <span class="sub">${cs.length}</span></h3>`+(cs.map(row).join('')||'<div class="sub">Sin categorías en este grupo.</div>')}).join('')
+      +`<label class="f">Añadir categoría</label><div class="srow"><input type="text" id="nc" placeholder="Congelados, bebidas, limpieza…"><select id="ncg" style="max-width:130px;flex:none">${GRP.slice(0,3).map(g=>`<option value="${g.id}">${g.ic} ${g.name}</option>`).join('')}</select><button class="btn" id="addc">Añadir</button></div>
+      <div class="sub" style="margin-top:10px">Los productos de <b>Frescos</b> y <b>Hogar</b> se guardan sin código de barras ni nota nutricional. Los <b>Envasados</b> sí la calculan.</div>`;
     wire=()=>{
-      document.querySelectorAll('[data-ck]').forEach(sl=>sl.onchange=()=>{putCats(S.cats.map(c=>c.id===sl.dataset.ck?{...c,kind:sl.value}:c));stores()});
-      $('addc').onclick=()=>{const n=$('nc').value.trim();if(n){putCats([...S.cats,{id:'c'+Date.now(),name:n}]);stores()}};
+      document.querySelectorAll('[data-cg]').forEach(sl=>sl.onchange=()=>{putCats(S.cats.map(c=>c.id===sl.dataset.cg?{...c,grp:sl.value}:{...c,grp:catGrp(c.id)}));stores()});
+      $('addc').onclick=()=>{const n=$('nc').value.trim();if(n){putCats([...S.cats.map(c=>({...c,grp:catGrp(c.id)})),{id:'c'+Date.now(),name:n,grp:$('ncg').value}]);stores()}};
       document.querySelectorAll('[data-dc]').forEach(b=>b.onclick=()=>{if(!confirm('¿Quitar esta categoría? Sus productos pasarán a «Sin categoría».'))return;
         const id=b.dataset.dc;putCats(S.cats.filter(c=>c.id!==id));
         S.products.forEach(p=>{if(p.cat===id)putP({...p,cat:''})});
