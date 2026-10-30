@@ -201,6 +201,7 @@ function startAuth(){
       if(!TABS.includes(cur)&&!S.stores.find(x=>x.id===cur))cur=S.stores[0].id;render()},err));
     unsubs.push(onSnapshot(doc(db,'config','cats'),d=>{
       S.cats=(d.exists()&&Array.isArray(d.data().list))?d.data().list:DEFC;applyGn(d.exists()?d.data().gn:null);render()},err));
+    unsubs.push(onSnapshot(doc(db,'config','cosov'),d=>{if(d.exists()&&d.data()&&d.data().map){COSOV=d.data().map;COSCF=d.data().ok||{};try{localStorage.setItem('cosov',JSON.stringify(COSOV));localStorage.setItem('coscf',JSON.stringify(COSCF))}catch(e){}render()}},()=>{}));
     unsubs.push(onSnapshot(collection(db,'products'),q=>{S.products=q.docs.map(d=>migrate({id:d.id,...d.data()}));render()},err));
     unsubs.push(onSnapshot(collection(db,'additives'),q=>{ADDS={};q.docs.forEach(d=>{ADDS[d.id]=d.data()});render()},err));
     unsubs.push(onSnapshot(collection(db,'pantry'),q=>{S.pantry=q.docs.map(d=>({id:d.id,...d.data()}));render()},err));
@@ -253,7 +254,7 @@ const parts=x=>{const pp=x.np!=null?Math.round(x.np):repPts(x.ns,x.lq),qs=String
   const og=x.og?10:0;let t=nut+ap+og;const capped=hi&&t>49;if(hi)t=Math.min(t,49);return {nut,ap,og,capped,fl,t:Math.round(t)}};
 const scoreOf=x=>x.ci?cosScore(x.ci):(((x.np==null&&!x.ns)||x.ad==null)?null:parts(x).t);
 const scLbl=n=>n>=75?['ex','Excelente']:n>=50?['bu','Bueno']:n>=25?['me','Mediocre']:['ma','Malo'];
-const bdg=(x,t='')=>{const n=scoreOf(x);if(n===null)return'';let [c,tx]=scLbl(n),nn=n+'/100';if(x.ci){const a=cosAnalyze(x.ci);if(a){[c,tx]=scLbl(a.t20*5);nn=a.t20+'/20'}}return `<span class="nsb sc-${c}" data-ns="${x.ns||''}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-ad="${esc(x.ad||'')}" data-og="${x.og?1:0}" data-ci="${esc(x.ci||'')}" data-t="${esc(t)}" style="cursor:pointer">${tx} ${nn} ⓘ</span>`};
+const bdg=(x,t='')=>{const n=scoreOf(x);if(n===null)return'';let [c,tx]=scLbl(n),nn=n+'/100';let est=0;if(x.ci){const a=cosAnalyze(x.ci);if(a){[c,tx]=scLbl(a.t20*5);est=((a.est||a.prov||catGrp(x.cat)==='ho')&&!cosConfirmed(x.ci))?1:0;nn=(est?'≈':'')+fm20(a.t20)+'/20'}}return `<span class="nsb sc-${c}" data-est="${est}" data-hog="${catGrp(x.cat)==='ho'?1:0}" data-ns="${x.ns||''}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-ad="${esc(x.ad||'')}" data-og="${x.og?1:0}" data-ci="${esc(x.ci||'')}" data-t="${esc(t)}" style="cursor:pointer">${tx} ${nn} ⓘ</span>`};
 const det=x=>{const l=adList(x),hi=l.filter(c=>kOf(c)==='r'),mo=l.filter(c=>kOf(c)==='y'),U=a=>a.map(c=>c.toUpperCase()).join(', ');
   return [nsTxt(x),x.ad==null?'':(l.length?l.length+' aditivo'+(l.length>1?'s':'')+(hi.length?' (alto riesgo: '+U(hi)+')':mo.length?' (riesgo limitado: '+U(mo)+')':''):'Sin aditivos'),x.og?'Ecológico':''].filter(Boolean).join(' · ')};
 const NIT='Puede formar nitrosaminas, compuestos potencialmente cancerígenos; la IARC clasifica la carne procesada como cancerígena.';
@@ -1038,6 +1039,44 @@ function planView(){
 // ===== Cosmética e higiene (estilo INCI Beauty): análisis de la lista de ingredientes (INCI) =====
 // Clasificación PROPIA y orientativa de ingredientes: g = sin riesgo, y = riesgo bajo, o = moderado, r = alto, desconocido = sin clasificar.
 const COSR=[
+ // ---- Criterio propio para productos de limpieza (sin calibrar con INCI Beauty): se puede cambiar pulsando el ingrediente ----
+ [/decyl glucoside/,'g','Tensioactivo suave de origen vegetal.'],
+ [/formaldehyde|formaldehido|\bformol\b/,'r','Criterio propio: formaldehído, cancerígeno según la IARC.'],
+ [/triclosan|triclosano/,'r','Criterio propio: antibacteriano con sospecha de disrupción endocrina.'],
+ [/butylphenyl methylpropional|\blilial\b/,'r','Criterio propio: prohibido en cosmética en la UE por toxicidad para la reproducción.'],
+ [/methylchloroisothiazolinone|metilcloroisotiazolinona/,'r','Criterio propio: conservante muy sensibilizante.'],
+ [/isothiazolinone|isotiazolinona/,'o','Criterio propio: conservante sensibilizante frecuente en limpiadores.'],
+ [/quaternium-15|dmdm hydantoin|diazolidinyl urea|imidazolidinyl urea|bronopol|2-bromo-2-nitropropane/,'o','Criterio propio: conservante liberador de formaldehído.'],
+ [/benzalkonium|didecyldimonium|didecyldimethylammonium|alkyl dimethyl benzyl ammonium|benzalconio|quaternary ammonium|amonios? cuaternarios?|cationic surfactants?|tensioactivos? cationicos?|agentes de superficie cationicos/,'o','Criterio propio: amonio cuaternario (desinfectante), irritante y poco biodegradable.'],
+ [/sodium hypochlorite|hipoclorito|blanqueantes? clorados?|chlorine bleach/,'o','Criterio propio: lejía, irritante; peligrosa si se mezcla con ácidos o amoníaco.'],
+ [/\bammonia\b|amoniaco|ammonium hydroxide/,'o','Criterio propio: irritante de las vías respiratorias; peligroso si se mezcla con lejía.'],
+ [/hydrochloric acid|acido clorhidrico|salfuman|sulfuric acid|acido sulfurico/,'o','Criterio propio: ácido fuerte, corrosivo.'],
+ [/optical brighteners?|fluorescent brightener|blanqueantes? opticos?|distyrylbiphenyl|stilbene/,'o','Criterio propio: blanqueante óptico, poco biodegradable.'],
+ [/sodium perborate|perborato/,'o','Criterio propio: perborato (boro), con toxicidad para la reproducción.'],
+ [/hydrogen peroxide|peroxido de hidrogeno|sodium percarbonate|percarbonato|oxygen-?based bleach|blanqueantes? oxigenados?|oxygen bleach/,'y','Criterio propio: blanqueante oxigenado; irritante a concentraciones altas.'],
+ [/dodecylbenzene ?sulfonate|alkylbenzene ?sulfonate|alkyl benzene sulfonate|alquilbenceno ?sulfonato|anionic surfactants?|tensioactivos? anionicos?|agentes de superficie anionicos|surfactants? anioniques/,'o','Criterio propio: tensioactivo aniónico (potencial irritante, de origen petroquímico).'],
+ [/ethoxylated alcohols?|alcohols?,? ?c\d+[-–]?\d*,? ?ethoxylated|alcoholes etoxilados|alcohol ethoxylate|pareth|ceteareth/,'o','Criterio propio: compuesto etoxilado.'],
+ [/non-?ionic surfactants?|tensioactivos? no ionicos?|agentes de superficie no ionicos/,'y','Criterio propio: tensioactivo no iónico.'],
+ [/amphoteric surfactants?|tensioactivos? anfoteros?|agentes de superficie anfoteros|amine oxide|oxido de amina|lauramine oxide|cocamine oxide|myristamine oxide/,'y','Criterio propio: tensioactivo anfótero / óxido de amina, irritante leve.'],
+ [/glucoside|polyglucoside|glucosido|sodium cocoyl|cocoyl glutamate|cocoyl isethionate|lauroyl sarcosinate|\bsoap\b|\bjabon|sodium (palmate|cocoate|tallowate|olivate)/,'g','Criterio propio: tensioactivo suave de origen vegetal o jabón.'],
+ [/butoxyethanol|glycol ether|eter de glicol|propoxypropanol|methoxypropanol/,'o','Criterio propio: disolvente tipo glicol éter.'],
+ [/xylenesulfonate|cumenesulfonate|xylene sulfonate|cumene sulfonate/,'y','Criterio propio: hidrótropo, irritante leve.'],
+ [/phosphonates?|fosfonatos?|etidronic|\bhedp\b|aminotris|\bdtpmp\b|\batmp\b|polycarboxylates?|policarboxilatos?|sodium polyacrylate|tripolyphosphate|fosfatos?\b/,'y','Criterio propio: secuestrante o antical; poco biodegradable o con efecto eutrofizante.'],
+ [/\benzymes?\b|enzimas?|proteasa|protease|amylase|amilasa|lipase|lipasa|cellulase|celulasa|mannanase|subtilisin|savinase/,'y','Criterio propio: enzimas; pueden sensibilizar las vías respiratorias.'],
+ [/\bzeolites?\b|zeolitas?|sodium carbonate|carbonato (de )?sodico|carbonato de sodio|sodium bicarbonate|bicarbonato|sodium sulfate|sulfato de sodio|sodium gluconate|glda|tetrasodium glutamate diacetate|polyaspart/,'g','Criterio propio: ingrediente de bajo riesgo en limpieza.'],
+ [/mgda|methylglycinediacetate|sodium silicate|silicato de sodio|sodium hydroxide|potassium hydroxide|hidroxido (de )?(sodio|potasio)/,'y','Criterio propio: alcalino o secuestrante, irritante en concentración.'],
+ [/limoneno|linalol|citronelol|geraniol|\bcitral\b|cumarina|eugenol|cinamal|salicilato de bencilo|alcohol bencilico/,'y','Alérgeno de fragancia de declaración obligatoria en la UE.'],
+ [/preservation agents?|agentes? conservantes?|\bconservantes?\b|\bpreservatives?\b/,'y','Criterio propio: conservante sin especificar.'],
+ [/disinfectants?|desinfectantes?/,'o','Criterio propio: desinfectante, biocida.'],
+ [/^eau$|\beau\b/,'g','Agua.'],
+ [/hexamethylindanopyran|galaxolide/,'r','Almizcle policíclico: sospecha de disruptor endocrino (ECHA).'],
+ [/isododecane|isododecano|siloxysilicate|chlorphenesin|clorfenesina/,'o','Derivado de la petroquímica o de síntesis (silicona, hidrocarburo, conservante).'],
+ [/rosa damascena|zinc chloride|cloruro de zinc|eucalyptus globulus|\bmenthol\b|\bmentol\b|anethole|\banetol\b|\bpinene\b|\bcarvone\b|pyrophosphate|olefin sulfonate|o-cymen-5-ol|trimethylbenzenepropanol|\btalc\b|\btalco\b/,'y','Ingrediente regulado, alergénico o de riesgo leve.'],
+ [/olaflur|gluconolactone|gluconate|gellan/,'g','Ingrediente sin riesgo conocido.'],
+ [/styrene\/acrylates|acrylates copolymer|carbomer|acrylates crosspolymer/,'o','Polímero sintético: poco biodegradable.'],
+ [/sodium benzoate|benzoato|potassium sorbate|calcium sorbate|sodium sorbate|sorbato|benzoic acid|sorbic acid|acido benzoico|acido sorbico/,'y','Conservante regulado en Europa.'],
+ [/acetone|acetona|glycol stearate|glycol distearate/,'y','Disolvente o derivado de glicol (riesgo leve).'],
+ [/hydrogenated starch hydrolysate|saccharin|sacarina|isopropyl (myristate|palmitate)|(cetyl|stearyl|oleyl|myristyl) acetate/,'g','Ingrediente sin riesgo conocido.'],
  [/methylisothiazolinone|methylchloroisothiazolinone|metilisotiazolinona|metilcloroisotiazolinona|\bmit\b|\bmci\b|chloromethylisothiazolinone/,'r','Conservante muy alergénico (dermatitis de contacto). La UE lo prohíbe en productos sin aclarado.'],
  [/triclosan|triclocarban/,'r','Antibacteriano sospechoso de alterar el sistema hormonal y de generar resistencias.'],
  [/\bformaldehyde\b|formaldehido|paraformaldehyde/,'r','Libera formaldehído: irritante y clasificado como cancerígeno.'],
@@ -1054,8 +1093,8 @@ const COSR=[
  [/lead acetate|acetato de plomo/,'r','Compuesto de plomo: tóxico.'],
  [/dmdm hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea|bronopol|2-bromo-2-nitropropane|hydroxymethylglycinate/,'o','Conservante liberador de formaldehído (alergénico e irritante).'],
  [/oxybenzone|benzophenone-?3\b|oxibenzona/,'o','Filtro UV con posible efecto hormonal, dañino para los arrecifes.'],
- [/\bparfum\b|fragrance|fragancia|perfume/,'o','Mezcla de fragancias sin detallar: primera causa de alergias cosméticas.'],
- [/\blimonene\b|\blinalool\b|citronellol|geraniol|\bcoumarin\b|\beugenol\b|isoeugenol|hexyl cinnamal|benzyl salicylate|benzyl benzoate|benzyl cinnamate|\bcitral\b|farnesol|cinnamal|cinnamyl alcohol|amyl cinnamal|isomethyl ionone|hydroxycitronellal|hydroxyisohexyl 3-cyclohexene carboxaldehyde|\blyral\b|evernia/,'o','Alérgeno de fragancia de declaración obligatoria en la UE.'],
+ [/\bparfum\b|fragrance|fragancia|perfume/,'y','Mezcla de fragancias sin detallar: primera causa de alergias cosméticas.'],
+ [/\blimonene\b|\blinalool\b|citronellol|geraniol|\bcoumarin\b|\beugenol\b|isoeugenol|hexyl cinnamal|benzyl salicylate|benzyl benzoate|benzyl cinnamate|\bcitral\b|farnesol|cinnamal|cinnamyl alcohol|amyl cinnamal|isomethyl ionone|hydroxycitronellal|hydroxyisohexyl 3-cyclohexene carboxaldehyde|\blyral\b|evernia|cinnamomum zeylanicum/,'y','Alérgeno de fragancia de declaración obligatoria en la UE.'],
  [/sodium lauryl sulfate|sodium laurylsulfate|laurilsulfato|\bsls\b/,'o','Tensioactivo irritante para piel y mucosas.'],
  [/mineral oil|paraffinum liquidum|petrolatum|vaseline|\bparaffin\b|ozokerite|microcrystalline wax|vaselina/,'o','Derivado del petróleo: oclusivo, con posible contaminación con hidrocarburos aromáticos.'],
  [/\bpolyethylene\b(?! glycol)|polypropylene|\bnylon-?\d*|polymethyl methacrylate|\bpmma\b|polytetrafluoroethylene|\bptfe\b|polyurethane|polystyrene|acrylates copolymer(?! crosspolymer)? ?beads/,'o','Microplástico sintético: contamina el agua y no se biodegrada.'],
@@ -1065,27 +1104,27 @@ const COSR=[
  [/diethanolamine|\bdea\b|cocamide dea|lauramide dea|cocamide mea|\bmea\b|ethanolamine/,'o','Etanolamina: puede formar nitrosaminas (cancerígenas) en el producto.'],
  [/chlorhexidine|clorhexidina/,'o','Antiséptico potente: puede alterar la flora oral y dar alergia.'],
  [/sodium hypochlorite|hipoclorito/,'o','Lejía: corrosiva e irritante para piel y vías respiratorias.'],
- [/\bpeg-?\d+|polyethylene glycol|\bppg-?\d+|peg\/ppg/,'y','Derivado etoxilado: puede contener trazas de impurezas (1,4-dioxano).'],
- [/phenoxyethanol|fenoxietanol/,'y','Conservante irritante a altas dosis; limitado al 1 % en la UE.'],
- [/ethylparaben|methylparaben|metilparaben|etilparaben/,'y','Parabeno de cadena corta: de bajo riesgo, pero con debate hormonal.'],
- [/laureth sulfate|ammonium lauryl sulfate|\bsles\b/,'y','Tensioactivo que puede resecar e irritar; derivado etoxilado.'],
- [/dimethicone|dimeticona|siloxane|silicone|amodimethicone|cyclomethicone|trimethicone|dimethiconol/,'y','Silicona: no biodegradable; forma película en piel y cabello.'],
+ [/\bpeg-?\d+|polyethylene glycol|\bppg-?\d+|peg\/ppg|(laureth|ceteth|steareth|oleth|trideceth|ceteareth|deceth|pareth)-?\d+/,'o','Derivado etoxilado: puede contener trazas de impurezas (1,4-dioxano).'],
+ [/phenoxyethanol|fenoxietanol/,'o','Conservante irritante a altas dosis; limitado al 1 % en la UE.'],
+ [/ethylparaben|methylparaben|metilparaben|etilparaben/,'r','Parabeno: sospecha de disruptor endocrino (CoRAP y ECHA).'],
+ [/laureth sulfate|lauryl sulfate|coco-?sulfate|myristyl sulfate|\bsles\b|\bsls\b/,'o','Tensioactivo que puede resecar e irritar; derivado etoxilado.'],
+ [/dimethicone|dimeticona|siloxane|silicone|amodimethicone|cyclomethicone|trimethicone|dimethiconol/,'o','Silicona: no biodegradable; forma película en piel y cabello.'],
  [/propylene glycol|propilenglicol/,'y','Humectante que puede irritar o sensibilizar la piel.'],
  [/cetyl alcohol|cetearyl alcohol|stearyl alcohol|behenyl alcohol|alcohol cetilico|alcohol estearilico|myristyl alcohol|lauryl alcohol|alcohol de cera/,'g','Alcohol graso: suaviza e hidrata la piel.'],
  [/benzyl alcohol|alcohol bencilico/,'y','Conservante y alérgeno de declaración obligatoria.'],
  [/^alcohol( denat\.?)?$|alcohol denat|denatured alcohol|ethanol|isopropyl alcohol|sd alcohol|\balcohol\b/,'y','Alcohol: reseca e irrita en pieles sensibles.'],
  [/\bbht\b|butylated hydroxytoluene/,'y','Antioxidante con posible acumulación y efecto hormonal leve.'],
  [/\btalc\b|talco/,'y','Mineral que puede contener trazas de amianto si no está purificado.'],
- [/triethanolamine|trietanolamina|\btea\b/,'y','Regulador de pH: puede formar nitrosaminas con otros ingredientes.'],
+ [/triethanolamine|trietanolamina|\btea\b/,'o','Regulador de pH: puede formar nitrosaminas con otros ingredientes.'],
  [/cocamidopropyl|coco-betaine/,'y','Tensioactivo suave pero con riesgo de alergia de contacto.'],
  [/titanium dioxide|ci ?77891|dioxido de titanio/,'y','Pigmento o filtro mineral; la forma nano o inhalada es motivo de precaución.'],
  [/retinyl palmitate|retinol\b|retinyl/,'y','Vitamina A: precaución en embarazo y con exposición solar.'],
  [/avobenzone|butyl methoxydibenzoylmethane|ethylhexyl salicylate|ethylhexyl triazone|bemotrizinol|bis-ethylhexyloxyphenol|diethylamino hydroxybenzoyl hexyl benzoate|\buvinul\b/,'y','Filtro solar químico: se absorbe en parte por la piel.'],
- [/aluminum|aluminium|aluminio/,'y','Sal de aluminio (antitranspirantes): debate sobre su acumulación.'],
+ [/potassium alum|ammonium alum|\balum\b|aluminum|aluminium|aluminio/,'o','Sal de aluminio: debate sobre su acumulación y origen mineral.'],
  [/salicylic acid|acido salicilico/,'y','Exfoliante: irritante a dosis altas y no recomendado en embarazo.'],
  [/butane|isobutane|propane|propelente|\bhfc\b|dimethyl ether/,'y','Gas propelente de aerosol: inflamable y contaminante.'],
  [/cetrimonium|behentrimonium chloride|stearalkonium|quaternium-(?!15)\d+|distearyldimonium|dicetyldimonium/,'y','Tensioactivo catiónico: puede irritar y es tóxico para el medio acuático.'],
- [/\bedta\b|disodium edta|tetrasodium edta/,'y','Quelante persistente: no se degrada bien en el agua.'],
+ [/\bedta\b|disodium edta|tetrasodium edta/,'o','Quelante persistente: no se degrada bien en el agua.'],
  [/alkylbenzene|dodecylbenzene|\blabsa\b/,'y','Tensioactivo aniónico irritante, poco biodegradable.'],
  [/phosphonate|polyphosphate|triphosphate|fosfonato|fosfato/,'y','Fosfato/fosfonato: contribuye a la eutrofización del agua.'],
  [/optical brightener|stilbene|brillantador/,'y','Blanqueante óptico: persistente en el agua.'],
@@ -1095,7 +1134,7 @@ const COSR=[
  [/methyl salicylate|salicilato de metilo/,'y','Puede irritar y no se recomienda en niños.'],
  [/\baroma\b|\bflavor\b|\bflavour\b|saborizante/,'y','Aroma/sabor sin detallar su composición.'],
  [/ci ?\d{5}|colorant|colorante/,'y','Colorante: aporta color pero ningún beneficio al producto.'],
- [/sodium fluoride|fluoruro|monofluorophosphate|stannous fluoride|amine fluoride|olaflur/,'g','Flúor: protege frente a las caries.'],
+ [/sodium fluoride|fluoruro|monofluorophosphate|stannous fluoride|amine fluoride|olaflur/,'y','Flúor: ingrediente regulado en Europa (protege frente a las caries).'],
  [/^(aqua|water|agua|eau)$|^aqua\b|\baqua\/water|\(water\)|^water\b/,'g','Agua: disolvente base.'],
  [/glycerin|glicerina|glycerol/,'g','Humectante suave.'],
  [/aloe barbadensis|aloe vera/,'g','Calmante e hidratante natural.'],
@@ -1109,7 +1148,7 @@ const COSR=[
  [/sodium chloride|cloruro de sodio|sorbitol|xylitol|xilitol|mannitol|maltitol|stevia/,'g','Ingrediente sin riesgo conocido.'],
  [/hydrated silica|silica|calcium carbonate|carbonato calcico|\bzinc\b|zinc oxide|mica|kaolin|caolin|bentonite|calcium|magnesium/,'g','Mineral inocuo (abrasivo o pigmento suave).'],
  [/stearic acid|glyceryl (stearate|caprylate|oleate|laurate|cocoate)|lecithin|lecitina|cera alba|beeswax|carnauba|candelilla|jojoba|simmondsia|butyrospermum|shea|cocos nucifera|coconut|helianthus|olea europaea|prunus|argania|ricinus|caprylic|capric|coco-glucoside|decyl glucoside|lauryl glucoside|caprylyl\/capryl glucoside|sodium cocoyl|glycine|bicarbonate|sodium bicarbonate|bicarbonato|sodium carbonate|sodium cocoate|sodium palmate|sodium olivate|sodium laurate/,'g','Ingrediente suave de origen natural.'],
- [/benzoate|benzoato|sorbate|sorbato|caprylyl glycol|chlorphenesin|ethylhexylglycerin|butylene glycol|pentylene glycol|propanediol/,'g','Conservante o humectante de bajo riesgo.'],
+ [/caprylyl glycol|chlorphenesin|ethylhexylglycerin|butylene glycol|pentylene glycol|propanediol/,'g','Conservante o humectante de bajo riesgo.'],
  [/extract|extracto|\bleaf\b|\bflower\b|\bseed\b|\broot\b|\boil\b|\baceite\b|\bbutter\b|manteca|\bfruit\b/,'g','Ingrediente de origen vegetal.']
 ];
 const COSN={g:'Sin riesgo',y:'Riesgo bajo',o:'Riesgo moderado',r:'Riesgo alto',u:'Sin clasificar'};
@@ -1121,9 +1160,33 @@ function cosParse(t){
   if(cur.trim())out.push(cur.trim());
   return out.map(x=>x.replace(/[*†]+/g,'').replace(/\.$/,'').trim()).filter(x=>x&&x.length>1&&x.length<80);
 }
+let COSOV={};try{COSOV=JSON.parse(localStorage.getItem('cosov')||'{}')||{}}catch(e){COSOV={}}
+let COSCF={};try{COSCF=JSON.parse(localStorage.getItem('coscf')||'{}')||{}}catch(e){COSCF={}}
+let COSREFRESH=null;
+function cosHash(ci){const t=norm(ci||'').replace(/\s+/g,' ').trim();let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return 'h'+(h>>>0).toString(36)+'_'+t.length}
+function cosConfirmed(ci){return !!COSCF[cosHash(ci)]}
+function cosIsEst(a,hog,ci){return !!a&&!cosConfirmed(ci)&&!!(a.est||a.prov||hog)}
+function cosConfirm(h,v){if(v)COSCF[h]=1;else delete COSCF[h];cosSaveOv();try{render()}catch(e){}if(COSREFRESH){try{COSREFRESH()}catch(e){}}}
+function cosKey(name){const raw=norm(name).replace(/\d+([.,]\d+)?\s*%/g,'').replace(/\s+/g,' ').trim();return raw.replace(/\(.*?\)/g,' ').replace(/\s+/g,' ').trim()||raw}
+function cosSaveOv(){
+  try{localStorage.setItem('cosov',JSON.stringify(COSOV));localStorage.setItem('coscf',JSON.stringify(COSCF))}catch(e){}
+  try{if(typeof db!=='undefined'&&db)setDoc(doc(db,'config','cosov'),{map:COSOV,ok:COSCF}).catch(()=>{})}catch(e){}}
+function cosSetOv(name,k){const key=cosKey(name);if(k)COSOV[key]={k,n:name};else delete COSOV[key];cosSaveOv();
+  try{render()}catch(e){}if(COSREFRESH){try{COSREFRESH()}catch(e){}}}
+function cosPick(name){
+  const key=cosKey(name),cur=cosClass(name),has=!!COSOV[key];
+  const opt=(k,t)=>`<button class="btn ${has&&cur.k===k?'':'g'}" data-k="${k}" style="display:flex;align-items:center;gap:8px;width:100%;margin:4px 0;justify-content:flex-start">${cdot(k)} ${t}</button>`;
+  const d=mdl(`<h2>${esc(name)}</h2><div class="sub">Ahora: ${cdot(cur.k)} ${COSN[cur.k]}${has?' (tu criterio)':''}. Elige cómo quieres clasificarlo. La nota se recalcula y el cambio vale para todos los productos.</div>
+    <div style="margin-top:8px">${opt('g','Sin riesgo (verde)')}${opt('y','Riesgo bajo (amarillo)')}${opt('o','Riesgo moderado (naranja)')}${opt('r','Riesgo alto (rojo)')}${opt('u','Sin clasificar (no resta)')}</div>
+    ${has?'<button class="btn r" data-k="" style="width:100%;margin:4px 0">Volver al criterio de la app</button>':''}
+    <div class="acts"><span></span><button class="btn g" id="cpx">Cancelar</button></div>`,60);
+  d.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{d.remove();cosSetOv(name,b.dataset.k)});
+  d.querySelector('#cpx').onclick=()=>d.remove()}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-cf]');if(c){e.stopPropagation();cosConfirm(c.dataset.cf,c.dataset.v==='1');return}const r=e.target.closest('[data-cos]');if(r){e.stopPropagation();cosPick(r.dataset.cos)}});
 function cosClass(name){
   const raw=norm(name).replace(/\d+([.,]\d+)?\s*%/g,'').replace(/\s+/g,' ').trim();
   const base=raw.replace(/\(.*?\)/g,' ').replace(/\s+/g,' ').trim()||raw;
+  const ov=COSOV[base]||COSOV[raw];if(ov)return {k:ov.k,why:'Tu criterio (pulsa el ingrediente para cambiarlo).',mine:1};
   // el nombre alternativo entre paréntesis ("Aqua (Water)", "Parfum (Fragrance)") también cuenta
   for(const f of COSR){if(f[0].test(base)||f[0].test(raw))return {k:f[1],why:f[2]}}
   return {k:'u',why:'Sin clasificar en la app: no hay una valoración de riesgo para este ingrediente.'}}
@@ -1131,29 +1194,47 @@ function cosAnalyze(text){
   const items=cosParse(text).map(n=>({n,...cosClass(n)}));
   if(items.length<2)return null;
   const c={g:0,y:0,o:0,r:0,u:0};items.forEach(i=>c[i.k]++);
-  let pen=Math.min(c.r*22,70)+Math.min(c.o*8,40)+Math.min(c.y*2.5,20);
-  let t=Math.max(0,Math.round(100-pen));const capped=c.r>0&&t>49;if(c.r)t=Math.min(t,49);
-  let t20=Math.round(t/5);if(c.r)t20=Math.min(t20,9);
-  return {t,t20,c,items,capped,n:items.length}}
+  // Escala de 20 puntos ajustada a notas reales de INCI Beauty (4 productos): amarillo resta ≈0,4 cada uno, naranja ≈3,6 el primero y cada nuevo naranja resta menos, y rojo ≈5,3 el primero con rendimiento decreciente. Ajustado a 10 productos.
+  const pen=0.38*Math.pow(c.y,0.95)+3.65*Math.pow(c.o,0.44)+5.3*Math.pow(c.r,0.66);
+  const t20=Math.round(Math.max(0,20-pen)*10)/10,t=Math.round(t20*5),capped=false;
+  return {t,t20,c,items,capped,n:items.length,prov:items.length>=3&&c.u/items.length>=0.4,est:items.some(i=>/^Criterio propio/.test(i.why||'')),nest:items.filter(i=>/^Criterio propio/.test(i.why||'')).length}}
+function fm20(n){return String(n).replace('.',',')}
 const cosScore=text=>{const a=cosAnalyze(text);return a?a.t:null};
 const cdot=k=>`<i class="dt dt-${k==='u'?'n':k}"></i>`;
 function cosBlock(text,open){const a=cosAnalyze(text);if(!a)return '<div class="sub">No hay una lista de ingredientes suficiente para calcular la nota.</div>';
   const ord={r:0,o:1,y:2,u:3,g:4},l=[...a.items].sort((x,y)=>ord[x.k]-ord[y.k]);
   return `<div class="sub" style="margin:10px 0">${['r','o','y','g','u'].map(k=>`${cdot(k)}${a.c[k]} ${COSN[k].toLowerCase()}`).join(' &nbsp; ')}${a.capped?'<br>La nota se limita a 9/20 por contener un ingrediente de riesgo alto.':''}</div>
-  ${l.map(i=>`<div class="adr" style="${i.k==='g'||i.k==='u'?'':'font-weight:500'}">${cdot(i.k)}<b>${esc(i.n)}</b> <span class="sub">· ${COSN[i.k]}</span><div class="sub">${esc(i.why)}</div></div>`).join('')}`}
+  <div class="sub" style="margin-bottom:4px">Pulsa un ingrediente para cambiar su color.</div>
+  ${l.map(i=>`<div class="adr" data-cos="${esc(i.n)}" style="cursor:pointer;${i.k==='g'||i.k==='u'?'':'font-weight:500'}">${cdot(i.k)}<b>${esc(i.n)}</b> <span class="sub">· ${COSN[i.k]}${i.mine?' · tu criterio':''} ✎</span><div class="sub">${esc(i.why)}</div></div>`).join('')}`}
+function cosEstNote(a,hogar,ci){
+  if(!a||!(a.est||a.prov||hogar))return '';
+  const h=cosHash(ci);
+  if(cosConfirmed(ci))return `<div class="sub" style="margin-top:6px">✔ <b>Nota confirmada por ti</b>. <button class="btn g" data-cf="${h}" data-v="0" style="padding:2px 8px;font-size:12px">Quitar confirmación</button></div>`;
+  const why=[];
+  if(a.est)why.push(a.nest+' ingrediente'+(a.nest===1?'':'s')+' con criterio propio de la app');
+  if(a.prov)why.push('más de un 40 % de los ingredientes sin clasificar');
+  if(hogar&&!why.length)why.push('producto del hogar');
+  return `<div class="sub" style="margin-top:6px"><b>≈ Estimación con criterio propio</b>: ${why.join(' y ')}. La nota no está comprobada con una nota real de INCI Beauty y puede ser menos fiable. Revisa los ingredientes (pulsa uno para cambiar su color) y, cuando estés de acuerdo, confírmala para quitar el ≈.<div style="margin-top:6px"><button class="btn" data-cf="${h}" data-v="1">✔ Confirmar que está bien</button></div></div>`}
 function showCos(ds){
+  COSREFRESH=()=>showCos(ds);
   const a=cosAnalyze(ds.ci||''),[cl,tx]=a?scLbl(a.t20*5):['me','—'];
   $('detsheet').innerHTML=`<h2>${esc(ds.t||'Producto')}</h2>
-  ${a?`<div><span class="nsb sc-${cl}" style="font-size:15px;padding:3px 10px">${tx} ${a.t20}/20</span></div><div class="sub" style="margin-top:6px">${a.n} ingredientes analizados</div>`:''}
+  ${a?`<div><span class="nsb sc-${cl}" style="font-size:15px;padding:3px 10px">${tx} ${cosIsEst(a,ds.hog==='1',ds.ci)?'≈':''}${fm20(a.t20)}/20</span></div><div class="sub" style="margin-top:6px">${a.n} ingredientes analizados</div>${cosEstNote(a,ds.hog==='1',ds.ci)}`:''}
   ${cosBlock(ds.ci||'')}
-  <details style="margin-top:12px"><summary>Cómo se calcula</summary><div class="sub" style="margin-top:6px">La nota va sobre 20 puntos, como en INCI Beauty. Se parte de 20 y se resta según el riesgo de cada ingrediente de la lista (alto, moderado o bajo). Si hay alguno de riesgo alto, la nota no pasa de 9. Los ingredientes que la app no conoce no restan. Es una clasificación propia y orientativa, basada en lo que indican organismos como el SCCS europeo y la ECHA; <b>no es la nota oficial de INCI Beauty</b> (solo usa su misma escala de 20) ni sustituye el consejo de un dermatólogo.</div></details>
+  <details style="margin-top:12px"><summary>Cómo se calcula</summary><div class="sub" style="margin-top:6px">La nota va sobre 20 puntos, como en INCI Beauty. Se parte de 20 y se resta según el color de cada ingrediente: amarillo (regulado o alergénico) resta poco, naranja (etoxilados, siliconas, sales de aluminio, fenoxietanol, EDTA…) resta bastante y rojo (parabenos, disruptores endocrinos…) resta más todavía. Los ingredientes que la app no conoce no restan. Puedes cambiar el color de cualquier ingrediente pulsándolo, y revisar tus cambios en Ajustes → Criterio de ingredientes. La clasificación y los pesos se han ajustado a varias notas reales de INCI Beauty, pero es una aproximación: <b>no es la nota oficial de INCI Beauty</b> ni sustituye el consejo de un dermatólogo.</div></details>
   <div class="acts"><span></span><button class="btn" id="detx">Cerrar</button></div>`;
   $('det').classList.add('show');$('detx').onclick=()=>$('det').classList.remove('show')}
 async function lookupCos(code){
-  const r=await fetch(`https://world.openbeautyfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,quantity,image_front_small_url`);
-  const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product;
-  const ci=(p.ingredients_text_es||p.ingredients_text||p.ingredients_text_en||p.ingredients_text_fr||'').trim();
-  return {cos:true,name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ci,qty:qtyG(p.quantity),img:p.image_front_small_url||''}}
+  const F='fields=product_name,brands,ingredients_text,ingredients_text_es,ingredients_text_en,ingredients_text_fr,quantity,image_front_small_url';
+  const tryDb=async(host,src)=>{
+    const r=await fetch(`https://world.${host}.org/api/v2/product/${encodeURIComponent(code)}.json?${F}`);
+    const d=await r.json();if(d.status!==1||!d.product)return null;const p=d.product;
+    const ci=(p.ingredients_text_es||p.ingredients_text||p.ingredients_text_en||p.ingredients_text_fr||'').trim();
+    return {cos:true,src,name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ci,qty:qtyG(p.quantity),img:p.image_front_small_url||''}};
+  let d=null;
+  try{d=await tryDb('openbeautyfacts','🧴 Cosmética (Open Beauty Facts)')}catch(e){}
+  if(!d){try{d=await tryDb('openproductsfacts','🧽 Hogar (Open Products Facts)')}catch(e){}}
+  return d}
 function openCosManual(row){
   const d=mdl(`<h2>✍️ Ingredientes (INCI)</h2><div class="sub">Pega la lista de ingredientes del envase (empieza por «Aqua…», «Water…» o «Ingredients:»), o haz una foto de la etiqueta para leerla.</div>
   <textarea id="cmt" placeholder="Aqua, Glycerin, Sodium Laureth Sulfate, Parfum…" style="min-height:120px;margin-top:8px">${esc(row.dataset.ci||'')}</textarea>
@@ -1389,16 +1470,16 @@ function findByBc(c){let r=null;S.products.forEach(p=>Object.entries(p.e).forEac
 async function quickScan(){
   const raw=await scanCode();if(!raw)return;const code=String(raw).replace(/\D/g,'');
   if(code.length<8){alert('No he podido leer bien el código. Prueba otra vez.');return}
-  const dlg=mdl('<div class="sub">Buscando en Open Food Facts y Open Beauty Facts…</div>',11),box=dlg.querySelector('.sheet');
+  const dlg=mdl('<div class="sub">Buscando en Open Food Facts, Open Beauty Facts y Open Products Facts…</div>',11),box=dlg.querySelector('.sheet');
   const found=findByBc(code);let d=null,kind='';
   const run=async()=>{try{d=await lookup(code,{cheese:kind==='cheese',bev:kind==='bev',milk:kind==='milk',name:''})}catch(e){d=null}
     if(!d){try{d=await lookupCos(code)}catch(e){d=null}}};
   const draw=()=>{
-    if(d&&d.cos){const ca=d.ci?cosAnalyze(d.ci):null,sc=ca?ca.t20:null,cl=sc!=null?scLbl(sc*5)[0]:'',tx=sc!=null?scLbl(sc*5)[1]:'';
+    if(d&&d.cos){COSREFRESH=draw;const ca=d.ci?cosAnalyze(d.ci):null,sc=ca?ca.t20:null,cl=sc!=null?scLbl(sc*5)[0]:'',tx=sc!=null?scLbl(sc*5)[1]:'';
       box.innerHTML=`<h2>Resultado del escaneo</h2>
-      <div class="row" style="margin:0 0 8px">${thumb({photo:d.img||''})}<div class="info"><div class="nm">${esc(d.name||'Producto sin nombre')}</div><div class="sub">${d.brand?esc(d.brand)+' · ':''}Código ${esc(code)} · 🧴 Cosmética (Open Beauty Facts)</div></div></div>
+      <div class="row" style="margin:0 0 8px">${thumb({photo:d.img||''})}<div class="info"><div class="nm">${esc(d.name||'Producto sin nombre')}</div><div class="sub">${d.brand?esc(d.brand)+' · ':''}Código ${esc(code)} · ${esc(d.src||'🧴 Cosmética (Open Beauty Facts)')}</div></div></div>
       ${found?`<div class="sub" style="margin-bottom:8px">Ya lo tienes en la app: <b>${esc(found.p.name)}</b>.</div>`:''}
-      ${sc!=null?`<div style="text-align:center;margin:8px 0 4px"><span class="nsb sc-${cl}" style="font-size:24px;padding:8px 20px;border-radius:14px">${tx} ${sc}/20</span></div>${cosBlock(d.ci)}`:'<div class="sub" style="margin:8px 0">Open Beauty Facts no tiene la lista de ingredientes de este producto. Puedes agregarlo y pegarla o leerla de una foto con «✍️ Ingredientes».</div>'}
+      ${sc!=null?`<div style="text-align:center;margin:8px 0 4px"><span class="nsb sc-${cl}" style="font-size:24px;padding:8px 20px;border-radius:14px">${tx} ${ca&&cosIsEst(ca,/Hogar/.test(d.src||''),d.ci)?'≈':''}${fm20(sc)}/20</span></div>${ca?cosEstNote(ca,/Hogar/.test(d.src||''),d.ci):''}${cosBlock(d.ci)}`:'<div class="sub" style="margin:8px 0">Open Beauty Facts no tiene la lista de ingredientes de este producto. Puedes agregarlo y pegarla o leerla de una foto con «✍️ Ingredientes».</div>'}
       <div class="sub" style="margin-top:10px">Clasificación propia y orientativa, no es la de INCI Beauty.</div>
       <div class="acts"><button class="btn g" id="qcl">Cerrar</button>${found?'<button class="btn" id="qop">Abrir el producto</button>':'<button class="btn" id="qad">➕ Agregar</button>'}</div>`;
       $('qcl').onclick=()=>dlg.remove();if(found)$('qop').onclick=()=>{dlg.remove();openP(found.p.id)};else $('qad').onclick=()=>{dlg.remove();pickStore(sid=>openScanned(d,code,sid))};return}
@@ -1644,10 +1725,10 @@ function drawForm(){
     try{const ho=catKind({cat:$('cat').value})==='hogar';let d=null;
       if(ho){try{d=await lookupCos(code)}catch(e){}if(!d)d=await lookup(code,kindFlags())}
       else{d=await lookup(code,kindFlags());if(!d){try{d=await lookupCos(code)}catch(e){}}}
-      if(!d){clr();st.textContent='No encontrado en Open Food Facts ni en Open Beauty Facts';return}
+      if(!d){clr();st.textContent='No encontrado en Open Food Facts, Open Beauty Facts ni Open Products Facts';return}
       if(d.cos){row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.dataset.mn='';row.dataset.ci=d.ci||'';
         const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
-        st.innerHTML=(d.ci?bdg({ci:d.ci},tt):'<span class="sub">Sin lista de ingredientes en Open Beauty Facts: pulsa «✍️ Ingredientes» para pegarla o leerla de una foto.</span>')+(d.name?' <span>'+esc(d.name)+'</span>':'');
+        st.innerHTML=(d.ci?bdg({ci:d.ci},tt):'<span class="sub">Sin lista de ingredientes en la base de datos: pulsa «✍️ Ingredientes» para pegarla o leerla de una foto.</span>')+(d.name?' <span>'+esc(d.name)+'</span>':'');
         if(!$('name').value.trim()&&d.name)$('name').value=d.name;return}
       row.dataset.ci='';
       row.dataset.ns=d.ns;row.dataset.nova=d.nova;row.dataset.eco=d.eco;row.dataset.ad=d.ad==null?'?':d.ad;row.dataset.og=d.og;row.dataset.np=d.np==null?'':d.np;row.dataset.lq=d.lq?1:0;row.dataset.ps=d.ps||'';row.dataset.nd=d.nd||'';row.dataset.mn='';
@@ -1698,7 +1779,7 @@ function stores(sec){
   let html='',wire=()=>{};
   if(!SEC){
     const tile=(k,ic,t,sub)=>`<button class="stile" data-set="${k}"><span class="sico">${ic}</span><b class="sn">${t}</b><span class="sub">${sub}</span></button>`;
-    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Grupos y categorías',S.cats.length+' categorías · 3 grupos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('diet',DIETS[S.diet][0],'Tipo de menú',DIETS[S.diet][1])}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
+    html=`<h2>⚙️ Ajustes</h2><div class="sett">${tile('stores','🏪','Supermercados',S.stores.length+' tienda'+(S.stores.length===1?'':'s'))}${tile('cats','🏷️','Grupos y categorías',S.cats.length+' categorías · 3 grupos')}${tile('rcats','🍳','Categorías de recetas',S.rcats.length+' categorías')}${tile('tg','✈️','Telegram',TG.token?'Configurado':'Sin configurar')}${tile('diet',DIETS[S.diet][0],'Tipo de menú',DIETS[S.diet][1])}${tile('cosov','🎨','Criterio de ingredientes',Object.keys(COSOV).length+' cambiado'+(Object.keys(COSOV).length===1?'':'s')+' por ti')}${tile('notes','🔄','Notas de productos','Actualizar todas')}${tile('out','🚪','Cerrar sesión',esc(email))}</div>`;
     wire=()=>document.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const k=b.dataset.set;if(k==='out'){if(confirm('¿Cerrar sesión?')){close();signOut(auth)}return}stores(k)});
   }else if(SEC==='stores'){
     html=back('🏪 Supermercados')+S.stores.map(s=>`<div class="sedit"><div class="srow"><input type="text" value="${esc(s.name)}" data-sn="${s.id}"><input type="color" value="${scol(s)}" data-sc="${s.id}"><button class="btn r" data-d="${s.id}">Quitar</button></div><div class="srow"><label class="btn g" style="flex:none">🖼️ ${s.logo?'Cambiar logo':'Añadir logo'}<input type="file" accept="image/*" hidden data-sl="${s.id}"></label>${s.logo?`<img class="slogo" src="${s.logo}" alt=""><button class="btn g" data-rl="${s.id}">Quitar logo</button>`:''}</div></div>`).join('')
@@ -1757,6 +1838,19 @@ function stores(sec){
         if(!/^-?\d+$/.test(c)){$('tgm').textContent='El ID del grupo debe ser un número, como -100123456789.';return}
         TG={token:t,chat:c};setDoc(doc(db,'config','telegram'),TG).catch(wfail);$('tgt').value='';$('tgm').textContent='Guardado.'};
       $('tgp').onclick=()=>tgSend(['✅ Prueba desde la app de la compra'],$('tgm'))};
+  }else if(SEC==='cosov'){
+    const ks=Object.keys(COSOV).sort((a,b)=>String(COSOV[a].n||a).localeCompare(String(COSOV[b].n||b)));
+    const sel=(k,at)=>`<select ${at}>${['g','y','o','r','u'].map(x=>`<option value="${x}"${x===k?' selected':''}>${COSN[x]}</option>`).join('')}</select>`;
+    html=back('🎨 Criterio de ingredientes')+`<div class="sub">Estos son los ingredientes cuyo color has cambiado tú. Tu criterio manda sobre el de la app y se aplica a todas las notas de cosmética y hogar. También puedes cambiar uno pulsándolo en la ficha de un producto.</div>`
+      +(ks.length?ks.map(k=>`<div class="srow" style="align-items:center"><div style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(COSOV[k].n||k)}</b></div>${sel(COSOV[k].k,`data-ck="${esc(k)}"`)}<button class="btn r" data-cd="${esc(k)}">Quitar</button></div>`).join(''):'<div class="sub" style="margin:8px 0">Todavía no has cambiado ninguno.</div>')
+      +`<label class="f">Añadir o cambiar un ingrediente</label><div class="srow"><input type="text" id="cvn" placeholder="Sodium Laureth Sulfate" style="flex:1;min-width:0">${sel('y','id="cvk"')}<button class="btn" id="cva">Guardar</button></div><div class="sub" id="cvm" style="margin-top:6px"></div>
+      ${ks.length?'<div class="srow" style="margin-top:10px"><button class="btn r" id="cvr">Borrar todos mis cambios</button></div>':''}`;
+    wire=()=>{
+      document.querySelectorAll('[data-ck]').forEach(i=>i.onchange=()=>{const k=i.dataset.ck;COSOV[k]={...COSOV[k],k:i.value};cosSaveOv();render()});
+      document.querySelectorAll('[data-cd]').forEach(b=>b.onclick=()=>{delete COSOV[b.dataset.cd];cosSaveOv();render();stores()});
+      $('cvn').oninput=()=>{const n=$('cvn').value.trim();if(!n){$('cvm').textContent='';return}const c=cosClass(n);$('cvm').innerHTML='Ahora: '+cdot(c.k)+' '+COSN[c.k]+(c.mine?' (tu criterio)':'');$('cvk').value=c.k};
+      $('cva').onclick=()=>{const n=$('cvn').value.trim();if(!n){$('cvn').focus();return}COSOV[cosKey(n)]={k:$('cvk').value,n};cosSaveOv();render();stores()};
+      if($('cvr'))$('cvr').onclick=()=>{if(confirm('¿Borrar todos tus cambios de criterio?')){COSOV={};cosSaveOv();render();stores()}}};
   }else if(SEC==='notes'){
     html=back('🔄 Notas de productos')+`<div id="nrbox"></div>`;
     wire=()=>{NR=null;nrRender()};
