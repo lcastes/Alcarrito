@@ -62,11 +62,11 @@ input[type=date]{width:100%;padding:11px;border-radius:10px;border:1px solid var
 .sett{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px}.sett .stile{min-height:112px}.sico{font-size:34px;line-height:1}
 .qchip{margin-top:4px;background:var(--ac2);color:var(--ac);border:0;border-radius:12px;padding:3px 10px;font:inherit;font-size:13px;cursor:pointer}.qchip:not(.on){background:none;border:1px dashed var(--bd);color:var(--mu)}
 .irow{display:flex;gap:6px;align-items:flex-start;margin-top:8px}.irow .iq{width:68px;flex:none}.irow .iu{width:80px;flex:none}.ipw{flex:1;min-width:0}.irow .ip.linked{border-color:var(--ac);background:var(--ac2)}
-.isg{display:flex;flex-direction:column;gap:2px;margin-top:2px}.isb{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font:inherit;cursor:pointer}.irow .ix{background:none;border:0;color:var(--wa);font-size:18px;padding:8px 4px;cursor:pointer}
+.isg{display:flex;flex-direction:column;gap:2px;margin-top:2px}.isb{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font:inherit;cursor:pointer}.irow .ix{background:none;border:0;color:var(--wa);font-size:18px;padding:8px 4px;cursor:pointer}.irow .ifry{background:none;border:0;font-size:16px;padding:8px 2px;cursor:pointer;opacity:.35}.irow .ifry.on{opacity:1}
 .ocr{box-shadow:0 0 0 2px #e0b400!important}.ocrt{white-space:pre-wrap;font-size:12px;color:var(--mu);max-height:140px;overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;margin:6px 0}
 .pbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.pbtns .btn{flex:1;min-width:130px;text-align:center}
 .dt-o{background:#e2861b}.sheet.hogar .orow .sq{display:none}
-.nubox{display:none;border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:4px 12px 12px;margin-top:10px}.sheet.fresh .nubox{display:block}.nugrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.nubox{display:none;border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:4px 12px 12px;margin-top:10px}.sheet:not(.hogar) .nubox{display:block}.nugrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .sheet.fresh .orow .oc,.sheet.fresh .orow .sb,.sheet.fresh .orow .sq,.sheet.fresh .orow .sm2,.sheet.fresh .orow .osc{display:none}
 .mpre{margin-top:12px;padding:10px;border:1px dashed var(--bd);border-radius:12px}.mpre .nsb{pointer-events:none}
 .sc-ex{background:#1e8f4e}.sc-bu{background:#6aa81f}.sc-me{background:#e2861b}.sc-ma{background:#d33a2c}
@@ -76,7 +76,7 @@ input[type=date]{width:100%;padding:11px;border-radius:10px;border:1px solid var
 #scan video{flex:1;width:100%;min-height:0;object-fit:cover}.scb{padding:14px;display:flex;justify-content:space-between;align-items:center;color:#fff;gap:10px}
 .addst{display:flex;gap:8px;flex-wrap:wrap}
 .orow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 0 36px}.orow .ob{flex:1 1 calc(100% - 108px);width:auto;min-width:0}.oph{width:44px;height:44px;border-radius:8px;background:var(--ac2);display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;cursor:pointer;font-size:20px}.oph img{width:100%;height:100%;object-fit:cover}
-.bl{display:flex;gap:8px;align-items:center;margin-top:4px}.th2{width:34px;height:34px;border-radius:8px;object-fit:cover;flex:none}.th3{width:26px;height:26px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px}
+.bestimg{box-shadow:0 0 0 3px var(--ac)}.bl{display:flex;gap:8px;align-items:center;margin-top:4px}.th2{width:34px;height:34px;border-radius:8px;object-fit:cover;flex:none}.th3{width:26px;height:26px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px}
 .orow .ob0{}.orow input[type=number]{width:92px;flex:none}.orow .kgv{flex:1;margin:0;min-width:70px}.orow .rm{padding:6px 10px}
 main{padding:12px;max-width:640px;margin:auto}
 .row{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;margin-bottom:10px}
@@ -459,11 +459,13 @@ function parseNutri(text){
     let v=[...rest.matchAll(/(\d+(?:[.,]\d+)?)\s*(mg|µg|mcg|g)\b/gi)].map(m=>/mg/i.test(m[2])?num(m[1])/1000:/µg|mcg/i.test(m[2])?num(m[1])/1e6:num(m[1]));
     if(!v.length)v=[...rest.matchAll(/(\d+(?:[.,]\d+)?)/g)].map(m=>num(m[1]));return pick(v)};
   const find=(re,not)=>{for(let i=0;i<L.length;i++){if(re.test(L[i])&&!(not&&not.test(L[i]))){let l=L[i];if(!/\d/.test(l)&&L[i+1])l+=' '+L[i+1];return l}}return null};
-  const out={kcal:null,kj:null,sz:null,sf:null,sl:null,fb:null,pr:null};
+  const out={kcal:null,kj:null,sz:null,sf:null,sl:null,fb:null,pr:null,hc:null,ft:null};
   const le=find(/valor\s+energ|energ[ií]a|energy/i);
   if(le){const kj=[...le.matchAll(/(\d+(?:[.,]\d+)?)\s*kj/gi)].map(m=>num(m[1])),kc=[...le.matchAll(/(\d+(?:[.,]\d+)?)\s*kcal/gi)].map(m=>num(m[1]));out.kj=pick(kj);out.kcal=pick(kc)}
   let l=find(/saturad|saturates?\b|saturated/i);if(l)out.sf=grams(l,/de\s+las\s+cuales\s+saturadas|saturadas?|of\s+which\s+saturat(es|ed)|saturat(es|ed)(\s+fat)?/i);
   l=find(/az[uú]cares|sugars/i,/polialcohol/i);if(l)out.sz=grams(l,/de\s+los\s+cuales\s+az[uú]cares|az[uú]cares|sugars/i);
+  l=find(/hidratos|carbohidratos|carbohydrates?|gl[uú]cidos/i,/polialcohol/i);if(l)out.hc=grams(l,/hidratos\s+de\s+carbono|hidratos|carbohidratos|carbohydrates?|gl[uú]cidos/i);
+  l=find(/\bgrasas?\b|\bfat\b/i,/saturad|saturates|insaturad|mono|poli|poly|trans/i);if(l)out.ft=grams(l,/grasas?\s+totales|\bgrasas?\b|\bfat\b/i);
   l=find(/fibra|fib(er|re)/i);if(l)out.fb=grams(l,/fibra\s+alimentaria|fibra|fib(er|re)/i);
   l=find(/prote[ií]nas?|protein/i);if(l)out.pr=grams(l,/prote[ií]nas?|protein/i);
   l=find(/\bsal\b|\bsalt\b/i);if(l)out.sl=grams(l,/\bsal\b|\bsalt\b/i);
@@ -488,7 +490,7 @@ function applyOcr(kind,text){
   const filled=[],set=(id,v,lab)=>{if(v==null||isNaN(v))return;$(id).value=String(Math.round(v*1000)/1000);$(id).classList.add('ocr');filled.push(lab)};let extra='';
   if(kind==='n'){const r=parseNutri(text);
     if(r.kcal!=null){set('me',r.kcal,'energía');$('meu').value='kcal'}else if(r.kj!=null){set('me',r.kj,'energía');$('meu').value='kj'}
-    set('msz',r.sz,'azúcares');set('msf',r.sf,'grasa saturada');set('msl',r.sl,'sal');set('mfb',r.fb,'fibra');set('mpr',r.pr,'proteínas');$('mptn').textContent=text}
+    set('msz',r.sz,'azúcares');set('msf',r.sf,'grasa saturada');set('msl',r.sl,'sal');set('mfb',r.fb,'fibra');set('mpr',r.pr,'proteínas');set('mhc',r.hc,'hidratos');set('mft',r.ft,'grasas');$('mptn').textContent=text}
   else{const r=parseIngText(text);
     if(r.codes.length){const all=[...new Set([...eCodes($('mad').value),...r.codes])];$('mad').value=all.map(c=>c.toUpperCase()).join(', ');$('mad').classList.add('ocr');filled.push('aditivos')}
     if(r.byName.length)extra=' Aditivos reconocidos por su nombre: '+r.byName.join(', ')+'.';
@@ -496,8 +498,19 @@ function applyOcr(kind,text){
     set('mfv',r.fv,'fruta y verdura');set('mni',r.n,'nº de ingredientes');$('mpti').textContent=text}
   if(MPREV)MPREV();
   $('mpst').textContent=filled.length?'He leído: '+filled.join(', ')+'.'+extra+' Revisa los campos marcados en amarillo y corrige lo que haga falta antes de calcular.':'No he encontrado datos en esa foto. Prueba con más luz, la tabla bien enfocada y sin reflejos.'}
+function mnFromRow(row,nt){nt=nt||{};const ad=String(row.dataset.ad||''),al=ad==='?'?[]:ad.split(',').filter(Boolean),n=x=>x==null?'':x;
+  return {e:n(nt.kcal),eu:'kcal',sz:n(nt.sug),sf:n(nt.sat),sl:n(nt.salt),fb:n(nt.fib),pr:n(nt.pro),hc:n(nt.hc),ft:n(nt.fat),fv:n(nt.fv),
+    ad:al.filter(c=>c!=='aroma'&&c!=='_qs').map(c=>c.toUpperCase()).join(', '),ar:al.includes('aroma'),og:row.dataset.og==='1'}}
 function openManual(row){
   let m={};try{m=JSON.parse(row.dataset.mn||'{}')}catch(e){}
+  let ntS={};try{ntS=JSON.parse(row.dataset.nt||'{}')||{}}catch(e){}
+  const hasMn=!!row.dataset.mn,hasNt=Object.keys(ntS).length>0;let srcTxt='';
+  if(!hasMn){
+    if(hasNt){m=mnFromRow(row,ntS);srcTxt='Datos guardados de Open Food Facts para esta marca. Puedes corregirlos.'}
+    else{const nuv=k=>{const el=$('nu_'+k),t=el?String(el.value).trim():'';return t===''||isNaN(+t)?'':+t};
+      m=mnFromRow(row,{kcal:nuv('kcal'),sug:nuv('sug'),sat:nuv('sat'),salt:nuv('salt'),fib:nuv('fib'),pro:nuv('pro'),hc:nuv('hc'),fat:nuv('fat')});
+      if(Object.values(m).some(x=>x!==''&&x!==false&&x!=='kcal'))srcTxt='Valores por 100 g de la caja «Valores nutricionales» del producto.'}}
+  else srcTxt='Datos que escribiste a mano para esta marca.';
   const v=k=>m[k]===undefined||m[k]===null?'':m[k];
   const fld=(id,l,k)=>`<div style="flex:1;min-width:120px"><label class="f">${l}</label><input type="number" id="${id}" step="any" inputmode="decimal" value="${esc(v(k))}"></div>`;
   $('mnsheet').innerHTML=`<h2>Datos a mano</h2><div class="sub">Valores por 100 g (o 100 ml), tal como salen en la etiqueta o en Yuka. Si escribes datos aquí, tienen prioridad sobre los de Open Food Facts en esta marca.</div>
@@ -511,13 +524,21 @@ function openManual(row){
   <div class="srow" style="flex-wrap:wrap">${fld('msz','Azúcares (g)','sz')}${fld('msf','Grasa saturada (g)','sf')}</div>
   <div class="srow" style="flex-wrap:wrap">${fld('msl','Sal (g)','sl')}${fld('mfb','Fibra (g)','fb')}</div>
   <div class="srow" style="flex-wrap:wrap">${fld('mpr','Proteínas (g)','pr')}${fld('mfv','Fruta y verdura (%)','fv')}</div>
+  <div class="srow" style="flex-wrap:wrap">${fld('mhc','Hidratos de carbono (g)','hc')}${fld('mft','Grasas totales (g)','ft')}</div>
+  <div class="sub">Hidratos y grasas totales no cuentan para la nota (el Nutri-Score usa azúcares y grasa saturada), pero se guardan para calcular las calorías de tus recetas.</div>
   <div class="sub">Fruta y verdura: pon 100 en un zumo de fruta; en la mayoría de productos, 0. Si es un ketchup o una salsa de tomate, el % de tomate.</div>
+  <div class="sub" id="mnsrc" style="margin-top:8px">${esc(srcTxt)}</div>
+  <label class="f">Ingredientes (texto de la etiqueta)</label>
+  <textarea id="mit" placeholder="Pega o corrige la lista de ingredientes. Los aditivos se detectan solos.">${esc(row.dataset.it||'')}</textarea>
+  <div class="pbtns"><button class="btn g" type="button" id="mitre">↻ Recargar de Open Food Facts</button></div>
+  <div class="sub" id="mitst"></div>
   <label class="f">Aditivos (códigos E separados por comas, si los hay)</label><input type="text" id="mad" value="${esc(v('ad'))}" placeholder="E330, E250">
   <label class="srow" style="margin-top:10px"><input type="checkbox" id="mar"> <span>Lleva «aromas» sin especificar (no «naturales»)</span></label>
   <label class="srow" style="margin-top:6px"><input type="checkbox" id="mog"> <span>Es ecológico</span></label>
   <div id="mnr" style="display:none">${fld('mni','Nº de ingredientes del queso','ni')}</div>
   <div id="mpre" class="mpre"></div>
-  <div class="acts"><button class="btn g" id="mncx">Cancelar</button><span>${row.dataset.mn?'<button class="btn r" id="mnrm">Quitar datos a mano</button> ':''}<button class="btn" id="mncalc">Calcular nota</button></span></div>`;
+  <div class="sub" style="margin-top:8px">«Guardar ingredientes» solo cambia ingredientes y aditivos y mantiene Nutri-Score, NOVA y ecoscore de Open Food Facts. «Calcular nota» pasa la marca a datos a mano.</div>
+  <div class="acts" style="flex-wrap:wrap;gap:8px"><button class="btn g" id="mncx">Cancelar</button><span>${row.dataset.mn?'<button class="btn r" id="mnrm">Quitar datos a mano</button> ':'<button class="btn g" id="mnsi">Guardar ingredientes</button> '}<button class="btn" id="mncalc">Calcular nota</button></span></div>`;
   $('mt').value=m.t||(({cheese:'cheese',bev:'bev'})[catKind({cat:$('cat')?$('cat').value:''})]||'food');$('meu').value=m.eu||'kcal';$('mar').checked=!!m.ar;$('mog').checked=!!m.og;
   const tg=()=>{$('mnr').style.display=$('mt').value==='cheese'?'':'none'};$('mt').onchange=tg;tg();
   $('mnl').classList.add('show');
@@ -543,19 +564,49 @@ function openManual(row){
       nutriments:{'energy-kj_100g':eu==='kj'?e:e*4.184,'sugars_100g':sz,'saturated-fat_100g':sf,'salt_100g':sl,'fiber_100g':fb,'proteins_100g':pr,'fruits-vegetables-legumes-estimate-from-ingredients_100g':fv}};
     const q=nsPoints(prod);if(q.np==null)return null;
     const a=[...codes,...(ar?['aroma']:[])];if(!a.length&&t==='cheese'&&ni<=5)a.push('_qs');
-    return {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,warn,ad:a.join(',')}};
+    return {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,warn,ad:a.join(','),hc:g('mhc'),ft:g('mft')}};
   const adHtml=(codes,ar)=>[...codes,...(ar?['aroma']:[])].map(c=>`${dot(dotK(c))}<b>${c==='aroma'?'AROMAS':c.toUpperCase()}</b> ${esc(info(c)[0])} <span class="sub">· ${DOTT[dotK(c)]}</span>`).join('<br>');
   const preview=()=>{const c=compute();
     if(!c){$('mpre').innerHTML='<span class="sub">Rellena energía, azúcares, grasa saturada y sal para ver la nota estimada y los aditivos detectados.</span>';return}
     const xx={ns:'',np:c.q.np,lq:c.q.lq,ps:'m',nd:'',ad:c.ad,og:c.og?1:0};
     $('mpre').innerHTML=`${c.warn.map(w=>`<div style="color:var(--wa);margin-bottom:6px">⚠️ ${esc(w)}</div>`).join('')}<b>Nota estimada:</b> ${bdg(xx,'')} <div class="sub">${esc(det(xx))}</div><div class="sub">${esc(c.q.nd)}</div>${(c.codes.length||c.ar)?`<div class="sub" style="margin-top:8px"><b>Aditivos detectados</b></div><div>${adHtml(c.codes,c.ar)}</div>`:'<div class="sub" style="margin-top:6px">No se han detectado aditivos.</div>'}`};
-  MPREV=preview;$('mnsheet').oninput=preview;$('mnsheet').onchange=preview;preview();
+  let touched=false;
+  MPREV=preview;$('mnsheet')._row=row;$('mnsheet').oninput=()=>{touched=true;preview()};$('mnsheet').onchange=preview;preview();
+  const sv=(id,x)=>{$(id).value=x==null||x===''?'':String(x)};
+  const setForm=f=>{sv('me',f.e);$('meu').value=f.eu||'kcal';sv('msz',f.sz);sv('msf',f.sf);sv('msl',f.sl);sv('mfb',f.fb);sv('mpr',f.pr);sv('mfv',f.fv);sv('mhc',f.hc);sv('mft',f.ft);$('mad').value=f.ad||'';$('mar').checked=!!f.ar;$('mog').checked=!!f.og;preview()};
+  const syncIt=()=>{const t=$('mit').value.trim();if(!t){$('mitst').textContent='';return}
+    const r=parseIngText(t);$('mad').value=r.codes.map(c=>c.toUpperCase()).join(', ');$('mar').checked=!!r.aroma;if(r.og)$('mog').checked=true;if($('mni')&&r.n)$('mni').value=r.n;
+    $('mitst').textContent=r.n+' ingrediente'+(r.n===1?'':'s')+' · '+(r.codes.length?r.codes.length+' aditivo'+(r.codes.length===1?'':'s')+' detectado'+(r.codes.length===1?'':'s'):'sin aditivos')+(r.aroma?' · aromas':'')+'.';preview()};
+  let itT=null;$('mit').oninput=()=>{clearTimeout(itT);itT=setTimeout(syncIt,350)};
+  if($('mit').value.trim()){const r0=parseIngText($('mit').value);$('mitst').textContent=r0.n+' ingrediente'+(r0.n===1?'':'s')+'.'}
+  const loadOff=async force=>{const code=row.querySelector('.oc').value.replace(/\D/g,'');
+    if(code.length<8){if(force)$('mnsrc').textContent='Sin código de barras: no puedo consultar Open Food Facts.';return}
+    $('mnsrc').textContent='Consultando Open Food Facts…';
+    try{const d=await lookup(code,kindFlags());
+      if($('mnsheet')._row!==row||!$('mnl').classList.contains('show'))return;
+      if(!d){$('mnsrc').textContent='Open Food Facts no conoce este código.'+(srcTxt?' '+srcTxt:'');return}
+      const nt={...d.nt,fv:d.fv==null?null:d.fv};
+      if(row.dataset.ie!=='1'){row.dataset.nt=JSON.stringify(nt);if(force||!(row.dataset.it||'').trim())row.dataset.it=d.it||''}
+      if(force||!touched){setForm({...mnFromRow({dataset:{ad:d.ad==null?'?':d.ad,og:String(d.og?1:0)}},nt)});if(force||!$('mit').value.trim())$('mit').value=d.it||'';
+        if($('mni')&&d.it)$('mni').value=parseIngText(d.it).n||'';$('mitst').textContent=d.it?parseIngText(d.it).n+' ingredientes.':'Open Food Facts no tiene la lista de ingredientes de este producto.'}
+      $('mnsrc').textContent='Datos de Open Food Facts cargados. Revisa y corrige lo que haga falta.'}
+    catch(e){$('mnsrc').textContent='No he podido consultar Open Food Facts (¿sin conexión?).'+(srcTxt?' '+srcTxt:'')}};
+  $('mitre').onclick=()=>loadOff(true);
+  if(!hasMn&&!hasNt)loadOff(false);
+  if($('mnsi'))$('mnsi').onclick=()=>{const t=$('mit').value.trim();if(!t){alert('Escribe o pega la lista de ingredientes.');return}
+    const r=parseIngText(t),k=catKind({cat:$('cat')?$('cat').value:''}),a=[...r.codes,...(r.aroma?['aroma']:[])];if(!a.length&&k==='cheese'&&r.n<=5)a.push('_qs');
+    row.dataset.it=t;row.dataset.ie='1';row.dataset.ad=a.join(',');
+    const x={ns:row.dataset.ns||'',nova:+row.dataset.nova||0,eco:row.dataset.eco||'',ad:row.dataset.ad,og:+row.dataset.og||0,np:row.dataset.np===''?null:+row.dataset.np,lq:+row.dataset.lq||0,ps:row.dataset.ps||'',nd:row.dataset.nd||''},
+      tt=($('name').value||'')+(row.querySelector('.ob').value?' · '+row.querySelector('.ob').value:'');
+    row.querySelector('.osc').innerHTML=bdg(x,tt)+' '+det(x);$('mnl').classList.remove('show')};
   $('mncalc').onclick=()=>{
     const c=compute();if(!c){alert('Rellena al menos energía, azúcares, grasa saturada y sal. Si no sale en la etiqueta, pon 0.');return}
-    const {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,ad}=c;
+    const {t,e,eu,sz,sf,sl,fb,pr,fv,ni,ar,og,codes,q,ad,hc,ft}=c;
     row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad=ad;row.dataset.og=og?1:0;
     row.dataset.np=q.np;row.dataset.lq=q.lq?1:0;row.dataset.ps='m';row.dataset.nd='Introducido a mano. '+q.nd;
-    row.dataset.mn=JSON.stringify({t,e,eu,sz,sf,sl,fb,pr,fv,ad:codes.join(', '),ar,og,ni:t==='cheese'?ni:''});
+    row.dataset.it=$('mit').value.trim();row.dataset.ie='';row.dataset.mn=JSON.stringify({t,e,eu,sz,sf,sl,fb,pr,fv,hc,ft,ad:codes.join(', '),ar,og,ni:t==='cheese'?ni:''});
+    try{const nv={kcal:eu==='kj'?Math.round(e/4.184):Math.round(e),fat:ft,sat:sf,hc:hc,sug:sz,fib:fb,pro:pr,salt:sl};
+      Object.entries(nv).forEach(([k,v])=>{const el=$('nu_'+k);if(el&&v!=null&&!isNaN(v)&&el.value.trim()==='')el.value=Math.round(v*10)/10})}catch(e){}
     const xx={ns:'',np:q.np,lq:q.lq,ps:'m',nd:row.dataset.nd,ad,og:og?1:0},tt=($('name').value||'')+(row.querySelector('.ob').value?' · '+row.querySelector('.ob').value:'');
     row.querySelector('.osc').innerHTML=bdg(xx,tt)+' '+det(xx);
     $('mnl').classList.remove('show')};
@@ -664,7 +715,8 @@ function mergeQl(arr,q,u){const a=(arr||[]).map(z=>({q:z.q,u:z.u}));if(q==null||
 const UNITS=['g','kg','ml','l','ud','cda','cdta','taza','diente','lata','pizca'];
 function normUnit(t){t=String(t||'').trim().toLowerCase().replace(/\.$/,'');if(!t)return ['',1];const m=UN[t];return m?[m[0],m[1]]:[t,1]}
 const ingRowHtml=i=>{i=i||{};const q=i.q==null?'':i.q,u=i.u||(i.q!=null?'ud':'');
-  return `<div class="irow" data-p="${esc(i.p||'')}" data-pn="${esc(i.p?(i.n||''):'')}"><input type="number" class="iq" step="any" inputmode="decimal" placeholder="Cant." value="${q}"><input type="text" class="iu" list="unl" placeholder="Unidad" value="${esc(u)}"><div class="ipw"><input type="text" class="ip${i.p?' linked':''}" placeholder="Producto o ingrediente" autocomplete="off" value="${esc(i.n||'')}"><div class="isg"></div></div><button class="ix" type="button" aria-label="Quitar">✕</button></div>`};
+  const ap=i.ap>0&&i.ap<100?i.ap:'';
+  return `<div class="irow" data-p="${esc(i.p||'')}" data-pn="${esc(i.p?(i.n||''):'')}" data-ap="${ap}"><input type="number" class="iq" step="any" inputmode="decimal" placeholder="Cant." value="${q}"><input type="text" class="iu" list="unl" placeholder="Unidad" value="${esc(u)}"><div class="ipw"><input type="text" class="ip${i.p?' linked':''}" placeholder="Producto o ingrediente" autocomplete="off" value="${esc(i.n||'')}"><div class="isg"></div></div><button class="ifry${ap?' on':''}" type="button" title="Aceite o grasa que se queda en la comida (para fritos)" aria-label="Aceite que se queda">🍳</button><button class="ix" type="button" aria-label="Quitar">✕</button></div>`};
 const ingEditorHtml=list=>`<div class="igrid">${(list&&list.length?list:[{}]).map(ingRowHtml).join('')}</div><button class="btn g" type="button" data-addrow="1" style="margin-top:6px">+ Ingrediente</button>
   <details style="margin-top:8px"><summary class="sub">📋 Pegar una lista de ingredientes (de una web)</summary><textarea class="ipaste" placeholder="200 g harina&#10;2 huevos&#10;1/2 cebolla"></textarea><button class="btn g" type="button" data-paste="1">Añadir estas líneas</button></details>
   <datalist id="unl">${UNITS.map(u=>`<option value="${u}">`).join('')}</datalist>`;
@@ -685,6 +737,10 @@ function bindIng(root){
   const grid=()=>root.querySelector('.igrid');
   const addRow=i=>{const t=document.createElement('div');t.innerHTML=ingRowHtml(i);const r=t.firstChild;grid().appendChild(r);return r};
   root.addEventListener('click',e=>{
+    const fry=e.target.closest('.ifry');
+    if(fry){const r=fry.closest('.irow'),cur=r.dataset.ap||'';
+      const v=prompt('¿Qué % del aceite o grasa de esta línea se queda en la comida?\n\n100 = todo (aliño, guiso, horno)\n30–50 = sartén o salteado\n10–20 = fritura con mucho aceite\n\nDéjalo vacío para contarlo entero.',cur);
+      if(v!==null){const n=parseFloat(String(v).replace(',','.'));r.dataset.ap=(String(v).trim()===''||isNaN(n)||n>=100||n<=0)?'':String(n);fry.classList.toggle('on',!!r.dataset.ap)}return}
     if(e.target.closest('.ix')){const r=e.target.closest('.irow');if(grid().children.length>1)r.remove();else{r.querySelectorAll('input').forEach(x=>{x.value=''});r.dataset.p='';r.querySelector('.ip').classList.remove('linked')}return}
     if(e.target.closest('[data-addrow]')){const r=addRow({});r.querySelector('.iq').focus();return}
     const npb=e.target.closest('[data-np]');
@@ -702,7 +758,7 @@ function bindIng(root){
 }
 function readIng(root){return [...root.querySelectorAll('.irow')].map(r=>{const n=r.querySelector('.ip').value.trim();if(!n)return null;
   const q=parseFloat(String(r.querySelector('.iq').value).replace(',','.')),[u,f]=normUnit(r.querySelector('.iu').value);
-  return {n,q:q>0?Math.round(q*f*1000)/1000:null,u:q>0?u:'',p:r.dataset.p||''}}).filter(Boolean)}
+  return {n,q:q>0?Math.round(q*f*1000)/1000:null,u:q>0?u:'',p:r.dataset.p||'',...(+r.dataset.ap>0&&+r.dataset.ap<100?{ap:+r.dataset.ap}:{})}}).filter(Boolean)}
 function editQty(kind,key){let title,ql;
   if(kind==='p'){const [pid,sid,i]=key.split('|');const pr=S.products.find(x=>x.id===pid);if(!pr)return;const o=pr.e[sid].o[+i];title=pr.name+(o.b?' · '+o.b:'');ql=o.ql||[]}
   else{const x=S.extras.find(y=>y.id===key);if(!x)return;title=x.name;ql=x.ql||[]}
@@ -781,7 +837,29 @@ function recipesHtml(){
     :RV.mode==='list'?l.map(x=>`<button class="rrow" data-r="${x.id}">${x.photo?`<img src="${x.photo}" alt="">`:'<div class="rph2">🍳</div>'}<span class="rrt"><b>${esc(x.title)}${recTick(x)}</b><span class="sub">${sub(x)||'Sin categoría'}</span><span class="sub">${x.servings||2} personas · ${(x.ing||[]).length} ingredientes</span></span></button>`).join('')
     :'<div class="rgrid">'+l.map(x=>`<button class="rcard" data-r="${x.id}">${x.photo?`<img src="${x.photo}" alt="">`:'<div class="rph">🍳</div>'}<b>${esc(x.title)}${recTick(x)}</b><span class="sub">${esc(x.cat||'Sin categoría')}</span></button>`).join('')+'</div>';
   return head+body}
+function recNut(rc){const it=entItems({r:rc.id});if(!it)return null;const t={kcal:0,pro:0,hc:0,fat:0,fib:0};
+  it.items.forEach(i=>['kcal','pro','hc','fat','fib'].forEach(k=>t[k]+=i[k]));
+  return {it,t,miss:recMiss(rc),sv:Math.max(1,rc.servings||1)}}
+function recKcalLine(rc){const r=recNut(rc);if(!r||!r.it.items.length)return '';
+  const ap=!(r.it.quant&&!r.miss.length);
+  return `<div class="sub">≈ ${Math.round(r.t.kcal)} kcal por ración${ap?' (aprox.)':''} · P ${Math.round(r.t.pro)} g · HC ${Math.round(r.t.hc)} g · G ${Math.round(r.t.fat)} g</div>`}
+function recNutHtml(rc){
+  const r=recNut(rc);if(!r||!r.it.items.length)return '<div class="sub">Añade ingredientes con su cantidad para calcular las calorías.</div>';
+  const R=v=>Math.round(v),t=r.t,sv=r.sv,it=r.it.items;
+  const est=it.filter(i=>i.est),gen=it.filter(i=>i.src!=='prod'&&!i.est);
+  const lab=i=>i.est?'ración estimada':i.src==='prod'?'tu producto':'tabla genérica';
+  const warn=[];
+  if(est.length)warn.push(`${est.length} ingrediente${est.length>1?'s':''} sin cantidad (${est.map(i=>esc(i.n||i.g)).join(', ')}): he usado una ración típica. Añade la cantidad para afinar.`);
+  if(r.miss.length)warn.push(`Sin datos nutricionales, no cuentan: ${r.miss.map(esc).join(', ')}.`);
+  if(gen.length)warn.push(`${gen.length} usan una tabla genérica en vez de tu producto: enlaza el ingrediente a un producto con sus valores por 100 g para más precisión.`);
+  return `<div style="font-size:24px;font-weight:700">≈ ${R(t.kcal)} kcal <span style="font-size:15px;font-weight:400">por ración</span></div>
+  <div class="sub" style="margin-top:2px">Proteínas ${R(t.pro)} g · Hidratos ${R(t.hc)} g · Grasas ${R(t.fat)} g · Fibra ${R(t.fib)} g</div>
+  <div class="sub">Toda la receta (${sv} raciones): ≈ ${R(t.kcal*sv)} kcal</div>
+  ${warn.length?`<div class="sub" style="margin-top:8px">${warn.map(w=>'⚠️ '+w).join('<br>')}</div>`:'<div class="sub" style="margin-top:8px;color:#1e8f4e">✓ Calculado con todas las cantidades.</div>'}
+  <div style="margin-top:10px">${it.map(i=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:14px"><span>${esc(i.n||NGRP[i.g]?.[0]||i.g)}${i.fa<1?` <span class="sub">(se queda el ${Math.round(i.fa*100)} %)</span>`:''}<br><span class="sub">${R(i.gr)} g/ración · ${lab(i)}</span></span><b>${R(i.kcal)} kcal</b></div>`).join('')}</div>
+  <div class="sub" style="margin-top:10px"><b>Cómo se tiene en cuenta la cocción</b><br>• <b>Fritos y salteados:</b> pulsa el 🍳 de la línea del aceite al editar la receta e indica qué % se queda en la comida (ej. 15 % si fríes con mucho aceite).<br>• <b>Arroz, pasta y legumbres:</b> pon el peso en seco, o escribe «cocido» en el nombre si pones el peso cocido.<br>• Hornear, hervir o plancha no cambian las calorías totales.</div>`}
 function recipeBody(rc,sv,tab){const sc=sv/(rc.servings||sv);
+  if(tab==='n')return recNutHtml(rc);
   if(tab==='i')return `<div class="srow" style="margin-bottom:10px"><button class="btn g" data-sv="-1">−</button><b>${sv} persona${sv===1?'':'s'}</b><button class="btn g" data-sv="1">+</button></div>
     <ul class="ing">${(rc.ing||[]).map(i=>`<li>${i.q!=null?esc(fq(i.q*sc,i.u))+' ':''}${esc(i.n)}</li>`).join('')||'<li class="sub">Sin ingredientes</li>'}</ul>`;
   return `<div class="steps">${esc(rc.steps||'Sin pasos todavía.')}</div>
@@ -790,8 +868,8 @@ function recipeBody(rc,sv,tab){const sc=sv/(rc.servings||sv);
 function showRecipe(id,sv0,tab0){const rc=S.recipes.find(x=>x.id===id);if(!rc)return;let sv=sv0||rc.servings||2,tab=tab0||'i';
   const meta=[rc.cat,...(rc.tags||[]).map(t=>'#'+t)].filter(Boolean).map(esc).join(' · ');
   const d=mdl(`<div class="rhead">${rc.photo?`<img src="${rc.photo}" alt="">`:'<div class="rph">🍳</div>'}</div>
-  <div class="rtt"><h2>${esc(rc.title)}${recTick(rc)}</h2>${meta?`<div class="sub">${meta}</div>`:''}${(()=>{const n=(rc.ing||[]).length;if(!n)return '';const ms=recMiss(rc);return ms.length?`<div class="sub">Valor nutricional: ${n-ms.length} de ${n} ingredientes. Faltan: ${ms.map(esc).join(', ')}</div>`:'<div class="sub" style="color:#1e8f4e">✓ Receta completa: todos los ingredientes tienen valor nutricional</div>'})()}</div>
-  <div class="rtabs"><button class="rtab" data-t="i">Ingredientes</button><button class="rtab" data-t="p">Preparación</button></div>
+  <div class="rtt"><h2>${esc(rc.title)}${recTick(rc)}</h2>${meta?`<div class="sub">${meta}</div>`:''}${(()=>{const n=(rc.ing||[]).length;if(!n)return '';const ms=recMiss(rc);return ms.length?`<div class="sub">Valor nutricional: ${n-ms.length} de ${n} ingredientes. Faltan: ${ms.map(esc).join(', ')}</div>`:'<div class="sub" style="color:#1e8f4e">✓ Receta completa: todos los ingredientes tienen valor nutricional</div>'})()}${recKcalLine(rc)}</div>
+  <div class="rtabs"><button class="rtab" data-t="i">Ingredientes</button><button class="rtab" data-t="n">Nutrición</button><button class="rtab" data-t="p">Preparación</button></div>
   <div class="rbody" id="rbd"></div>
   <div class="racts"><button class="btn g" data-a="edit">✏️ Editar</button><button class="btn" data-a="plan">📅 Planificar</button><button class="btn g" data-a="x">Cerrar</button></div>`,33);
   d.firstChild.classList.add('rsheet');
@@ -926,8 +1004,9 @@ function entItems(e){ // devuelve {title,items:[{g,gr,kcal,pro,hc,fat,fib,est}],
         per=nu?[nu.kcal||0,nu.pro||0,nu.hc||0,nu.fat||0,nu.fib||0]:[f[2],f[3],f[4],f[5],f[6]],ud=nu&&nu.ug>0?nu.ug:(f?f[7]:100);let gr=null;
       if(x.q!=null&&x.q>0){const u=x.u||'';gr=u==='ud'||u===''?x.q*ud:x.q*(UNG[u]||1);gr=gr/sv}
       const est=gr==null;if(est){gr=PORC[g]||100;quant=false}
-      const m=!nu&&/cocid|hervid/.test(norm(x.n))&&['cer','leg'].includes(g)?(g==='cer'?0.37:1):1;
-      items.push({g,gr,kcal:per[0]*gr/100*m,pro:per[1]*gr/100*m,hc:per[2]*gr/100*m,fat:per[3]*gr/100*m,fib:per[4]*gr/100*m,est,real:!!nu})})}
+      const fa=x.ap>0&&x.ap<100?x.ap/100:1;
+      const m=(!nu&&/cocid|hervid/.test(norm(x.n))&&['cer','leg'].includes(g)?(g==='cer'?0.37:1):1)*fa;
+      items.push({g,gr,kcal:per[0]*gr/100*m,pro:per[1]*gr/100*m,hc:per[2]*gr/100*m,fat:per[3]*gr/100*m,fib:per[4]*gr/100*m,est,real:!!nu,n:x.n||'',src:nu?'prod':'tabla',fa})})}
   // título: añade grupos que no aparecen en los ingredientes (o todo si no hay ingredientes)
   const t=norm(title),have=new Set(items.map(i=>i.g));
   if(!ing||!ing.length){quant=false;
@@ -1329,11 +1408,14 @@ async function lookup(code,fl){fl=fl||{};
   const d=await offGet(code,OFFF);if(!d||d.status!==1||!d.product)return null;const p=d.product,g=x=>/^[a-e]$/.test(x||'')?x:'';
   if(!p.ingredients_text){const alt=p.ingredients_text_es||p.ingredients_text_en||p.ingredients_text_fr||(Array.isArray(p.ingredients)?p.ingredients.map(i=>i.text||String(i.id||'').replace(/^[a-z]{2}:/,'')).filter(Boolean).join(', '):'');if(alt)p.ingredients_text=alt}
   const nn=p.nutriments||{},miss=[];
+  const R1=v=>v==null||isNaN(+v)?null:Math.round(+v*10)/10;
+  const kv=nn['energy-kcal_100g']!=null?+nn['energy-kcal_100g']:(nn['energy-kj_100g']!=null?nn['energy-kj_100g']/4.184:(nn['energy_100g']!=null?nn['energy_100g']/4.184:null));
+  const nt={kcal:kv==null||isNaN(kv)?null:Math.round(kv),fat:R1(nn['fat_100g']),sat:R1(nn['saturated-fat_100g']),hc:R1(nn['carbohydrates_100g']),sug:R1(nn['sugars_100g']),fib:R1(nn['fiber_100g']),pro:R1(nn['proteins_100g']),salt:R1(nn['salt_100g']!=null?nn['salt_100g']:(nn['sodium_100g']!=null?nn['sodium_100g']*2.5:null))};
   if(nn['energy-kj_100g']==null&&nn['energy_100g']==null&&nn['energy-kcal_100g']==null)miss.push('energía');
   if(nn['sugars_100g']==null)miss.push('azúcares');
   if(nn['saturated-fat_100g']==null)miss.push('grasas saturadas');
   if(nn['salt_100g']==null&&nn['sodium_100g']==null)miss.push('sal');p._cheese=!!fl.cheese;p._bev=!!fl.bev;p._milk=!!fl.milk;p._name=fl.name||'';const q=nsPoints(p);
-  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>normE(t.replace(/^[a-z]{2}:/,''))),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||'',qty:qtyG(p.quantity),img:p.image_front_small_url||'',miss,noing:!p.ingredients_text};
+  return {name:p.product_name||'',brand:(p.brands||'').split(',')[0].trim(),ns:g(p.nutriscore_grade),nova:[1,2,3,4].includes(+p.nova_group)?+p.nova_group:0,eco:g(p.ecoscore_grade),ad:p.ingredients_text?(()=>{const a=[...(p.additives_tags||[]).map(t=>normE(t.replace(/^[a-z]{2}:/,''))),...(hasAroma(p)?['aroma']:[])];if(!a.length&&((p.categories_tags||[]).includes('en:cheeses')||fl.cheese)&&ingN(p)<=5)a.push('_qs');return a.join(',')})():null,og:/organic/.test((p.labels_tags||[]).join(' '))?1:0,np:q.np,lq:q.lq,ps:q.ps,nd:q.nd||'',qty:qtyG(p.quantity),img:p.image_front_small_url||'',miss,noing:!p.ingredients_text,nt,it:String(p.ingredients_text||'').trim(),fv:R1(nn['fruits-vegetables-legumes-estimate-from-ingredients_100g'])};
 }
 const loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s)});
 function scanCode(){return new Promise(async resolve=>{
@@ -1435,10 +1517,11 @@ function render(){
     const l=S.products.filter(keep);
     if(l.length&&needGate()){m.innerHTML=gateHtml(l,p=>p.cat);return}
     m.innerHTML=l.length?grpBar()+groupHtml(l,p=>p.cat,p=>{
-      const lines=[];S.stores.forEach(s=>{const e=p.e[s.id];if(!e)return;const o=opts(e);if(!o.length)lines.push({s,o:null});else o.forEach((x,i)=>lines.push({s,o:x,i}))});
+      const lines0=[];S.stores.forEach(s=>{const e=p.e[s.id];if(!e)return;const o=opts(e);if(!o.length)lines0.push({s,o:null});else o.forEach((x,i)=>lines0.push({s,o:x,i,price:x.price||0,kg:kgOf(x.price||0,x.g||0)}))});
+      const pri=lines0.filter(z=>z.o&&z.price>0),lines=[...rank(pri),...lines0.filter(z=>!(z.o&&z.price>0))],best=pri.length>1?lines[0]:null;
       const anyPh=lines.length>1&&lines.some(z=>z.o&&z.o.ph);
-      const img=z=>{const u=anyPh?((z.o&&z.o.ph)||p.photo):'';return u?`<img class="th2" src="${u}" alt="">`:''};
-      const main=anyPh?'':(lines.length===1&&lines[0].o?thumbB(p,lines[0].o):thumb(p));
+      const img=z=>{const u=anyPh?((z.o&&z.o.ph)||p.photo):'';return u?`<img class="th2${z===best?' bestimg':''}" src="${u}" alt="">`:''};
+      let main=anyPh?'':(lines.length===1&&lines[0].o?thumbB(p,lines[0].o):thumb(p));if(best&&!anyPh)main=main.replace('class="th"','class="th bestimg"');
       const txt=z=>z.o?((z.o.b?'<b>'+esc(z.o.b)+'</b> · ':'')+(priceTxt(z.o)+' '+bdg(z.o,p.name+(z.o.b?' · '+z.o.b:'')))):'Sin precio';
       return `<div class="row" data-p="${p.id}">${main}<div class="info"><div class="nm">${esc(p.name)}</div>${lines.map(z=>`<div class="sub bl">${img(z)}<span class="lt"><span class="stg" style="background:${scol(z.s)};color:#fff">${esc(z.s.name)}</span> ${txt(z)}</span>${z.o?`<button class="cart ${z.o.need?'on':''}" data-n="${p.id}|${z.s.id}|${z.i}">${z.o.need?'✓ En lista':'+ Lista'}</button>`:''}</div>`).join('')}</div></div>`})
       :`<div class="empty">${S.products.length?'Ningún producto coincide con la búsqueda o el filtro.':'Aún no hay productos. Pulsa «+ Añadir».'}</div>`;
@@ -1544,7 +1627,7 @@ async function decodePhoto(f){const url=URL.createObjectURL(f);
     await loadZX();const h=new Map();h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E]);h.set(ZXing.DecodeHintType.TRY_HARDER,true);
     const rd=new ZXing.BrowserMultiFormatReader(h);try{return (await rd.decodeFromImageUrl(url)).getText()}catch(e){return null}finally{try{rd.reset()}catch(e){}}
   }finally{URL.revokeObjectURL(url)}}
-const mkOpt=(d,code,price,g)=>({b:d?d.brand:'',price:price||0,g:g||0,bc:code,ns:d?d.ns:'',nova:d?d.nova:0,eco:d?d.eco:'',ad:d&&d.ad!=null?d.ad:null,og:d?d.og:0,np:d&&d.np!=null?d.np:null,lq:d&&d.lq?1:0,ps:d?d.ps||'':'',nd:d?d.nd||'':'',ci:d&&d.ci?d.ci:'',mn:'',need:false,done:false,ql:[],ph:''});
+const mkOpt=(d,code,price,g)=>({b:d?d.brand:'',price:price||0,g:g||0,bc:code,ns:d?d.ns:'',nova:d?d.nova:0,eco:d?d.eco:'',ad:d&&d.ad!=null?d.ad:null,og:d?d.og:0,np:d&&d.np!=null?d.np:null,lq:d&&d.lq?1:0,ps:d?d.ps||'':'',nd:d?d.nd||'':'',ci:d&&d.ci?d.ci:'',it:d&&d.it?d.it:'',ie:0,nt:d&&d.nt?{...d.nt,fv:d.fv==null?null:d.fv}:null,mn:'',need:false,done:false,ql:[],ph:''});
 function findByBc(c){let r=null;S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>e.o.forEach((o,i)=>{if(!r&&o.bc===c)r={p,sid,i}})));return r}
 async function quickScan(){
   const raw=await scanCode();if(!raw)return;const code=String(raw).replace(/\D/g,'');
@@ -1696,7 +1779,7 @@ const nrSc=n=>n==null?'sin nota':String(n);
 const nrName=x=>`<b>${esc(x.name)}</b>${x.brand?' · '+esc(x.brand):''}<br><span class="sub">${esc(x.store)}`;
 function nrCands(){const r=[];
   S.products.forEach(p=>Object.entries(p.e).forEach(([sid,e])=>(Array.isArray(e.o)?e.o:[]).forEach((o,i)=>{
-    if(o.bc&&!o.mn&&!o.ci)r.push({pid:p.id,sid,i,bc:o.bc,name:p.name,brand:o.b||'',store:sname(sid),old:scoreOf(nrX(o)),on:true})})));
+    if(o.bc&&!o.mn&&!o.ci&&!o.ie)r.push({pid:p.id,sid,i,bc:o.bc,name:p.name,brand:o.b||'',store:sname(sid),old:scoreOf(nrX(o)),on:true})})));
   return r}
 function nrRender(){const b=$('nrbox');if(!b)return;
   if(!NR)NR={stage:'list',c:nrCands()};
@@ -1747,7 +1830,7 @@ function nrApply(){
   const sel=NR.res.filter(x=>x.on),by={};sel.forEach(x=>(by[x.it.pid]=by[x.it.pid]||[]).push(x));let done=[];
   Object.entries(by).forEach(([pid,l])=>{const p=S.products.find(z=>z.id===pid);if(!p)return;const q=JSON.parse(JSON.stringify(p));
     l.forEach(x=>{const e=q.e[x.it.sid],o=e&&Array.isArray(e.o)?e.o[x.it.i]:null;
-      if(o&&o.bc===x.it.bc&&!o.mn&&!o.ci){Object.assign(o,{ns:x.d.ns,nova:x.d.nova,eco:x.d.eco,ad:x.d.ad==null?null:x.d.ad,og:x.d.og,np:x.d.np==null?null:x.d.np,lq:x.d.lq?1:0,ps:x.d.ps||'',nd:x.d.nd||''});done.push(x)}});
+      if(o&&o.bc===x.it.bc&&!o.mn&&!o.ci&&!o.ie){Object.assign(o,{it:x.d.it||o.it||'',nt:x.d.nt?{...x.d.nt,fv:x.d.fv==null?null:x.d.fv}:(o.nt||null),ns:x.d.ns,nova:x.d.nova,eco:x.d.eco,ad:x.d.ad==null?null:x.d.ad,og:x.d.og,np:x.d.np==null?null:x.d.np,lq:x.d.lq?1:0,ps:x.d.ps||'',nd:x.d.nd||''});done.push(x)}});
     putP(q)});
   $('nrbox').innerHTML=`<div class="sub">✅ Hecho: ${done.length} nota${done.length===1?'':'s'} actualizada${done.length===1?'':'s'}. El resto no se ha tocado.</div>
     ${done.map(x=>`<div class="nrr"><span class="t">${nrName(x.it)}</span></span><span>${nrSc(x.it.old)} → ${nrSc(x.nw)}</span></div>`).join('')}
@@ -1764,7 +1847,7 @@ function syncForm(){
   S.stores.forEach(s=>{
     if(!edit.e[s.id])return;
     const rows=shAll(`.orow[data-sid="${s.id}"]`);if(!rows.length)return;
-    edit.e[s.id].o=rows.map(r=>({b:r.querySelector('.ob').value.trim(),price:n2(r.querySelector('.op').value),g:n2(r.querySelector('.og').value),bc:r.querySelector('.oc').value.trim(),ns:r.dataset.ns||'',nova:+r.dataset.nova||0,eco:r.dataset.eco||'',ad:(r.dataset.ad===undefined||r.dataset.ad==='?')?null:r.dataset.ad,og:+r.dataset.og||0,np:(r.dataset.np===undefined||r.dataset.np==='')?null:+r.dataset.np,lq:+r.dataset.lq||0,ps:r.dataset.ps||'',nd:r.dataset.nd||'',mn:r.dataset.mn||'',ci:r.dataset.ci||'',need:r.dataset.need==='1',done:r.dataset.done==='1',ql:(()=>{try{return JSON.parse(r.dataset.ql||'[]')}catch(e){return[]}})(),ph:r.dataset.ph||''}))});
+    edit.e[s.id].o=rows.map(r=>({b:r.querySelector('.ob').value.trim(),price:n2(r.querySelector('.op').value),g:n2(r.querySelector('.og').value),bc:r.querySelector('.oc').value.trim(),ns:r.dataset.ns||'',nova:+r.dataset.nova||0,eco:r.dataset.eco||'',ad:(r.dataset.ad===undefined||r.dataset.ad==='?')?null:r.dataset.ad,og:+r.dataset.og||0,np:(r.dataset.np===undefined||r.dataset.np==='')?null:+r.dataset.np,lq:+r.dataset.lq||0,ps:r.dataset.ps||'',nd:r.dataset.nd||'',mn:r.dataset.mn||'',ci:r.dataset.ci||'',need:r.dataset.need==='1',done:r.dataset.done==='1',ql:(()=>{try{return JSON.parse(r.dataset.ql||'[]')}catch(e){return[]}})(),ph:r.dataset.ph||'',it:r.dataset.it||'',ie:+r.dataset.ie||0,nt:(()=>{try{return r.dataset.nt?JSON.parse(r.dataset.nt):null}catch(e){return null}})()}))});
 }
 function mergeInto(pid){
   syncForm();const t=JSON.parse(JSON.stringify(S.products.find(x=>x.id===pid)));
@@ -1781,15 +1864,16 @@ function drawForm(){
   <div class="photo"><div id="pv">${thumb(edit)}</div><div class="pbtns"><label class="btn g">📷 Hacer foto<input type="file" accept="image/*" capture="environment" id="file2" hidden></label><label class="btn g">🖼️ Archivos<input type="file" accept="image/*" id="file" hidden></label></div></div>
   <label class="f">Nombre del producto</label><input type="text" id="name" value="${esc(edit.name)}" placeholder="Varitas de merluza"><div class="addst" id="sug" style="margin-top:6px"></div>
   <label class="f">Categoría</label><select id="cat">${catOpts(edit.cat||'')}</select>
-  <div class="nubox"><label class="f"><b>🥗 Valores nutricionales por 100 g</b> (son los mismos en todos los supermercados)</label>
+  <div class="nubox"><label class="f"><b>🥗 Valores nutricionales por 100 g</b> (los mismos en todos los supermercados; sirven para calcular las calorías de las recetas)</label>
     <div class="nugrid">${NUF.map(([k,l])=>`<div><label class="f">${l}</label><input type="number" id="nu_${k}" inputmode="decimal" step="any" min="0" value="${edit.nu&&edit.nu[k]!=null?edit.nu[k]:''}"></div>`).join('')}
     <div><label class="f">Peso de 1 unidad (g)</label><input type="number" id="nu_ug" inputmode="decimal" step="any" min="0" placeholder="Ej.: 120" value="${edit.nu&&edit.nu.ug!=null?edit.nu.ug:''}"></div>
     <div><label class="f">Grupo (análisis del menú)</label><select id="nu_ng"><option value="">Automático</option>${Object.entries(NGRP).map(([k,v])=>`<option value="${k}" ${edit.nu&&edit.nu.ng===k?'selected':''}>${v[0]}</option>`).join('')}</select></div></div>
-    <div class="sub" style="margin-top:6px">Si dejas las kcal vacías se calculan con proteínas, hidratos y grasas. El peso de la unidad sirve para recetas con «2 plátanos».</div></div>
+    <div class="sub" style="margin-top:6px">Si dejas las kcal vacías se calculan con proteínas, hidratos y grasas. El peso de la unidad sirve para recetas con «2 plátanos».</div>
+    <div class="pbtns" style="margin-top:6px"><button class="btn g" type="button" id="nu_off">↻ Rellenar desde Open Food Facts</button></div><div class="sub" id="nu_offs"></div></div>
   ${inS.length?'<label class="f">Marca (opcional), precio y gramos en cada tienda. Con «+ Otra marca» metes varias y se comparan todas.</label>':''}
   ${inS.map(s=>{const e=edit.e[s.id],o=(e.o&&e.o.length)?e.o:[{b:'',price:0,g:0}];
     return `<div class="sbox"><div class="srow"><span><b>${esc(s.name)}</b></span><button class="btn g" data-ao="${s.id}">+ Otra marca</button><button class="btn r" data-rs="${s.id}">Quitar</button></div>
-    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-ci="${esc(x.ci||'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ql="${esc(JSON.stringify(x.ql||[]))}" data-ph="${x.ph||''}"><label class="oph" title="Elegir de archivos"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'🖼️'}</span><input type="file" accept="image/*" class="ofile" hidden></label><label class="oph" title="Hacer foto">📷<input type="file" accept="image/*" capture="environment" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
+    ${o.map((x,i)=>`<div class="orow" data-sid="${s.id}" data-ns="${x.ns||''}" data-nova="${x.nova||0}" data-eco="${x.eco||''}" data-ad="${x.ad==null?'?':esc(x.ad)}" data-og="${x.og?1:0}" data-np="${x.np==null?'':x.np}" data-lq="${x.lq?1:0}" data-ps="${x.ps||''}" data-nd="${esc(x.nd||'')}" data-mn="${esc(x.mn||'')}" data-ci="${esc(x.ci||'')}" data-it="${esc(x.it||'')}" data-ie="${x.ie?1:0}" data-nt="${esc(x.nt?JSON.stringify(x.nt):'')}" data-need="${x.need?1:0}" data-done="${x.done?1:0}" data-ql="${esc(JSON.stringify(x.ql||[]))}" data-ph="${x.ph||''}"><label class="oph" title="Elegir de archivos"><span class="opi">${x.ph?`<img src="${x.ph}" alt="">`:'🖼️'}</span><input type="file" accept="image/*" class="ofile" hidden></label><label class="oph" title="Hacer foto">📷<input type="file" accept="image/*" capture="environment" class="ofile" hidden></label><input type="text" class="ob" placeholder="Marca (opcional)" value="${esc(x.b||'')}"><input type="text" class="oc" inputmode="numeric" placeholder="Código de barras" value="${esc(x.bc||'')}"><button class="btn g sb" type="button">📷 Escanear</button><button class="btn g sq" type="button">🔎 Buscar</button><button class="btn g sm2" type="button">✍️ A mano</button><input type="number" class="op" inputmode="decimal" step="0.01" min="0" placeholder="€" value="${x.price>0?x.price:''}"><input type="number" class="og" inputmode="decimal" step="any" min="0" placeholder="g" value="${x.g>0?x.g:''}"><span class="sub kgv"></span>${o.length>1?`<button class="btn r rm" data-rm="${s.id}:${i}">✕</button>`:''}<div class="sub osc" style="flex:1 1 100%">${bdg(x,(edit.name||'')+(x.b?' · '+x.b:''))} ${det(x)}</div></div>`).join('')}</div>`}).join('')}
   ${outS.length?`<label class="f">${inS.length?'¿Se vende en otra tienda? Añádela:':'¿Dónde se vende? Elige la tienda:'}</label><div class="addst">${outS.map(s=>`<button class="btn g" data-as="${s.id}">+ ${esc(s.name)}</button>`).join('')}</div>`:''}
   <div class="acts">${id?'<button class="btn r" id="del">Eliminar</button>':'<span></span>'}<span><button class="btn g" id="cx">Cancelar</button> <button class="btn" id="ok">Guardar</button></span></div>`;
   const gph=ev=>{const f=ev.target.files[0];if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
@@ -1798,7 +1882,7 @@ function drawForm(){
   const upd=r=>{const k=kgOf(n2(r.querySelector('.op').value),n2(r.querySelector('.og').value));r.querySelector('.kgv').textContent=k>0?'= '+eurkg(k):''};
   shAll('.orow').forEach(r=>{upd(r);r.querySelectorAll('input').forEach(i=>i.oninput=()=>upd(r))});
   const apply0=async(row,raw)=>{const st=row.querySelector('.osc'),code=String(raw||'').replace(/\D/g,'');row.querySelector('.oc').value=code;
-    const clr=()=>{if(row.dataset.mn||row.dataset.ci)return;row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd=''};
+    const clr=()=>{if(row.dataset.mn||row.dataset.ci||row.dataset.ie==='1')return;row.dataset.it='';row.dataset.nt='';row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd=''};
     if(code.length<8){clr();st.innerHTML='';return}
     st.textContent='Buscando en Open Food Facts…';
     try{const ho=catKind({cat:$('cat').value})==='hogar';let d=null;
@@ -1806,12 +1890,13 @@ function drawForm(){
       else{d=await lookup(code,kindFlags());if(!d){try{d=await lookupCos(code)}catch(e){}}}
       if(row.querySelector('.oc').value.replace(/\D/g,'')!==code)return;
       if(!d){clr();st.textContent='No encontrado en Open Food Facts, Open Beauty Facts ni Open Products Facts';return}
-      if(d.cos){row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.dataset.mn='';row.dataset.ci=d.ci||'';
+      if(d.cos){row.dataset.ns='';row.dataset.nova=0;row.dataset.eco='';row.dataset.ad='?';row.dataset.og=0;row.dataset.np='';row.dataset.lq=0;row.dataset.ps='';row.dataset.nd='';row.dataset.mn='';row.dataset.ci=d.ci||'';row.dataset.it='';row.dataset.ie='';row.dataset.nt='';
         const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
         st.innerHTML=(d.ci?bdg({ci:d.ci},tt):'<span class="sub">Sin lista de ingredientes en la base de datos: pulsa «✍️ Ingredientes» para pegarla o leerla de una foto.</span>')+(d.name?' <span>'+esc(d.name)+'</span>':'');
         if(!$('name').value.trim()&&d.name)$('name').value=d.name;return}
       row.dataset.ci='';
-      row.dataset.ns=d.ns;row.dataset.nova=d.nova;row.dataset.eco=d.eco;row.dataset.ad=d.ad==null?'?':d.ad;row.dataset.og=d.og;row.dataset.np=d.np==null?'':d.np;row.dataset.lq=d.lq?1:0;row.dataset.ps=d.ps||'';row.dataset.nd=d.nd||'';row.dataset.mn='';
+      row.dataset.ns=d.ns;row.dataset.nova=d.nova;row.dataset.eco=d.eco;row.dataset.ad=d.ad==null?'?':d.ad;row.dataset.og=d.og;row.dataset.np=d.np==null?'':d.np;row.dataset.lq=d.lq?1:0;row.dataset.ps=d.ps||'';row.dataset.nd=d.nd||'';row.dataset.mn='';row.dataset.it=d.it||'';row.dataset.ie='';row.dataset.nt=JSON.stringify({...d.nt,fv:d.fv==null?null:d.fv});
+      try{if(d.nt&&!$('sheet').classList.contains('hogar'))Object.entries(d.nt).forEach(([k,v])=>{const el=$('nu_'+k);if(el&&v!=null&&el.value.trim()==='')el.value=v})}catch(e){}
       const b=row.querySelector('.ob');if(!b.value.trim()&&d.brand)b.value=d.brand;const tt=($('name').value||'')+(b.value?' · '+b.value:'');
       st.innerHTML=(bdg(d,tt)?bdg(d,tt)+' '+det(d):'<span class="sub">'+offWhy(d)+'</span>')+(d.name?' <span>'+esc(d.name)+'</span>':'')
     }catch(e){st.textContent='No se pudo consultar (¿sin conexión?)'}};
@@ -1823,10 +1908,16 @@ function drawForm(){
     row.querySelector('.sb').onclick=async()=>{const c=await scanCode();if(c)apply(row,c)};
     row.querySelector('.sq').onclick=()=>openSearch(row,apply);
     row.querySelector('.sm2').onclick=()=>catKind({cat:$('cat').value})==='hogar'?openCosManual(row):openManual(row)});
-  shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if((row.dataset.ad==='?'||!row.dataset.nd)&&!row.dataset.ci&&c.length>=8)apply(row,c)});
+  shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if((row.dataset.ad==='?'||!row.dataset.nd)&&!row.dataset.ci&&row.dataset.ie!=='1'&&c.length>=8)apply(row,c)});
   shAll('.orow').forEach(row=>{row.querySelectorAll('.ofile').forEach(fi=>{fi.onchange=ev=>{const f=ev.target.files[0];if(!f)return;shrink(f,u=>{row.dataset.ph=u;row.querySelector('.opi').innerHTML=`<img src="${u}" alt="">`})}})});
   const applyKindUI=()=>{const k=catKind({cat:$('cat').value});$('sheet').classList[k==='fresh'?'add':'remove']('fresh');$('sheet').classList[k==='hogar'?'add':'remove']('hogar');shAll('.orow .sm2').forEach(b=>b.textContent=k==='hogar'?'✍️ Ingredientes':'✍️ A mano')};
-  $('cat').onchange=()=>{applyKindUI();shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if(c.length>=8&&!row.dataset.mn&&!row.dataset.ci)apply(row,c)})};applyKindUI();
+  if($('nu_off'))$('nu_off').onclick=async()=>{let code='';for(const r of shAll('.orow')){const c=r.querySelector('.oc').value.replace(/\D/g,'');if(c.length>=8){code=c;break}}
+    const st=$('nu_offs');if(!code){st.textContent='Pon antes el código de barras de alguna marca.';return}
+    st.textContent='Buscando en Open Food Facts…';
+    try{const d=await lookup(code,kindFlags());if(!d||!d.nt){st.textContent='No encontrado en Open Food Facts.';return}
+      let n=0;Object.entries(d.nt).forEach(([k,v])=>{const el=$('nu_'+k);if(el&&v!=null&&el.value.trim()===''){el.value=v;n++}});
+      st.textContent=n?'Rellenados '+n+' valores. Revísalos antes de guardar.':'No había nada nuevo que rellenar (o Open Food Facts no tiene esos datos).'}catch(e){st.textContent='No se pudo consultar (¿sin conexión?).'}};
+  $('cat').onchange=()=>{applyKindUI();shAll('.orow').forEach(row=>{const c=row.querySelector('.oc').value.replace(/\D/g,'');if(c.length>=8&&!row.dataset.mn&&!row.dataset.ci&&row.dataset.ie!=='1')apply(row,c)})};applyKindUI();
   shAll('[data-as]').forEach(b=>b.onclick=()=>{syncForm();edit.e[b.dataset.as]={done:false,need:false,o:[{b:'',price:0,g:0}]};drawForm()});
   shAll('[data-rs]').forEach(b=>b.onclick=()=>{syncForm();delete edit.e[b.dataset.rs];drawForm()});
   shAll('[data-ao]').forEach(b=>b.onclick=()=>{syncForm();const e=edit.e[b.dataset.ao];
@@ -1850,7 +1941,7 @@ function drawForm(){
     const e={};Object.entries(edit.e).forEach(([k,v])=>{e[k]={done:!!v.done,need:!!v.need,o:v.o.filter(x=>x.b||x.price>0||x.g>0||x.bc||x.ph||x.need||x.mn)}});
     if(!Object.keys(e).length){alert('Añade al menos una tienda donde se venda');return}
     let nu=edit.nu||null;
-    if(nu&&catKind({cat:edit.cat})==='fresh'){
+    if(nu&&catKind({cat:edit.cat})!=='hogar'){
       if(nu.kcal==null&&[nu.pro,nu.hc,nu.fat].some(v=>v!=null))nu.kcal=Math.round(4*(nu.pro||0)+4*(nu.hc||0)+9*(nu.fat||0));
       if(nu.kcal>900){alert('Las kcal por 100 g no pueden pasar de unas 900. Revísalo.');return}
     }else nu=null;
